@@ -17,7 +17,11 @@ export type ComponentWithMetricsView =
   | KPIGridSpec
   | LeaderboardSpec;
 
-export type ComponentSpec = ComponentWithMetricsView | ImageSpec | MarkdownSpec;
+export type ComponentSpec =
+  | ComponentWithMetricsView
+  | ImageSpec
+  | MarkdownSpec
+  | SqlTableSpec;
 
 export interface ComponentCommonProperties {
   title?: string;
@@ -54,7 +58,18 @@ export type CanvasComponentType =
   | "image"
   | "pivot"
   | "table"
-  | "leaderboard";
+  | "leaderboard"
+  | "sql_table";
+
+// SQL Table component - runs raw SQL against a connector
+export interface SqlTableSpec extends ComponentCommonProperties {
+  connector: string; // Required: connector name (e.g., "mysql_source")
+  sql: string; // Required: SQL query to execute
+  limit?: number; // Optional: max rows (default 1000)
+  display_type?: "table" | "vega_lite"; // Display as table or Vega-Lite chart
+  vega_preset?: string; // Preset chart type (line, stacked_line, bar, pie, single_number)
+  vega_lite_spec?: string; // Optional Vega-Lite JSON spec for custom visualization
+}
 
 interface LineChart {
   line_chart: CartesianCanvasChartSpec;
@@ -86,10 +101,15 @@ export interface TableTemplateT {
   table: TableSpec;
 }
 
+export interface SqlTableTemplateT {
+  sql_table: SqlTableSpec;
+}
+
 export type TemplateSpec =
   | ChartTemplates
   | KPITemplateT
   | PivotTemplateT
   | MarkdownTemplateT
   | ImageTemplateT
-  | TableTemplateT;
+  | TableTemplateT
+  | SqlTableTemplateT;

@@ -20,6 +20,7 @@ import { ImageComponent } from "./image";
 import { LeaderboardComponent } from "./leaderboard";
 import { MarkdownCanvasComponent } from "./markdown";
 import { PivotCanvasComponent } from "./pivot";
+import { SqlTableComponent } from "./sql-table";
 import type {
   CanvasComponentType,
   ComponentCommonProperties,
@@ -90,6 +91,7 @@ const NON_CHART_TYPES = [
   "table",
   "pivot",
   "leaderboard",
+  "sql_table",
 ] as const;
 const ALL_COMPONENT_TYPES = [...CHART_TYPES, ...NON_CHART_TYPES] as const;
 
@@ -121,6 +123,7 @@ const baseComponentMap = {
   leaderboard: LeaderboardComponent,
   table: PivotCanvasComponent,
   pivot: PivotCanvasComponent,
+  sql_table: SqlTableComponent,
 } as const;
 
 const chartComponentMap = Object.fromEntries(
@@ -140,6 +143,7 @@ const baseDisplayMap = {
   pivot: "Pivot",
   image: "Image",
   leaderboard: "Leaderboard",
+  sql_table: "SQL Query",
 } as const;
 
 const chartDisplayMap = Object.fromEntries(

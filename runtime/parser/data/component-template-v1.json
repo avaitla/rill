@@ -211,6 +211,50 @@
       ],
       "type": "object"
     },
+    "SqlTableProperties": {
+      "additionalProperties": false,
+      "properties": {
+        "connector": {
+          "type": "string"
+        },
+        "sql": {
+          "type": "string"
+        },
+        "limit": {
+          "type": "integer"
+        },
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "display_type": {
+          "type": "string",
+          "enum": ["table", "vega_lite"]
+        },
+        "vega_lite_spec": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "connector",
+        "sql"
+      ],
+      "type": "object"
+    },
+    "SqlTableTemplateT": {
+      "additionalProperties": false,
+      "properties": {
+        "sql_table": {
+          "$ref": "#/definitions/SqlTableProperties"
+        }
+      },
+      "required": [
+        "sql_table"
+      ],
+      "type": "object"
+    },
     "SelectPropertiesT": {
       "additionalProperties": false,
       "properties": {
@@ -382,6 +426,9 @@
         },
         {
           "$ref": "#/definitions/SwitchPropertiesT"
+        },
+        {
+          "$ref": "#/definitions/SqlTableTemplateT"
         }
       ]
     }
