@@ -33,6 +33,7 @@
     { id: "kpi_grid", label: "KPI", icon: BigNumberIcon },
     { id: "leaderboard", label: "Leaderboard", icon: LeaderboardIcon },
     { id: "image", label: "Image", icon: ChartIcon },
+    { id: "sql_table", label: "SQL Query", icon: TableIcon },
   ];
 
   export let disabled = false;
