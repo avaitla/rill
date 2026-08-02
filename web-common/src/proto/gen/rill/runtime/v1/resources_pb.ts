@@ -1573,6 +1573,15 @@ export class MetricsViewSpec extends Message<MetricsViewSpec> {
    */
   maxQueryTimeRange = "";
 
+  /**
+   * If true, dimensions that fail validation (e.g. reference a column not present in the underlying table)
+   * are excluded from the valid spec with a warning instead of failing the whole metrics view.
+   * Useful for schema-on-read data sources such as structured logs, where fields vary between rows.
+   *
+   * @generated from field: bool skip_invalid_dimensions = 38;
+   */
+  skipInvalidDimensions = false;
+
   constructor(data?: PartialMessage<MetricsViewSpec>) {
     super();
     proto3.util.initPartial(data, this);
@@ -1609,6 +1618,7 @@ export class MetricsViewSpec extends Message<MetricsViewSpec> {
     { no: 33, name: "query_attributes", kind: "map", K: 9 /* ScalarType.STRING */, V: {kind: "scalar", T: 9 /* ScalarType.STRING */} },
     { no: 34, name: "rollups", kind: "message", T: MetricsViewSpec_Rollup, repeated: true },
     { no: 36, name: "max_query_time_range", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 38, name: "skip_invalid_dimensions", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): MetricsViewSpec {

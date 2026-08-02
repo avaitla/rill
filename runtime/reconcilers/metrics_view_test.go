@@ -210,3 +210,62 @@ explore:
 		})
 	}
 }
+
+func TestMetricsViewSkipInvalidDimensions(t *testing.T) {
+	rt, id := testruntime.NewInstanceWithOptions(t, testruntime.InstanceOptions{
+		Files: map[string]string{
+			"m1.sql": `SELECT '2024-01-01T00:00:00Z'::TIMESTAMP AS time, 'svc' AS service, 1 AS num`,
+			// Without the flag, a dimension referencing a missing column fails the whole metrics view.
+			"mv_strict.yaml": `
+type: metrics_view
+model: m1
+timeseries: time
+dimensions:
+- column: service
+- column: status_code
+measures:
+- name: num
+  expression: sum(num)
+explore:
+  skip: true
+`,
+			// With the flag, invalid dimensions are excluded from the valid spec with a warning.
+			"mv_skip.yaml": `
+type: metrics_view
+model: m1
+timeseries: time
+skip_invalid_dimensions: true
+dimensions:
+- column: service
+- column: status_code
+- column: log_level
+measures:
+- name: num
+  expression: sum(num)
+explore:
+  skip: true
+`,
+		},
+	})
+	testruntime.RequireReconcileState(t, rt, id, 4, 1, 0)
+
+	strict := testruntime.GetResource(t, rt, id, runtime.ResourceKindMetricsView, "mv_strict")
+	require.Nil(t, strict.GetMetricsView().State.ValidSpec)
+	require.Contains(t, strict.Meta.ReconcileError, "status_code")
+
+	skip := testruntime.GetResource(t, rt, id, runtime.ResourceKindMetricsView, "mv_skip")
+	require.Empty(t, skip.Meta.ReconcileError)
+	validSpec := skip.GetMetricsView().State.ValidSpec
+	require.NotNil(t, validSpec)
+	var dims []string
+	for _, d := range validSpec.Dimensions {
+		dims = append(dims, d.Name)
+	}
+	require.Equal(t, []string{"time", "service"}, dims)
+	// The full spec still contains all declared dimensions.
+	require.Len(t, skip.GetMetricsView().Spec.Dimensions, 4)
+	// The skipped dimensions are surfaced as reconcile warnings.
+	require.Len(t, skip.Meta.ReconcileWarnings, 2)
+	require.Contains(t, skip.Meta.ReconcileWarnings[0], "status_code")
+	require.Contains(t, skip.Meta.ReconcileWarnings[1], "log_level")
+}

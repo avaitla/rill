@@ -2094,6 +2094,9 @@ definitions:
           max_query_time_range:
             type: string
             description: 'The maximum time span any single query against this metrics view may cover, expressed as an ISO 8601 duration with day-or-larger granularity (e.g. `P90D`, `P3M`, `P1Y`). Sub-day durations such as `PT12H` are not supported. Applies independently to the primary and comparison time ranges. If unset, no limit is enforced.'
+          skip_invalid_dimensions:
+            type: boolean
+            description: When true, dimensions that fail validation (e.g. reference a column not present in the underlying table) are excluded from the dashboard with a warning instead of failing the whole metrics view. Useful for schema-on-read data sources such as structured logs, where fields vary between rows.
           dimensions:
             type: array
             description: Relates to exploring segments or dimensions of your data and filtering the dashboard

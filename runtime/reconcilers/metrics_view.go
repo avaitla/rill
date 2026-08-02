@@ -8,6 +8,7 @@ import (
 	runtimev1 "github.com/rilldata/rill/proto/gen/rill/runtime/v1"
 	"github.com/rilldata/rill/runtime"
 	"github.com/rilldata/rill/runtime/metricsview/executor"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -146,7 +147,21 @@ func (r *MetricsViewReconciler) Reconcile(ctx context.Context, n *runtimev1.Reso
 	defer e.Close()
 
 	validateResult, validateErr := e.ValidateAndNormalizeMetricsView(ctx)
-	if validateErr == nil {
+
+	// The spec that will be captured in the state. May differ from mv.Spec if invalid dimensions are skipped below.
+	validSpec := mv.Spec
+	var validateWarnings []string
+	if validateErr == nil && mv.Spec.SkipInvalidDimensions && !validateResult.IsZero() {
+		prunedSpec, warnings, pruneErr := r.pruneInvalidDimensions(ctx, mv.Spec, validateResult, !hasInternalRef)
+		if pruneErr == nil {
+			validSpec = prunedSpec
+			validateWarnings = warnings
+			validateResult = nil
+		} else if !errors.Is(pruneErr, ctx.Err()) {
+			validateErr = pruneErr
+		}
+	}
+	if validateErr == nil && validateResult != nil {
 		validateErr = validateResult.Error()
 	}
 	if ctx.Err() != nil { // May not be handled in all validation implementations
@@ -170,7 +185,7 @@ func (r *MetricsViewReconciler) Reconcile(ctx context.Context, n *runtimev1.Reso
 	}
 
 	// Capture the spec, which we now know to be valid.
-	mv.State.ValidSpec = mv.Spec
+	mv.State.ValidSpec = validSpec
 	// If there's no internal ref, we assume the metrics view is based on an externally managed table and set the streaming state to true.
 	mv.State.Streaming = !hasInternalRef
 	// We copy the underlying model's refreshed_on timestamp to the metrics view state since dashboard users may not have access to the underlying model resource.
@@ -181,7 +196,52 @@ func (r *MetricsViewReconciler) Reconcile(ctx context.Context, n *runtimev1.Reso
 		return runtime.ReconcileResult{Err: err}
 	}
 
-	return runtime.ReconcileResult{}
+	return runtime.ReconcileResult{Warnings: validateWarnings}
+}
+
+// pruneInvalidDimensions attempts to produce a valid spec by removing dimensions that fail validation.
+// It returns an error if validation fails for any reason other than invalid dimensions.
+// Since validation may short-circuit on the first errors it encounters,
+// it re-validates after each round of pruning until the spec is valid (bounded to avoid endless loops).
+func (r *MetricsViewReconciler) pruneInvalidDimensions(ctx context.Context, spec *runtimev1.MetricsViewSpec, res *executor.ValidateMetricsViewResult, streaming bool) (*runtimev1.MetricsViewSpec, []string, error) {
+	pruned := proto.Clone(spec).(*runtimev1.MetricsViewSpec)
+	var warnings []string
+	for range 5 {
+		// Errors other than dimension errors cannot be resolved by pruning.
+		if res.TimeDimensionErr != nil || len(res.MeasureErrs) > 0 || len(res.OtherErrs) > 0 || len(res.DimensionErrs) == 0 {
+			return nil, nil, res.Error()
+		}
+
+		remove := make(map[int]bool, len(res.DimensionErrs))
+		for _, ie := range res.DimensionErrs {
+			if ie.Idx >= len(pruned.Dimensions) {
+				return nil, nil, res.Error()
+			}
+			remove[ie.Idx] = true
+			warnings = append(warnings, fmt.Sprintf("skipped dimension %q: %s", pruned.Dimensions[ie.Idx].Name, ie.Err.Error()))
+		}
+		dims := make([]*runtimev1.MetricsViewSpec_Dimension, 0, len(pruned.Dimensions)-len(remove))
+		for i, d := range pruned.Dimensions {
+			if !remove[i] {
+				dims = append(dims, d)
+			}
+		}
+		pruned.Dimensions = dims
+
+		e, err := executor.New(ctx, r.C.Runtime, r.C.InstanceID, pruned, streaming, runtime.ResolvedSecurityOpen, 0, nil)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to create metrics view executor: %w", err)
+		}
+		res, err = e.ValidateAndNormalizeMetricsView(ctx)
+		e.Close()
+		if err != nil {
+			return nil, nil, err
+		}
+		if res.IsZero() {
+			return pruned, warnings, nil
+		}
+	}
+	return nil, nil, res.Error()
 }
 
 func (r *MetricsViewReconciler) ResolveTransitiveAccess(ctx context.Context, claims *runtime.SecurityClaims, res *runtimev1.Resource) ([]*runtimev1.SecurityRule, error) {

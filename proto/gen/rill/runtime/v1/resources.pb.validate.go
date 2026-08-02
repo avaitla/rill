@@ -3443,6 +3443,8 @@ func (m *MetricsViewSpec) validate(all bool) error {
 
 	// no validation rules for MaxQueryTimeRange
 
+	// no validation rules for SkipInvalidDimensions
+
 	if m.CacheEnabled != nil {
 		// no validation rules for CacheEnabled
 	}

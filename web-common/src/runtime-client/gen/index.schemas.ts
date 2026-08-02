@@ -1735,6 +1735,9 @@ Keys and values are stored as templates and will be resolved at query time. */
    * granularity (e.g. "P90D", "P3M", "P1Y"). Sub-day durations are not supported. Applies to queries that take a time
    * range, including the comparison time range. Time-range introspection RPCs are exempt. If unset, no limit is enforced. */
   maxQueryTimeRange?: string;
+  /** If true, dimensions that fail validation (e.g. reference a column not present in the underlying table)
+are excluded from the valid spec with a warning instead of failing the whole metrics view. */
+  skipInvalidDimensions?: boolean;
 }
 
 /**
