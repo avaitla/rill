@@ -2938,6 +2938,15 @@ export class ExploreSpec extends Message<ExploreSpec> {
   timeZones: string[] = [];
 
   /**
+   * List of selectable auto-refresh intervals, e.g. "30s", "5m", "1h".
+   * If the list is empty, a default list should be shown.
+   * The special values "off" and "auto" are always selectable and should not be included here.
+   *
+   * @generated from field: repeated string refresh_intervals = 22;
+   */
+  refreshIntervals: string[] = [];
+
+  /**
    * Preset UI state to show by default.
    *
    * @generated from field: rill.runtime.v1.ExplorePreset default_preset = 15;
@@ -3015,6 +3024,7 @@ export class ExploreSpec extends Message<ExploreSpec> {
     { no: 17, name: "embedded_theme", kind: "message", T: ThemeSpec },
     { no: 9, name: "time_ranges", kind: "message", T: ExploreTimeRange, repeated: true },
     { no: 10, name: "time_zones", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+    { no: 22, name: "refresh_intervals", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
     { no: 15, name: "default_preset", kind: "message", T: ExplorePreset },
     { no: 16, name: "embeds_hide_pivot", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
     { no: 12, name: "security_rules", kind: "message", T: SecurityRule, repeated: true },
@@ -3260,6 +3270,14 @@ export class ExplorePreset extends Message<ExplorePreset> {
   timeDimension?: string;
 
   /**
+   * Auto-refresh interval: a duration like "5m", or "off" or "auto".
+   * It corresponds to the values of the explore's `refresh_intervals`.
+   *
+   * @generated from field: optional string refresh_interval = 40;
+   */
+  refreshInterval?: string;
+
+  /**
    * Comparison mode.
    *
    * @generated from field: rill.runtime.v1.ExploreComparisonMode comparison_mode = 7;
@@ -3418,6 +3436,7 @@ export class ExplorePreset extends Message<ExplorePreset> {
     { no: 13, name: "time_grain", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
     { no: 14, name: "select_time_range", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
     { no: 34, name: "time_dimension", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 40, name: "refresh_interval", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
     { no: 7, name: "comparison_mode", kind: "enum", T: proto3.getEnumType(ExploreComparisonMode) },
     { no: 15, name: "compare_time_range", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
     { no: 8, name: "comparison_dimension", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },

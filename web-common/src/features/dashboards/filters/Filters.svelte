@@ -33,6 +33,8 @@
   } from "../stores/dashboard-stores";
   import ComparisonPill from "../time-controls/comparison-pill/ComparisonPill.svelte";
   import TableSelector from "../time-controls/TableSelector.svelte";
+  import RefreshSelector from "../time-controls/RefreshSelector.svelte";
+  import { REFRESH_INTERVAL_OFF } from "../time-controls/refresh-intervals";
   import {
     CUSTOM_TIME_RANGE_ALIAS,
     deriveInterval,
@@ -531,6 +533,17 @@
           />
         </div>
       {/if}
+      <div class="ml-auto">
+        <RefreshSelector
+          runtimeClient={client}
+          {metricsViewName}
+          refreshIntervals={exploreSpec.refreshIntervals}
+          selected={$dashboardStore?.selectedRefreshInterval ??
+            REFRESH_INTERVAL_OFF}
+          onSelect={(interval) =>
+            metricsExplorerStore.setRefreshInterval($exploreName, interval)}
+        />
+      </div>
     </div>
   {/if}
 

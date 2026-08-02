@@ -38,6 +38,10 @@ export function getExploreStateFromYAMLConfig(
   return <Partial<ExploreState>>{
     activePage: DashboardState_ActivePage.DEFAULT,
 
+    ...(exploreSpec.defaultPreset?.refreshInterval
+      ? { selectedRefreshInterval: exploreSpec.defaultPreset.refreshInterval }
+      : {}),
+
     ...getExploreTimeStateFromYAMLConfig(
       exploreSpec,
       timeRangeSummary,

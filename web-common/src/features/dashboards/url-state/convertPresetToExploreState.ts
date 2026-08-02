@@ -112,6 +112,10 @@ export function convertPresetToExploreState(
     partialExploreState.selectedTableOption = preset.tableOption;
   }
 
+  if (preset.refreshInterval) {
+    partialExploreState.selectedRefreshInterval = preset.refreshInterval;
+  }
+
   return { partialExploreState, errors };
 }
 

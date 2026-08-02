@@ -5571,6 +5571,10 @@ func (m *ExplorePreset) validate(all bool) error {
 		// no validation rules for TimeDimension
 	}
 
+	if m.RefreshInterval != nil {
+		// no validation rules for RefreshInterval
+	}
+
 	if m.CompareTimeRange != nil {
 		// no validation rules for CompareTimeRange
 	}

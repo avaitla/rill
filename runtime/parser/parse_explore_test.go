@@ -127,3 +127,98 @@ measures:
 	require.NoError(t, err)
 	requireResourcesAndErrors(t, p, resources, nil)
 }
+
+func TestExploreRefreshIntervals(t *testing.T) {
+	files := map[string]string{
+		`rill.yaml`: ``,
+		`explores/e1.yaml`: `
+type: explore
+metrics_view: mv1
+refresh_intervals: ['30s', '5m', '1h', '1d']
+defaults:
+  refresh_interval: 5m
+`,
+		`explores/e2.yaml`: `
+type: explore
+metrics_view: mv1
+defaults:
+  refresh_interval: auto
+`,
+	}
+
+	refreshInterval1 := "5m"
+	refreshInterval2 := "auto"
+	resources := []*Resource{
+		{
+			Name:  ResourceName{Kind: ResourceKindExplore, Name: "e1"},
+			Refs:  []ResourceName{{Kind: ResourceKindMetricsView, Name: "mv1"}},
+			Paths: []string{"/explores/e1.yaml"},
+			ExploreSpec: &runtimev1.ExploreSpec{
+				DisplayName:          "E1",
+				MetricsView:          "mv1",
+				DimensionsSelector:   &runtimev1.FieldSelector{Selector: &runtimev1.FieldSelector_All{All: true}},
+				MeasuresSelector:     &runtimev1.FieldSelector{Selector: &runtimev1.FieldSelector_All{All: true}},
+				RefreshIntervals: []string{"30s", "5m", "1h", "1d"},
+				DefaultPreset: &runtimev1.ExplorePreset{
+					DimensionsSelector: &runtimev1.FieldSelector{Selector: &runtimev1.FieldSelector_All{All: true}},
+					MeasuresSelector:   &runtimev1.FieldSelector{Selector: &runtimev1.FieldSelector_All{All: true}},
+					RefreshInterval:    &refreshInterval1,
+					ComparisonMode:     runtimev1.ExploreComparisonMode_EXPLORE_COMPARISON_MODE_NONE,
+				},
+				AllowCustomTimeRange: true,
+			},
+		},
+		{
+			Name:  ResourceName{Kind: ResourceKindExplore, Name: "e2"},
+			Refs:  []ResourceName{{Kind: ResourceKindMetricsView, Name: "mv1"}},
+			Paths: []string{"/explores/e2.yaml"},
+			ExploreSpec: &runtimev1.ExploreSpec{
+				DisplayName:          "E2",
+				MetricsView:          "mv1",
+				DimensionsSelector:   &runtimev1.FieldSelector{Selector: &runtimev1.FieldSelector_All{All: true}},
+				MeasuresSelector:     &runtimev1.FieldSelector{Selector: &runtimev1.FieldSelector_All{All: true}},
+				DefaultPreset: &runtimev1.ExplorePreset{
+					DimensionsSelector: &runtimev1.FieldSelector{Selector: &runtimev1.FieldSelector_All{All: true}},
+					MeasuresSelector:   &runtimev1.FieldSelector{Selector: &runtimev1.FieldSelector_All{All: true}},
+					RefreshInterval:    &refreshInterval2,
+					ComparisonMode:     runtimev1.ExploreComparisonMode_EXPLORE_COMPARISON_MODE_NONE,
+				},
+				AllowCustomTimeRange: true,
+			},
+		},
+	}
+
+	ctx := context.Background()
+	repo := makeRepo(t, files)
+	p, err := Parse(ctx, repo, "", "", "duckdb", true)
+	require.NoError(t, err)
+	requireResourcesAndErrors(t, p, resources, nil)
+
+	// Invalid: bad duration
+	repo = makeRepo(t, map[string]string{
+		`rill.yaml`: ``,
+		`explores/e1.yaml`: `
+type: explore
+metrics_view: mv1
+refresh_intervals: ['5x']
+`,
+	})
+	p, err = Parse(ctx, repo, "", "", "duckdb", true)
+	require.NoError(t, err)
+	require.Len(t, p.Errors, 1)
+	require.Contains(t, p.Errors[0].Message, "invalid refresh interval")
+
+	// Invalid: special values in refresh_intervals
+	repo = makeRepo(t, map[string]string{
+		`rill.yaml`: ``,
+		`explores/e1.yaml`: `
+type: explore
+metrics_view: mv1
+refresh_intervals: ['off', '5m']
+`,
+	})
+	p, err = Parse(ctx, repo, "", "", "duckdb", true)
+	require.NoError(t, err)
+	require.Len(t, p.Errors, 1)
+	require.Contains(t, p.Errors[0].Message, "always selectable")
+}

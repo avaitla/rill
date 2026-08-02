@@ -3,6 +3,7 @@ import {
   getDefaultTimeRange,
   getDefaultTimeZone,
 } from "@rilldata/web-common/features/dashboards/stores/get-rill-default-explore-state";
+import { REFRESH_INTERVAL_OFF } from "@rilldata/web-common/features/dashboards/time-controls/refresh-intervals";
 import { getValidComparisonOption } from "@rilldata/web-common/features/dashboards/time-controls/time-range-store";
 import { getDefaultTimeGrain } from "@rilldata/web-common/features/dashboards/time-controls/time-range-utils";
 import { TDDChart } from "@rilldata/web-common/features/dashboards/time-dimension-details/types";
@@ -45,6 +46,7 @@ export function getDefaultExplorePreset(
     timezone: getDefaultTimeZone(explore),
     timeGrain: "",
     tableOption: "",
+    refreshInterval: REFRESH_INTERVAL_OFF,
     comparisonMode: V1ExploreComparisonMode.EXPLORE_COMPARISON_MODE_NONE,
     compareTimeRange: "",
     comparisonDimension: "",

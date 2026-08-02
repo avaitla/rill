@@ -2657,6 +2657,11 @@ definitions:
             description: Refers to the time zones that should be pinned to the top of the time zone selector. It should be a list of [IANA time zone identifiers](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)
             items:
               type: string
+          refresh_intervals:
+            type: array
+            description: Overrides the list of auto-refresh intervals available in the refresh dropdown, e.g. `['30s', '5m', '1h']`. The special values `off` and `auto` are always selectable and should not be included.
+            items:
+              type: string
           lock_time_zone:
             type: boolean
             description: When true, the dashboard will be locked to the first time provided in the time_zones list. When no time_zones are provided, the dashboard will be locked to UTC
@@ -2701,6 +2706,9 @@ definitions:
                   - dimension
               comparison_dimension:
                 description: 'For dimension mode, specify the comparison dimension by name.'
+                type: string
+              refresh_interval:
+                description: Refers to the default auto-refresh interval selected when a user initially loads the dashboard. The value must be a duration such as `30s`, `5m` or `1h`, or one of the special values `off` (the default) and `auto`.
                 type: string
             additionalProperties: false
           embeds:
@@ -4171,6 +4179,11 @@ definitions:
             description: List of time zones to pin to the top of the time zone selector. Should be a list of IANA time zone identifiers.
             items:
               type: string
+          refresh_intervals:
+            type: array
+            description: Overrides the list of auto-refresh intervals available in the refresh dropdown, e.g. `['30s', '5m', '1h']`. The special values `off` and `auto` are always selectable and should not be included.
+            items:
+              type: string
           lock_time_zone:
             type: boolean
             description: When true, the explore view will be locked to the first time zone provided in the time_zones list. If no time_zones are provided, it will be locked to UTC.
@@ -4199,6 +4212,9 @@ definitions:
               comparison_dimension:
                 type: string
                 description: Default dimension to use for comparison when comparison_mode is 'dimension'.
+              refresh_interval:
+                type: string
+                description: Default auto-refresh interval selected when the explore view loads. A duration such as `30s`, `5m` or `1h`, or one of the special values `off` (the default) and `auto`.
             additionalProperties: false
           embeds:
             type: object

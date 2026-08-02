@@ -3,6 +3,7 @@ package parser
 import (
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -33,6 +34,7 @@ type ExploreDefinitionYAML struct {
 	Theme                yaml.Node              `yaml:"theme"` // Name (string) or inline theme definition (map)
 	TimeRanges           []ExploreTimeRangeYAML `yaml:"time_ranges"`
 	TimeZones            []string               `yaml:"time_zones"` // Single time zone or list of time zones
+	RefreshIntervals     []string               `yaml:"refresh_intervals"`
 	LockTimeZone         bool                   `yaml:"lock_time_zone"`
 	HideEmptyDimensions  bool                   `yaml:"hide_empty_dimensions"`
 	AllowCustomTimeRange *bool                  `yaml:"allow_custom_time_range"`
@@ -49,6 +51,7 @@ type ExploreDefaultsYAML struct {
 	TimeRange           string             `yaml:"time_range"`
 	ComparisonMode      string             `yaml:"comparison_mode"`
 	ComparisonDimension string             `yaml:"comparison_dimension"`
+	RefreshInterval     string             `yaml:"refresh_interval"`
 }
 
 // ExploreTimeRangeYAML represents a time range in an ExploreYAML.
@@ -265,6 +268,16 @@ func (p *Parser) parseExploreDefinition(tmp *ExploreDefinitionYAML) (*exploreDef
 		}
 	}
 
+	// Validate refresh intervals
+	for _, ri := range tmp.RefreshIntervals {
+		if ri == refreshIntervalOff || ri == refreshIntervalAuto {
+			return nil, fmt.Errorf("refresh interval %q should not be listed in refresh_intervals since it is always selectable", ri)
+		}
+		if err := validateRefreshInterval(ri); err != nil {
+			return nil, err
+		}
+	}
+
 	// Build and validate presets
 	if tmp.Defaults != nil {
 		if tmp.Defaults.TimeRange != "" {
@@ -284,6 +297,12 @@ func (p *Parser) parseExploreDefinition(tmp *ExploreDefinitionYAML) (*exploreDef
 
 		if tmp.Defaults.ComparisonDimension != "" && mode != runtimev1.ExploreComparisonMode_EXPLORE_COMPARISON_MODE_DIMENSION {
 			return nil, errors.New("can only set comparison_dimension when comparison_mode is 'dimension'")
+		}
+
+		if tmp.Defaults.RefreshInterval != "" && tmp.Defaults.RefreshInterval != refreshIntervalOff && tmp.Defaults.RefreshInterval != refreshIntervalAuto {
+			if err := validateRefreshInterval(tmp.Defaults.RefreshInterval); err != nil {
+				return nil, err
+			}
 		}
 
 		var presetDimensionsSelector *runtimev1.FieldSelector
@@ -306,6 +325,10 @@ func (p *Parser) parseExploreDefinition(tmp *ExploreDefinitionYAML) (*exploreDef
 		if tmp.Defaults.ComparisonDimension != "" {
 			compareDim = &tmp.Defaults.ComparisonDimension
 		}
+		var refreshInterval *string
+		if tmp.Defaults.RefreshInterval != "" {
+			refreshInterval = &tmp.Defaults.RefreshInterval
+		}
 		def.defaultPreset = &runtimev1.ExplorePreset{
 			Dimensions:          presetDimensions,
 			DimensionsSelector:  presetDimensionsSelector,
@@ -314,6 +337,7 @@ func (p *Parser) parseExploreDefinition(tmp *ExploreDefinitionYAML) (*exploreDef
 			TimeRange:           tr,
 			ComparisonMode:      mode,
 			ComparisonDimension: compareDim,
+			RefreshInterval:     refreshInterval,
 		}
 	}
 
@@ -340,6 +364,7 @@ func (d *exploreDefinition) applyToSpec(spec *runtimev1.ExploreSpec, tmp *Explor
 	spec.EmbeddedTheme = d.themeSpec
 	spec.TimeRanges = d.timeRanges
 	spec.TimeZones = tmp.TimeZones
+	spec.RefreshIntervals = tmp.RefreshIntervals
 	spec.DefaultPreset = d.defaultPreset
 	spec.EmbedsHidePivot = tmp.Embeds.HidePivot
 	spec.LockTimeZone = tmp.LockTimeZone
@@ -379,4 +404,29 @@ func (p *Parser) parseThemeRef(n *yaml.Node) (string, *runtimev1.ThemeSpec, erro
 	default:
 		return "", nil, fmt.Errorf("invalid theme: should be a string or mapping, got %s", n.Tag)
 	}
+}
+
+// Special refresh interval values that are always selectable in the UI.
+const (
+	refreshIntervalOff  = "off"
+	refreshIntervalAuto = "auto"
+)
+
+// validateRefreshInterval validates an auto-refresh interval such as "30s", "5m", "1h" or "1d".
+func validateRefreshInterval(s string) error {
+	// Support a day suffix, which Go's duration parsing lacks.
+	if days, found := strings.CutSuffix(s, "d"); found {
+		if n, err := strconv.Atoi(days); err == nil && n > 0 {
+			return nil
+		}
+		return fmt.Errorf("invalid refresh interval %q", s)
+	}
+	d, err := time.ParseDuration(s)
+	if err != nil {
+		return fmt.Errorf("invalid refresh interval %q: %w", s, err)
+	}
+	if d < time.Second {
+		return fmt.Errorf("invalid refresh interval %q: must be at least 1s", s)
+	}
+	return nil
 }

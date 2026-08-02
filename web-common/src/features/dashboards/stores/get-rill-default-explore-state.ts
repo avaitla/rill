@@ -34,6 +34,7 @@ import {
   V1TimeGrainToOrder,
 } from "@rilldata/web-common/lib/time/new-grains";
 import { getAggregationGrain } from "@rilldata/web-common/lib/time/rill-time-grains";
+import { REFRESH_INTERVAL_OFF } from "../time-controls/refresh-intervals";
 import { parseRillTime } from "../url-state/time-ranges/parser";
 
 export function getRillDefaultExploreState(
@@ -51,6 +52,7 @@ export function getRillDefaultExploreState(
     temporaryFilterName: null,
 
     selectedTableOption: "",
+    selectedRefreshInterval: REFRESH_INTERVAL_OFF,
 
     ...getRillDefaultExploreTimeState(
       metricsViewSpec,
