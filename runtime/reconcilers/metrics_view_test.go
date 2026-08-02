@@ -312,22 +312,6 @@ timeseries: time
 skip_empty_dimensions: true
 dimensions:
 - column: service
-func TestMetricsViewTableOptions(t *testing.T) {
-	rt, id := testruntime.NewInstanceWithOptions(t, testruntime.InstanceOptions{
-		Files: map[string]string{
-			// Two versions of a table: v1 predates the http_method and region columns.
-			"events_v1.sql": `SELECT '2024-01-01T00:00:00Z'::TIMESTAMP AS "time", 'checkout' AS service, 1 AS num`,
-			"events_v2.sql": `SELECT '2024-02-01T00:00:00Z'::TIMESTAMP AS "time", 'checkout' AS service, 'GET' AS http_method, 'eu' AS region, 2 AS num`,
-			"mv.yaml": `
-type: metrics_view
-table: events_v2
-table_options: [events_v1, events_v2]
-timeseries: time
-skip_invalid_dimensions: true
-dimensions:
-- column: service
-- column: http_method
-- column: region
 measures:
 - name: num
   expression: sum(num)
@@ -517,6 +501,32 @@ explore:
 		names = append(names, d.Name)
 	}
 	require.Equal(t, []string{"time", "log_level"}, names)
+}
+
+func TestMetricsViewTableOptions(t *testing.T) {
+	rt, id := testruntime.NewInstanceWithOptions(t, testruntime.InstanceOptions{
+		Files: map[string]string{
+			// Two versions of a table: v1 predates the http_method and region columns.
+			"events_v1.sql": `SELECT '2024-01-01T00:00:00Z'::TIMESTAMP AS "time", 'checkout' AS service, 1 AS num`,
+			"events_v2.sql": `SELECT '2024-02-01T00:00:00Z'::TIMESTAMP AS "time", 'checkout' AS service, 'GET' AS http_method, 'eu' AS region, 2 AS num`,
+			"mv.yaml": `
+type: metrics_view
+table: events_v2
+table_options: [events_v1, events_v2]
+timeseries: time
+skip_invalid_dimensions: true
+dimensions:
+- column: service
+- column: http_method
+- column: region
+measures:
+- name: num
+  expression: sum(num)
+explore:
+  skip: true
+`,
+		},
+	})
 	testruntime.RequireReconcileState(t, rt, id, 5, 0, 0)
 
 	// The primary metrics view is backed by the default table and carries the option mapping.
