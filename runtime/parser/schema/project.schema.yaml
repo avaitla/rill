@@ -2159,6 +2159,9 @@ definitions:
                     - string
                     - boolean
                   description: Enable if your dimension is a clickable URL to enable single-click navigation (boolean or valid SQL expression).
+                drill_through:
+                  type: string
+                  description: Name of another explore dashboard to open when a value of this dimension is clicked, with the clicked value applied as a filter. Used for drilling down from a high-level dashboard into a more detailed one.
                 lookup_table:
                   type: string
                   description: The name of a ClickHouse dictionary to use for query-time lookups. Use `database.dictionary_name` for dictionaries in a non-default database. All three `lookup_*` fields (`lookup_table`, `lookup_key_column`, `lookup_value_column`) must be specified together. See [Query-Time Joins](/developers/build/metrics-view/dimensions/lookup) for details.

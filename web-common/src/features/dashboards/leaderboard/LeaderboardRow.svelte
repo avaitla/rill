@@ -2,6 +2,8 @@
   import FormattedDataType from "@rilldata/web-common/components/data-types/FormattedDataType.svelte";
   import PercentageChange from "@rilldata/web-common/components/data-types/PercentageChange.svelte";
   import ExternalLink from "@rilldata/web-common/components/icons/ExternalLink.svelte";
+  import ExploreIcon from "@rilldata/web-common/components/icons/ExploreIcon.svelte";
+  import { m } from "@rilldata/web-common/lib/i18n/gen/messages";
   import LeaderboardCell from "@rilldata/web-common/features/dashboards/leaderboard/LeaderboardCell.svelte";
   import { clamp } from "@rilldata/web-common/lib/clamp";
   import { formatMeasurePercentageDifference } from "@rilldata/web-common/lib/number-formatting/percentage-formatter";
@@ -48,6 +50,9 @@
     (value: number | string | null | undefined) => string | null | undefined
   >;
   export let lowerIsBetterMap: Record<string, boolean> = {};
+  // Name of the explore to drill through to when the drill icon is clicked
+  export let drillThrough: string | undefined = undefined;
+  export let onDrillThrough: (dimensionValue: string) => void = () => {};
 
   function shouldShowContextColumns(measureName: string): boolean {
     return (
@@ -225,7 +230,7 @@
     {/if}
 
     {#if href}
-      <span class="external-link-wrapper">
+      <span class="external-link-wrapper" class:shifted={!!drillThrough}>
         <a
           target="_blank"
           rel="noopener noreferrer"
@@ -238,6 +243,23 @@
         >
           <ExternalLink className="fill-primary-600" />
         </a>
+      </span>
+    {/if}
+
+    {#if drillThrough}
+      <span class="drill-through-wrapper">
+        <button
+          type="button"
+          title={m.dashboard_drill_through({ name: drillThrough })}
+          aria-label={m.dashboard_drill_through({ name: drillThrough })}
+          onclick={(e) => {
+            e.stopPropagation();
+            onDrillThrough(dimensionValue);
+          }}
+          class:hovered
+        >
+          <ExploreIcon size="14px" className="fill-primary-600" />
+        </button>
       </span>
     {/if}
   </LeaderboardCell>
@@ -384,5 +406,31 @@
     pointer-events: auto;
     backdrop-filter: blur(2px);
     -webkit-backdrop-filter: blur(2px);
+  }
+
+  /* When both a URI link and a drill-through icon are shown, shift the URI link left */
+  .external-link-wrapper.shifted a {
+    right: 20px;
+  }
+
+  .drill-through-wrapper button {
+    opacity: 0;
+    position: absolute;
+    right: 0;
+    top: 0;
+    height: 20px;
+    width: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .drill-through-wrapper button.hovered {
+    opacity: 0.7;
+    pointer-events: auto;
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+  }
+  .drill-through-wrapper button.hovered:hover {
+    opacity: 1;
   }
 </style>

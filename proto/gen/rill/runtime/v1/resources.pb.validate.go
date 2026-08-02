@@ -13099,6 +13099,8 @@ func (m *MetricsViewSpec_Dimension) validate(all bool) error {
 
 	// no validation rules for DiscoverPattern
 
+	// no validation rules for DrillThrough
+
 	// no validation rules for LookupTable
 
 	// no validation rules for LookupKeyColumn

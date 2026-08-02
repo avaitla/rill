@@ -738,6 +738,7 @@
   "dashboard_drag_dimensions_or_measures": "Arrastra dimensiones o medidas aquí",
   "dashboard_drag_list_zone": "Lista de arrastre {zone}",
   "dashboard_dynamic_y_axis": "Escala dinámica del eje Y",
+  "dashboard_drill_through": "Explorar en detalle en {name}",
   "dashboard_empty_state": "Aún no tienes dashboards",
   "dashboard_end": "fin",
   "dashboard_error_occurred": "Ocurrió un error",

@@ -11,7 +11,9 @@
   import { fly } from "svelte/transition";
   import { getStateManagers } from "../state-managers/state-managers";
   import type { VirtualItem } from "@tanstack/svelte-virtual";
+  import { page } from "$app/stores";
   import { makeDimensionHref } from "@rilldata/web-common/features/dashboards/dashboard-utils";
+  import { gotoDrillThroughExplore } from "@rilldata/web-common/features/dashboards/drill-through";
   import type { DimensionTableRow } from "./dimension-table-types";
 
   const config: VirtualizedTableConfig = getContext("config");
@@ -42,7 +44,25 @@
     selectors: {
       sorting: { sortedByDimensionValue, sortedAscending },
     },
+    runtimeClient,
+    validSpecStore,
   } = getStateManagers();
+
+  $: drillThrough = $validSpecStore.data?.metricsView?.dimensions?.find(
+    (d) => d.name === column.name,
+  )?.drillThrough;
+
+  function onDrillValue(dimensionValue: string) {
+    if (!drillThrough) return;
+    void gotoDrillThroughExplore(
+      runtimeClient,
+      drillThrough,
+      column.name,
+      dimensionValue,
+      $page.params.organization,
+      $page.params.project,
+    ).catch((error) => console.warn("Drill-through navigation error:", error));
+  }
 
   $: atLeastOneSelected = !!selectedIndex?.length;
 
@@ -59,6 +79,8 @@
       barValue: 0,
       rowSelected: selectedIndex.findIndex((tgt) => row?.index === tgt) >= 0,
       href: makeDimensionHref(rows[row.index], column.name, value as string),
+      onDrill: drillThrough ? () => onDrillValue(value as string) : undefined,
+      drillThroughName: drillThrough,
     };
   };
 </script>

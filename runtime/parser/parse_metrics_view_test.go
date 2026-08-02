@@ -1332,4 +1332,31 @@ measures:
 		require.Len(t, p.Errors, 1, "expected error for %q", c.dimYAML)
 		require.Contains(t, p.Errors[0].Message, c.errMsg)
 	}
+func TestMetricsViewDimensionDrillThrough(t *testing.T) {
+	files := map[string]string{
+		`rill.yaml`: ``,
+		`metrics/mv1.yaml`: `
+version: 1
+type: metrics_view
+table: t1
+dimensions:
+- column: country
+  drill_through: orders_detail
+- column: category
+measures:
+- name: count
+  expression: count(*)
+`,
+	}
+
+	ctx := context.Background()
+	repo := makeRepo(t, files)
+	p, err := Parse(ctx, repo, "", "", "duckdb", true)
+	require.NoError(t, err)
+	require.Empty(t, p.Errors)
+
+	mv := p.Resources[ResourceName{Kind: ResourceKindMetricsView, Name: "mv1"}.Normalized()]
+	require.NotNil(t, mv)
+	require.Equal(t, "orders_detail", mv.MetricsViewSpec.Dimensions[0].DrillThrough)
+	require.Empty(t, mv.MetricsViewSpec.Dimensions[1].DrillThrough)
 }

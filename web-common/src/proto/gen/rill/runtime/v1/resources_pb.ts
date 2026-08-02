@@ -1782,7 +1782,6 @@ export class MetricsViewSpec_Dimension extends Message<MetricsViewSpec_Dimension
    * Name of a map-typed column whose keys are dynamically discovered and expanded into
    * concrete dimensions in the valid spec (one per key, accessing the key's value).
    * Mutually exclusive with column and expression.
-   * NOTE: 17 is reserved for a pending drill_through field.
    *
    * @generated from field: string map_column = 18;
    */
@@ -1810,6 +1809,15 @@ export class MetricsViewSpec_Dimension extends Message<MetricsViewSpec_Dimension
    * @generated from field: string discover_pattern = 20;
    */
   discoverPattern = "";
+
+  /**
+   * Name of another explore dashboard to open when a value of this dimension is clicked,
+   * with the clicked value applied as a filter. Used for drilling down from a high-level
+   * dashboard into a more detailed one.
+   *
+   * @generated from field: string drill_through = 17;
+   */
+  drillThrough = "";
 
   /**
    * Lookup fields for the dimension
@@ -1868,6 +1876,7 @@ export class MetricsViewSpec_Dimension extends Message<MetricsViewSpec_Dimension
     { no: 21, name: "all_columns", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
     { no: 19, name: "discover_limit", kind: "scalar", T: 13 /* ScalarType.UINT32 */ },
     { no: 20, name: "discover_pattern", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 17, name: "drill_through", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 8, name: "lookup_table", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 9, name: "lookup_key_column", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 10, name: "lookup_value_column", kind: "scalar", T: 9 /* ScalarType.STRING */ },

@@ -738,6 +738,7 @@
   "dashboard_drag_dimensions_or_measures": "Drag dimensions or measures here",
   "dashboard_drag_list_zone": "Drag list {zone}",
   "dashboard_dynamic_y_axis": "Dynamic Y-axis scale",
+  "dashboard_drill_through": "Drill through to {name}",
   "dashboard_empty_state": "You don't have any dashboards yet",
   "dashboard_end": "end",
   "dashboard_error_occurred": "An error occurred",

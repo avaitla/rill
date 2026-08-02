@@ -75,6 +75,9 @@ concrete dimensions in the valid spec (one per key). Mutually exclusive with col
   discoverLimit?: number;
   /** Optional regex; only map keys matching the pattern are expanded. */
   discoverPattern?: string;
+  /** Name of another explore dashboard to open when a value of this dimension is clicked,
+with the clicked value applied as a filter. */
+  drillThrough?: string;
   lookupTable?: string;
   lookupKeyColumn?: string;
   lookupValueColumn?: string;

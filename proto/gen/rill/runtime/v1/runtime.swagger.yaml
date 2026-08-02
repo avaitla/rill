@@ -3858,7 +3858,6 @@ definitions:
           Name of a map-typed column whose keys are dynamically discovered and expanded into
           concrete dimensions in the valid spec (one per key, accessing the key's value).
           Mutually exclusive with column and expression.
-          NOTE: 17 is reserved for a pending drill_through field.
       allColumns:
         type: boolean
         description: |-
@@ -3872,6 +3871,12 @@ definitions:
       discoverPattern:
         type: string
         description: Optional regex; only map keys matching the pattern are expanded.
+      drillThrough:
+        type: string
+        description: |-
+          Name of another explore dashboard to open when a value of this dimension is clicked,
+          with the clicked value applied as a filter. Used for drilling down from a high-level
+          dashboard into a more detailed one.
       lookupTable:
         type: string
         title: Lookup fields for the dimension

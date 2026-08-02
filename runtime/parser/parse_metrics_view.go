@@ -51,20 +51,21 @@ type MetricsViewYAML struct {
 	SkipEmptyDimensions   bool             `yaml:"skip_empty_dimensions"`
 	TableOptions          []string         `yaml:"table_options"`
 	Dimensions            []*struct {
-		Name        string
-		DisplayName string `yaml:"display_name"`
-		Label       string // Deprecated: use display_name
-		Description string
-		Type        string
-		Column      string
-		Expression  string
-		Property    string // For backwards compatibility
-		Ignore      bool   `yaml:"ignore"` // Deprecated
-		Unnest      bool
-		URI         string
-		MapColumn   string `yaml:"map_column"`
-		Columns     string `yaml:"columns"`
-		Discover    *struct {
+		Name         string
+		DisplayName  string `yaml:"display_name"`
+		Label        string // Deprecated: use display_name
+		Description  string
+		Type         string
+		Column       string
+		Expression   string
+		Property     string // For backwards compatibility
+		Ignore       bool   `yaml:"ignore"` // Deprecated
+		Unnest       bool
+		URI          string
+		DrillThrough string `yaml:"drill_through"`
+		MapColumn    string `yaml:"map_column"`
+		Columns      string `yaml:"columns"`
+		Discover     *struct {
 			Limit   uint32 `yaml:"limit"`
 			Pattern string `yaml:"pattern"`
 		} `yaml:"discover"`
@@ -496,6 +497,7 @@ func (p *Parser) parseMetricsView(node *Node) error {
 			Type:                    typ,
 			Unnest:                  dim.Unnest,
 			Uri:                     dim.URI,
+			DrillThrough:            dim.DrillThrough,
 			MapColumn:               dim.MapColumn,
 			AllColumns:              dim.Columns == "*",
 			LookupTable:             dim.LookupTable,
