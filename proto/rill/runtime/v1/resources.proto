@@ -216,6 +216,10 @@ message MetricsViewSpec {
     string expression = 6;
     bool unnest = 5;
     string uri = 7;
+    // Name of another explore dashboard to open when a value of this dimension is clicked,
+    // with the clicked value applied as a filter. Used for drilling down from a high-level
+    // dashboard into a more detailed one.
+    string drill_through = 17;
     // Lookup fields for the dimension
     string lookup_table = 8;
     string lookup_key_column = 9;

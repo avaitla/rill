@@ -47,6 +47,7 @@ type MetricsViewYAML struct {
 		Ignore                  bool   `yaml:"ignore"` // Deprecated
 		Unnest                  bool
 		URI                     string
+		DrillThrough            string `yaml:"drill_through"`
 		LookupTable             string `yaml:"lookup_table"`
 		LookupKeyColumn         string `yaml:"lookup_key_column"`
 		LookupValueColumn       string `yaml:"lookup_value_column"`
@@ -436,6 +437,7 @@ func (p *Parser) parseMetricsView(node *Node) error {
 			Type:                    typ,
 			Unnest:                  dim.Unnest,
 			Uri:                     dim.URI,
+			DrillThrough:            dim.DrillThrough,
 			LookupTable:             dim.LookupTable,
 			LookupKeyColumn:         dim.LookupKeyColumn,
 			LookupValueColumn:       dim.LookupValueColumn,

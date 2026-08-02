@@ -3852,6 +3852,12 @@ definitions:
         type: boolean
       uri:
         type: string
+      drillThrough:
+        type: string
+        description: |-
+          Name of another explore dashboard to open when a value of this dimension is clicked,
+          with the clicked value applied as a filter. Used for drilling down from a high-level
+          dashboard into a more detailed one.
       lookupTable:
         type: string
         title: Lookup fields for the dimension

@@ -66,6 +66,9 @@ export interface MetricsViewSpecDimension {
   expression?: string;
   unnest?: boolean;
   uri?: string;
+  /** Name of another explore dashboard to open when a value of this dimension is clicked,
+with the clicked value applied as a filter. */
+  drillThrough?: string;
   lookupTable?: string;
   lookupKeyColumn?: string;
   lookupValueColumn?: string;

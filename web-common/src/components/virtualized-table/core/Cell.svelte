@@ -17,6 +17,8 @@
   import { formatDataTypeAsDuckDbQueryString } from "@rilldata/web-common/lib/formatters";
   import { getContext } from "svelte";
   import ExternalLink from "@rilldata/web-common/components/icons/ExternalLink.svelte";
+  import ExploreIcon from "@rilldata/web-common/components/icons/ExploreIcon.svelte";
+  import { m } from "@rilldata/web-common/lib/i18n/gen/messages";
   import BarAndLabel from "../../BarAndLabel.svelte";
   import type { VirtualizedTableConfig } from "../types";
 
@@ -46,6 +48,9 @@
   export let onkeydown: ((e: KeyboardEvent) => void) | undefined = undefined;
   // When set, renders a hover-revealed external link icon for URI dimensions.
   export let href: string | undefined = undefined;
+  // When set, renders a hover-revealed drill-through icon that invokes the callback.
+  export let onDrill: (() => void) | undefined = undefined;
+  export let drillThroughName: string | undefined = undefined;
 
   const config: VirtualizedTableConfig = getContext("config");
   const isDimensionTable = config.table === "DimensionTable";
@@ -171,7 +176,7 @@
       value={barValue}
       compact
     >
-      {#if href}
+      {#if href || onDrill}
         <!-- URI dimension: lay the value button and external-link icon side by
         side. This wrapper only exists when there is a link, so non-URI cells
         keep the exact DOM (and text content) the table's matchers expect. -->
@@ -197,16 +202,36 @@
               {lowerIsBetter}
             />
           </button>
-          <a
-            class="external-link shrink-0"
-            target="_blank"
-            rel="noopener noreferrer"
-            {href}
-            title={href}
-            onclick={(e) => e.stopPropagation()}
-          >
-            <ExternalLink className="fill-primary-600" />
-          </a>
+          {#if href}
+            <a
+              class="external-link shrink-0"
+              target="_blank"
+              rel="noopener noreferrer"
+              {href}
+              title={href}
+              onclick={(e) => e.stopPropagation()}
+            >
+              <ExternalLink className="fill-primary-600" />
+            </a>
+          {/if}
+          {#if onDrill}
+            <button
+              type="button"
+              class="external-link shrink-0"
+              title={m.dashboard_drill_through({
+                name: drillThroughName ?? "",
+              })}
+              aria-label={m.dashboard_drill_through({
+                name: drillThroughName ?? "",
+              })}
+              onclick={(e) => {
+                e.stopPropagation();
+                onDrill?.();
+              }}
+            >
+              <ExploreIcon size="14px" className="fill-primary-600" />
+            </button>
+          {/if}
         </div>
       {:else}
         <button

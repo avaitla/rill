@@ -14,6 +14,7 @@
     createQueryServiceMetricsViewAggregation,
     V1Operation,
   } from "@rilldata/web-common/runtime-client";
+  import { page } from "$app/stores";
   import { useRuntimeClient } from "@rilldata/web-common/runtime-client/v2";
   import { onMount } from "svelte";
   import type { DimensionThresholdFilter } from "web-common/src/features/dashboards/stores/explore-state";
@@ -21,6 +22,7 @@
     getComparisonRequestMeasures,
     getURIRequestMeasure,
   } from "../dashboard-utils";
+  import { gotoDrillThroughExplore } from "../drill-through";
   import { mergeDimensionAndMeasureFilters } from "../filters/measure-filters/measure-filter-utils";
   import { SortType } from "../proto-state/derived-types";
   import { getFiltersForOtherDimensions } from "../selectors";
@@ -127,7 +129,20 @@
     description = "",
     displayName = "",
     uri,
+    drillThrough,
   } = dimension);
+
+  function onDrillThrough(dimensionValue: string) {
+    if (!drillThrough) return;
+    void gotoDrillThroughExplore(
+      runtimeClient,
+      drillThrough,
+      dimensionName,
+      dimensionValue,
+      $page.params.organization,
+      $page.params.project,
+    ).catch((error) => console.warn("Drill-through navigation error:", error));
+  }
 
   $: leaderboardMeasureNames = leaderboardMeasures.map(
     (measure) => measure.name!,
@@ -409,6 +424,8 @@
             {dimensionColumnWidth}
             {maxValues}
             {lowerIsBetterMap}
+            {drillThrough}
+            {onDrillThrough}
           />
         {/each}
       </DelayedLoadingRows>
@@ -433,6 +450,8 @@
           {dimensionColumnWidth}
           {maxValues}
           {lowerIsBetterMap}
+          {drillThrough}
+          {onDrillThrough}
         />
       {/each}
     </tbody>
