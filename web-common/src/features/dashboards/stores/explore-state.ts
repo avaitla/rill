@@ -126,6 +126,11 @@ export interface ExploreState {
   selectedTimezone: string;
 
   /**
+   * user selected auto-refresh interval: a duration like "5m", or "off" or "auto"
+   */
+  selectedRefreshInterval?: string;
+
+  /**
    * user selected time column, should default to undefined if no other value is set
    */
   selectedTimeDimension: string | undefined;

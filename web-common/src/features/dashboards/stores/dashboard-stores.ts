@@ -497,6 +497,12 @@ const metricsViewReducers = {
     });
   },
 
+  setRefreshInterval(name: string, interval: string) {
+    updateMetricsExplorerByName(name, (exploreState) => {
+      exploreState.selectedRefreshInterval = interval;
+    });
+  },
+
   displayTimeComparison(name: string, showTimeComparison: boolean) {
     updateMetricsExplorerByName(name, (exploreState) => {
       exploreState.showTimeComparison = showTimeComparison;

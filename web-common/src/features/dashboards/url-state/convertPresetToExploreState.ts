@@ -108,6 +108,10 @@ export function convertPresetToExploreState(
 
   partialExploreState.dynamicYAxisScale = preset.chartDynamicYAxis ?? false;
 
+  if (preset.refreshInterval) {
+    partialExploreState.selectedRefreshInterval = preset.refreshInterval;
+  }
+
   return { partialExploreState, errors };
 }
 

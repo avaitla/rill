@@ -5330,6 +5330,11 @@ definitions:
         type: string
       timeDimension:
         type: string
+      refreshInterval:
+        type: string
+        description: |-
+          Auto-refresh interval: a duration like "5m", or "off" or "auto".
+          It corresponds to the values of the explore's `refresh_intervals`.
       comparisonMode:
         $ref: '#/definitions/v1ExploreComparisonMode'
         description: Comparison mode.
@@ -5452,6 +5457,14 @@ definitions:
           List of selectable time zones.
           If the list is empty, a default list should be shown.
           The values should be valid IANA location identifiers.
+      refreshIntervals:
+        type: array
+        items:
+          type: string
+        description: |-
+          List of selectable auto-refresh intervals, e.g. "30s", "5m", "1h".
+          If the list is empty, a default list should be shown.
+          The special values "off" and "auto" are always selectable and should not be included here.
       defaultPreset:
         $ref: '#/definitions/v1ExplorePreset'
         description: Preset UI state to show by default.

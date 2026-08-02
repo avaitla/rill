@@ -924,6 +924,9 @@ If not found in `time_ranges`, it should be added to the list. */
   timeGrain?: string;
   selectTimeRange?: string;
   timeDimension?: string;
+  /** Auto-refresh interval: a duration like "5m", or "off" or "auto".
+It corresponds to the values of the explore's `refresh_intervals`. */
+  refreshInterval?: string;
   comparisonMode?: V1ExploreComparisonMode;
   compareTimeRange?: string;
   /** If comparison_mode is EXPLORE_COMPARISON_MODE_DIMENSION, this indicates the dimension to use. */
@@ -985,6 +988,10 @@ If the list is empty, a default list should be shown. */
 If the list is empty, a default list should be shown.
 The values should be valid IANA location identifiers. */
   timeZones?: string[];
+  /** List of selectable auto-refresh intervals, e.g. "30s", "5m", "1h".
+If the list is empty, a default list should be shown.
+The special values "off" and "auto" are always selectable and should not be included here. */
+  refreshIntervals?: string[];
   defaultPreset?: V1ExplorePreset;
   /** If true, the pivot tab will be hidden when the explore is embedded. */
   embedsHidePivot?: boolean;

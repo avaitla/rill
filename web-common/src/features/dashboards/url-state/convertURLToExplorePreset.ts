@@ -9,6 +9,7 @@ import {
   createAndExpression,
   filterIdentifiers,
 } from "@rilldata/web-common/features/dashboards/stores/filter-utils";
+import { isValidRefreshInterval } from "@rilldata/web-common/features/dashboards/time-controls/refresh-intervals";
 import { decompressUrlParams } from "@rilldata/web-common/features/dashboards/url-state/compression";
 import { convertLegacyStateToExplorePreset } from "@rilldata/web-common/features/dashboards/url-state/convertLegacyStateToExplorePreset";
 import { CustomTimeRangeRegex } from "@rilldata/web-common/features/dashboards/url-state/convertPresetToExploreState";
@@ -233,6 +234,15 @@ export function convertURLToExplorePreset(
       preset.chartDynamicYAxis = false;
     } else {
       errors.push(getSingleFieldError("dynamic y-axis scale", raw ?? ""));
+    }
+  }
+
+  if (searchParams.has(ExploreStateURLParams.RefreshInterval)) {
+    const raw = searchParams.get(ExploreStateURLParams.RefreshInterval) ?? "";
+    if (isValidRefreshInterval(raw)) {
+      preset.refreshInterval = raw;
+    } else {
+      errors.push(getSingleFieldError("refresh interval", raw));
     }
   }
 

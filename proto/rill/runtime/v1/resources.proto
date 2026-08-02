@@ -486,6 +486,10 @@ message ExploreSpec {
   // If the list is empty, a default list should be shown.
   // The values should be valid IANA location identifiers.
   repeated string time_zones = 10;
+  // List of selectable auto-refresh intervals, e.g. "30s", "5m", "1h".
+  // If the list is empty, a default list should be shown.
+  // The special values "off" and "auto" are always selectable and should not be included here.
+  repeated string refresh_intervals = 22;
   // Preset UI state to show by default.
   ExplorePreset default_preset = 15;
   // If true, the pivot tab will be hidden when the explore is embedded.
@@ -549,6 +553,10 @@ message ExplorePreset {
   optional string time_grain = 13;
   optional string select_time_range = 14;
   optional string time_dimension = 34;
+
+  // Auto-refresh interval: a duration like "5m", or "off" or "auto".
+  // It corresponds to the values of the explore's `refresh_intervals`.
+  optional string refresh_interval = 40;
 
   // Comparison mode.
   ExploreComparisonMode comparison_mode = 7;
