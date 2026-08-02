@@ -522,6 +522,10 @@ message ExploreSpec {
   bool allow_custom_time_range = 20;
   // When true, it indicates that the explore was defined in a metrics view either explicitly or emitted because version was not set.
   bool defined_in_metrics_view = 21;
+  // When true, dimensions whose values are all NULL or empty under the dashboard's current filters hide themselves.
+  // Useful for schemaless data where filtering by one field narrows the rows to a subset that does not carry other fields.
+  // NOTE: 22 is reserved for a pending refresh_intervals field.
+  bool hide_empty_dimensions = 23;
 }
 
 message ExploreState {

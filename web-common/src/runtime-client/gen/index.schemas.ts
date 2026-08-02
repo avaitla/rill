@@ -1006,6 +1006,8 @@ These are not currently parsed from YAML, but will be derived from the parent me
   allowCustomTimeRange?: boolean;
   /** When true, it indicates that the explore was defined in a metrics view either explicitly or emitted because version was not set. */
   definedInMetricsView?: boolean;
+  /** When true, dimensions whose values are all NULL or empty under the dashboard's current filters hide themselves. */
+  hideEmptyDimensions?: boolean;
 }
 
 export interface V1ExploreState {

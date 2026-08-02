@@ -2655,6 +2655,9 @@ definitions:
           lock_time_zone:
             type: boolean
             description: When true, the dashboard will be locked to the first time provided in the time_zones list. When no time_zones are provided, the dashboard will be locked to UTC
+          hide_empty_dimensions:
+            type: boolean
+            description: When true, dimensions whose values are all NULL or empty under the dashboard's current filters hide themselves. Useful for schemaless data where filtering by one field narrows the rows to a subset that does not carry other fields.
           allow_custom_time_range:
             type: boolean
             description: Defaults to true, when set to false it will hide the ability to set a custom time range for the user.
@@ -4166,6 +4169,9 @@ definitions:
           lock_time_zone:
             type: boolean
             description: When true, the explore view will be locked to the first time zone provided in the time_zones list. If no time_zones are provided, it will be locked to UTC.
+          hide_empty_dimensions:
+            type: boolean
+            description: When true, dimensions whose values are all NULL or empty under the dashboard's current filters hide themselves. Useful for schemaless data where filtering by one field narrows the rows to a subset that does not carry other fields.
           allow_custom_time_range:
             type: boolean
             description: Defaults to true. When set to false, hides the ability to set a custom time range for the user.

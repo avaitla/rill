@@ -66,6 +66,8 @@
   export let filterExcludeMode: boolean;
   export let isBeingCompared: boolean;
   export let parentElement: HTMLElement | undefined = undefined;
+  // When true, the leaderboard hides itself if all its values are NULL or empty under the current filters.
+  export let hideEmptyDimensions = false;
   export let allowExpandTable = true;
   export let allowDimensionComparison = true;
   export let visible = false;
@@ -214,6 +216,17 @@
   );
 
   $: ({ data: sortedData, isFetching, isLoading, isPending } = $sortedQuery);
+
+  // Hide the leaderboard when the current filters leave no rows that carry this dimension.
+  // Dimensions with an active filter are never hidden, so their filters stay discoverable and editable.
+  $: hideSelf =
+    hideEmptyDimensions &&
+    !atLeastOneActive &&
+    !!sortedData &&
+    (sortedData.data ?? []).every((row) => {
+      const value = row[dimensionName];
+      return value === null || value === undefined || value === "";
+    });
   $: ({ data: totalsData } = $totalsQuery);
 
   $: leaderboardTotals = totalsData?.data?.[0]
@@ -324,6 +337,7 @@
 
 <div
   class="flex flex-col"
+  class:hidden={hideSelf}
   aria-label={m.dashboard_dimension_leaderboard_aria({ name: dimensionName })}
   role="table"
   bind:this={container}

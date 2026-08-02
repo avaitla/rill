@@ -2926,6 +2926,15 @@ export class ExploreSpec extends Message<ExploreSpec> {
    */
   definedInMetricsView = false;
 
+  /**
+   * When true, dimensions whose values are all NULL or empty under the dashboard's current filters hide themselves.
+   * Useful for schemaless data where filtering by one field narrows the rows to a subset that does not carry other fields.
+   * NOTE: 22 is reserved for a pending refresh_intervals field.
+   *
+   * @generated from field: bool hide_empty_dimensions = 23;
+   */
+  hideEmptyDimensions = false;
+
   constructor(data?: PartialMessage<ExploreSpec>) {
     super();
     proto3.util.initPartial(data, this);
@@ -2952,6 +2961,7 @@ export class ExploreSpec extends Message<ExploreSpec> {
     { no: 19, name: "lock_time_zone", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
     { no: 20, name: "allow_custom_time_range", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
     { no: 21, name: "defined_in_metrics_view", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 23, name: "hide_empty_dimensions", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ExploreSpec {

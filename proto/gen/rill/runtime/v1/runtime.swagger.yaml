@@ -5498,6 +5498,12 @@ definitions:
       definedInMetricsView:
         type: boolean
         description: When true, it indicates that the explore was defined in a metrics view either explicitly or emitted because version was not set.
+      hideEmptyDimensions:
+        type: boolean
+        description: |-
+          When true, dimensions whose values are all NULL or empty under the dashboard's current filters hide themselves.
+          Useful for schemaless data where filtering by one field narrows the rows to a subset that does not carry other fields.
+          NOTE: 22 is reserved for a pending refresh_intervals field.
   v1ExploreState:
     type: object
     properties:

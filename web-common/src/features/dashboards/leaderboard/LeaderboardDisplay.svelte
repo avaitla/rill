@@ -54,9 +54,13 @@
     },
     exploreName,
     dashboardStore,
+    validSpecStore,
   } = StateManagers;
 
   const client = useRuntimeClient();
+
+  $: hideEmptyDimensions =
+    $validSpecStore.data?.explore?.hideEmptyDimensions ?? false;
 
   let parentElement: HTMLDivElement;
 
@@ -112,6 +116,7 @@
               sortedAscending={$sortedAscending}
               sortType={$sortType}
               filterExcludeMode={$isFilterExcludeMode(dimension.name)}
+              {hideEmptyDimensions}
               {comparisonTimeRange}
               {dimension}
               {parentElement}
