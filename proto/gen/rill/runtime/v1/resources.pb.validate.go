@@ -3445,6 +3445,8 @@ func (m *MetricsViewSpec) validate(all bool) error {
 
 	// no validation rules for SkipInvalidDimensions
 
+	// no validation rules for SkipEmptyDimensions
+
 	if m.CacheEnabled != nil {
 		// no validation rules for CacheEnabled
 	}
@@ -13044,6 +13046,12 @@ func (m *MetricsViewSpec_Dimension) validate(all bool) error {
 	// no validation rules for Unnest
 
 	// no validation rules for Uri
+
+	// no validation rules for MapColumn
+
+	// no validation rules for DiscoverLimit
+
+	// no validation rules for DiscoverPattern
 
 	// no validation rules for LookupTable
 

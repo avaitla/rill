@@ -66,6 +66,13 @@ export interface MetricsViewSpecDimension {
   expression?: string;
   unnest?: boolean;
   uri?: string;
+  /** Name of a map-typed column whose keys are dynamically discovered and expanded into
+concrete dimensions in the valid spec (one per key). Mutually exclusive with column and expression. */
+  mapColumn?: string;
+  /** Maximum number of keys to discover for a map_column dimension (most frequent keys first). */
+  discoverLimit?: number;
+  /** Optional regex; only map keys matching the pattern are expanded. */
+  discoverPattern?: string;
   lookupTable?: string;
   lookupKeyColumn?: string;
   lookupValueColumn?: string;
@@ -1738,6 +1745,9 @@ Keys and values are stored as templates and will be resolved at query time. */
   /** If true, dimensions that fail validation (e.g. reference a column not present in the underlying table)
 are excluded from the valid spec with a warning instead of failing the whole metrics view. */
   skipInvalidDimensions?: boolean;
+  /** If true, dimensions whose values are NULL in every row of the underlying table are excluded
+from the valid spec with a warning. */
+  skipEmptyDimensions?: boolean;
 }
 
 /**

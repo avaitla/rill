@@ -1582,6 +1582,15 @@ export class MetricsViewSpec extends Message<MetricsViewSpec> {
    */
   skipInvalidDimensions = false;
 
+  /**
+   * If true, dimensions whose values are NULL in every row of the underlying table are excluded from the valid spec with a warning.
+   * Useful for schemaless data sources where the table schema is a union of all fields ever ingested,
+   * so fields not present in the current data show up as all-NULL columns.
+   *
+   * @generated from field: bool skip_empty_dimensions = 39;
+   */
+  skipEmptyDimensions = false;
+
   constructor(data?: PartialMessage<MetricsViewSpec>) {
     super();
     proto3.util.initPartial(data, this);
@@ -1619,6 +1628,7 @@ export class MetricsViewSpec extends Message<MetricsViewSpec> {
     { no: 34, name: "rollups", kind: "message", T: MetricsViewSpec_Rollup, repeated: true },
     { no: 36, name: "max_query_time_range", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 38, name: "skip_invalid_dimensions", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 39, name: "skip_empty_dimensions", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): MetricsViewSpec {
@@ -1758,6 +1768,30 @@ export class MetricsViewSpec_Dimension extends Message<MetricsViewSpec_Dimension
   uri = "";
 
   /**
+   * Name of a map-typed column whose keys are dynamically discovered and expanded into
+   * concrete dimensions in the valid spec (one per key, accessing the key's value).
+   * Mutually exclusive with column and expression.
+   * NOTE: 17 is reserved for a pending drill_through field.
+   *
+   * @generated from field: string map_column = 18;
+   */
+  mapColumn = "";
+
+  /**
+   * Maximum number of keys to discover for a map_column dimension (most frequent keys first).
+   *
+   * @generated from field: uint32 discover_limit = 19;
+   */
+  discoverLimit = 0;
+
+  /**
+   * Optional regex; only map keys matching the pattern are expanded.
+   *
+   * @generated from field: string discover_pattern = 20;
+   */
+  discoverPattern = "";
+
+  /**
    * Lookup fields for the dimension
    *
    * @generated from field: string lookup_table = 8;
@@ -1810,6 +1844,9 @@ export class MetricsViewSpec_Dimension extends Message<MetricsViewSpec_Dimension
     { no: 6, name: "expression", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 5, name: "unnest", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
     { no: 7, name: "uri", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 18, name: "map_column", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 19, name: "discover_limit", kind: "scalar", T: 13 /* ScalarType.UINT32 */ },
+    { no: 20, name: "discover_pattern", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 8, name: "lookup_table", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 9, name: "lookup_key_column", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 10, name: "lookup_value_column", kind: "scalar", T: 9 /* ScalarType.STRING */ },

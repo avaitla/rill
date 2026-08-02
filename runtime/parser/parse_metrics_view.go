@@ -17,6 +17,9 @@ import (
 	_ "time/tzdata"
 )
 
+// maxMapDimensionDiscoverLimit bounds how many keys a map_column dimension may discover.
+const maxMapDimensionDiscoverLimit = 500
+
 // MetricsViewYAML is the raw structure of a MetricsView resource defined in YAML
 type MetricsViewYAML struct {
 	commonYAML            `yaml:",inline"` // Not accessed here, only setting it so we can use KnownFields for YAML parsing
@@ -36,18 +39,24 @@ type MetricsViewYAML struct {
 	FirstMonthOfYear      uint32           `yaml:"first_month_of_year"`
 	MaxQueryTimeRange     string           `yaml:"max_query_time_range"`
 	SkipInvalidDimensions bool             `yaml:"skip_invalid_dimensions"`
+	SkipEmptyDimensions   bool             `yaml:"skip_empty_dimensions"`
 	Dimensions            []*struct {
-		Name                    string
-		DisplayName             string `yaml:"display_name"`
-		Label                   string // Deprecated: use display_name
-		Description             string
-		Type                    string
-		Column                  string
-		Expression              string
-		Property                string // For backwards compatibility
-		Ignore                  bool   `yaml:"ignore"` // Deprecated
-		Unnest                  bool
-		URI                     string
+		Name        string
+		DisplayName string `yaml:"display_name"`
+		Label       string // Deprecated: use display_name
+		Description string
+		Type        string
+		Column      string
+		Expression  string
+		Property    string // For backwards compatibility
+		Ignore      bool   `yaml:"ignore"` // Deprecated
+		Unnest      bool
+		URI         string
+		MapColumn   string `yaml:"map_column"`
+		Discover    *struct {
+			Limit   uint32 `yaml:"limit"`
+			Pattern string `yaml:"pattern"`
+		} `yaml:"discover"`
 		LookupTable             string `yaml:"lookup_table"`
 		LookupKeyColumn         string `yaml:"lookup_key_column"`
 		LookupValueColumn       string `yaml:"lookup_value_column"`
@@ -353,10 +362,13 @@ func (p *Parser) parseMetricsView(node *Node) error {
 
 		// Backwards compatibility
 		if dim.Name == "" {
-			if dim.Column == "" {
-				dim.Name = fmt.Sprintf("dimension_%d", i)
-			} else {
+			switch {
+			case dim.Column != "":
 				dim.Name = dim.Column
+			case dim.MapColumn != "":
+				dim.Name = dim.MapColumn
+			default:
+				dim.Name = fmt.Sprintf("dimension_%d", i)
 			}
 		}
 
@@ -370,8 +382,25 @@ func (p *Parser) parseMetricsView(node *Node) error {
 			dim.DisplayName = ToDisplayName(dim.Name)
 		}
 
-		// The "column" and "expression" properties are mutually exclusive
-		if (dim.Column == "" && dim.Expression == "") || (dim.Column != "" && dim.Expression != "") {
+		// The "column", "expression" and "map_column" properties are mutually exclusive
+		if dim.MapColumn != "" {
+			if dim.Column != "" || dim.Expression != "" {
+				return fmt.Errorf("map_column cannot be combined with column or expression for dimension: %q", dim.Name)
+			}
+			if dim.Unnest || dim.URI != "" || dim.LookupTable != "" {
+				return fmt.Errorf("map_column cannot be combined with unnest, uri or lookup fields for dimension: %q", dim.Name)
+			}
+			if dim.Discover != nil && dim.Discover.Pattern != "" {
+				if _, err := regexp.Compile(dim.Discover.Pattern); err != nil {
+					return fmt.Errorf("invalid discover pattern for dimension %q: %w", dim.Name, err)
+				}
+			}
+			if dim.Discover != nil && dim.Discover.Limit > maxMapDimensionDiscoverLimit {
+				return fmt.Errorf("discover limit for dimension %q may not exceed %d", dim.Name, maxMapDimensionDiscoverLimit)
+			}
+		} else if dim.Discover != nil {
+			return fmt.Errorf("discover can only be set for map_column dimensions: %q", dim.Name)
+		} else if (dim.Column == "" && dim.Expression == "") || (dim.Column != "" && dim.Expression != "") {
 			return fmt.Errorf("exactly one of column or expression should be set for dimension: %q", dim.Name)
 		}
 
@@ -428,7 +457,7 @@ func (p *Parser) parseMetricsView(node *Node) error {
 		}
 
 		// Dimension is valid, add to the list
-		dimensions = append(dimensions, &runtimev1.MetricsViewSpec_Dimension{
+		d := &runtimev1.MetricsViewSpec_Dimension{
 			Name:                    dim.Name,
 			DisplayName:             dim.DisplayName,
 			Description:             dim.Description,
@@ -437,13 +466,19 @@ func (p *Parser) parseMetricsView(node *Node) error {
 			Type:                    typ,
 			Unnest:                  dim.Unnest,
 			Uri:                     dim.URI,
+			MapColumn:               dim.MapColumn,
 			LookupTable:             dim.LookupTable,
 			LookupKeyColumn:         dim.LookupKeyColumn,
 			LookupValueColumn:       dim.LookupValueColumn,
 			LookupDefaultExpression: dim.LookupDefaultExpression,
 			SmallestTimeGrain:       smallestTimeGrain,
 			Tags:                    dim.Tags,
-		})
+		}
+		if dim.Discover != nil {
+			d.DiscoverLimit = dim.Discover.Limit
+			d.DiscoverPattern = dim.Discover.Pattern
+		}
+		dimensions = append(dimensions, d)
 	}
 
 	for _, dimension := range tmp.DefaultDimensions {
@@ -885,6 +920,7 @@ func (p *Parser) parseMetricsView(node *Node) error {
 	spec.FirstMonthOfYear = tmp.FirstMonthOfYear
 	spec.MaxQueryTimeRange = tmp.MaxQueryTimeRange
 	spec.SkipInvalidDimensions = tmp.SkipInvalidDimensions
+	spec.SkipEmptyDimensions = tmp.SkipEmptyDimensions
 	if tmp.Cache.TimestampsTTL != "" {
 		d, _ := time.ParseDuration(tmp.Cache.TimestampsTTL) // already validated above
 		spec.CacheTimestampsTtlSeconds = int64(d.Seconds())

@@ -139,23 +139,31 @@ func (r *MetricsViewReconciler) Reconcile(ctx context.Context, n *runtimev1.Reso
 
 	// NOTE: Not checking refs for errors since they may still be valid even if they have errors. Instead, we just validate the metrics view against the table name.
 
-	// Validate the metrics view and update ValidSpec
-	e, err := executor.New(ctx, r.C.Runtime, r.C.InstanceID, mv.Spec, !hasInternalRef, runtime.ResolvedSecurityOpen, 0, nil)
-	if err != nil {
-		return runtime.ReconcileResult{Err: fmt.Errorf("failed to create metrics view executor: %w", err)}
+	// Expand dimensions that declare a map_column by discovering the map's keys in the data.
+	// The expanded spec is what gets validated and captured in the state; mv.Spec itself is left untouched.
+	baseSpec, validateWarnings, validateErr := r.expandMapDimensions(ctx, mv.Spec)
+	if baseSpec == nil {
+		baseSpec = mv.Spec
 	}
-	defer e.Close()
 
-	validateResult, validateErr := e.ValidateAndNormalizeMetricsView(ctx)
+	// Validate the metrics view and update ValidSpec
+	var validateResult *executor.ValidateMetricsViewResult
+	if validateErr == nil {
+		e, err := executor.New(ctx, r.C.Runtime, r.C.InstanceID, baseSpec, !hasInternalRef, runtime.ResolvedSecurityOpen, 0, nil)
+		if err != nil {
+			return runtime.ReconcileResult{Err: fmt.Errorf("failed to create metrics view executor: %w", err)}
+		}
+		validateResult, validateErr = e.ValidateAndNormalizeMetricsView(ctx)
+		e.Close()
+	}
 
 	// The spec that will be captured in the state. May differ from mv.Spec if invalid dimensions are skipped below.
-	validSpec := mv.Spec
-	var validateWarnings []string
-	if validateErr == nil && mv.Spec.SkipInvalidDimensions && !validateResult.IsZero() {
-		prunedSpec, warnings, pruneErr := r.pruneInvalidDimensions(ctx, mv.Spec, validateResult, !hasInternalRef)
+	validSpec := baseSpec
+	if validateErr == nil && baseSpec.SkipInvalidDimensions && !validateResult.IsZero() {
+		prunedSpec, warnings, pruneErr := r.pruneInvalidDimensions(ctx, baseSpec, validateResult, !hasInternalRef)
 		if pruneErr == nil {
 			validSpec = prunedSpec
-			validateWarnings = warnings
+			validateWarnings = append(validateWarnings, warnings...)
 			validateResult = nil
 		} else if !errors.Is(pruneErr, ctx.Err()) {
 			validateErr = pruneErr
@@ -163,6 +171,15 @@ func (r *MetricsViewReconciler) Reconcile(ctx context.Context, n *runtimev1.Reso
 	}
 	if validateErr == nil && validateResult != nil {
 		validateErr = validateResult.Error()
+	}
+	if validateErr == nil && validSpec.SkipEmptyDimensions {
+		prunedSpec, warnings, pruneErr := r.pruneEmptyDimensions(ctx, validSpec, !hasInternalRef)
+		if pruneErr == nil {
+			validSpec = prunedSpec
+			validateWarnings = append(validateWarnings, warnings...)
+		} else if !errors.Is(pruneErr, ctx.Err()) {
+			validateErr = pruneErr
+		}
 	}
 	if ctx.Err() != nil { // May not be handled in all validation implementations
 		return runtime.ReconcileResult{Err: ctx.Err()}
@@ -197,6 +214,30 @@ func (r *MetricsViewReconciler) Reconcile(ctx context.Context, n *runtimev1.Reso
 	}
 
 	return runtime.ReconcileResult{Warnings: validateWarnings}
+}
+
+// expandMapDimensions replaces dimensions that declare a map_column with concrete dimensions
+// for the keys discovered in the data, returning a new spec and leaving the input spec untouched.
+// It returns a nil spec if the input spec has no map dimensions.
+func (r *MetricsViewReconciler) expandMapDimensions(ctx context.Context, spec *runtimev1.MetricsViewSpec) (*runtimev1.MetricsViewSpec, []string, error) {
+	hasMap := false
+	for _, d := range spec.Dimensions {
+		if d.MapColumn != "" {
+			hasMap = true
+			break
+		}
+	}
+	if !hasMap {
+		return nil, nil, nil
+	}
+
+	// The streaming flag doesn't affect key discovery, so it's simply set to false here.
+	e, err := executor.New(ctx, r.C.Runtime, r.C.InstanceID, spec, false, runtime.ResolvedSecurityOpen, 0, nil)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to create metrics view executor: %w", err)
+	}
+	defer e.Close()
+	return e.ExpandMapDimensions(ctx)
 }
 
 // pruneInvalidDimensions attempts to produce a valid spec by removing dimensions that fail validation.
@@ -242,6 +283,45 @@ func (r *MetricsViewReconciler) pruneInvalidDimensions(ctx context.Context, spec
 		}
 	}
 	return nil, nil, res.Error()
+}
+
+// pruneEmptyDimensions removes dimensions whose values are NULL in every row of the underlying table.
+// It supports schemaless data sources where the table schema is a union of all fields ever ingested,
+// so a field not present in the current data shows up as an all-NULL column.
+// The input spec must already be valid and normalized.
+// The pruned spec is deliberately not re-validated:
+// removing a dimension cannot break the remaining dimensions and measures,
+// and re-validation would reject specs whose security rules or rollups reference a hidden dimension,
+// which is expected for schemaless sources where the dimension comes back once its field carries data again.
+func (r *MetricsViewReconciler) pruneEmptyDimensions(ctx context.Context, spec *runtimev1.MetricsViewSpec, streaming bool) (*runtimev1.MetricsViewSpec, []string, error) {
+	e, err := executor.New(ctx, r.C.Runtime, r.C.InstanceID, spec, streaming, runtime.ResolvedSecurityOpen, 0, nil)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to create metrics view executor: %w", err)
+	}
+	empty, err := e.EmptyDimensions(ctx)
+	e.Close()
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to find empty dimensions: %w", err)
+	}
+	if len(empty) == 0 {
+		return spec, nil, nil
+	}
+
+	remove := make(map[int]bool, len(empty))
+	warnings := make([]string, 0, len(empty))
+	for _, idx := range empty {
+		remove[idx] = true
+		warnings = append(warnings, fmt.Sprintf("hid empty dimension %q: all values are NULL", spec.Dimensions[idx].Name))
+	}
+	pruned := proto.Clone(spec).(*runtimev1.MetricsViewSpec)
+	dims := make([]*runtimev1.MetricsViewSpec_Dimension, 0, len(pruned.Dimensions)-len(remove))
+	for i, d := range pruned.Dimensions {
+		if !remove[i] {
+			dims = append(dims, d)
+		}
+	}
+	pruned.Dimensions = dims
+	return pruned, warnings, nil
 }
 
 func (r *MetricsViewReconciler) ResolveTransitiveAccess(ctx context.Context, claims *runtime.SecurityClaims, res *runtimev1.Resource) ([]*runtimev1.SecurityRule, error) {

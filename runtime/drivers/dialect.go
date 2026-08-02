@@ -70,6 +70,11 @@ type Dialect interface {
 	SelectTimeRangeBins(start, end time.Time, grain runtimev1.TimeGrain, alias string, tz *time.Location, firstDay, firstMonth int) (string, []any, error)
 	SelectInlineResults(result *Result) (string, []any, []any, error)
 	LookupSelectExpr(lookupTable, lookupKeyColumn string) (string, error)
+	// SelectMapKeys returns a query with a single string column containing the distinct keys of a map-typed column,
+	// ordered by decreasing frequency. If pattern is non-empty, only keys matching the regex are returned.
+	SelectMapKeys(db, dbSchema, table, column, pattern string, limit int) (string, error)
+	// MapAccessExpr returns an expression that accesses the value of a key in a map-typed column.
+	MapAccessExpr(column, key string) string
 	SanitizeQueryForLogging(sql string) string
 	ColumnCardinality(db, dbSchema, table, column string) (string, error)
 	ColumnDescriptiveStatistics(db, dbSchema, table, column string) (string, error)
@@ -367,6 +372,14 @@ func (b *BaseDialect) SelectInlineResults(result *Result) (string, []any, []any,
 
 func (b *BaseDialect) LookupSelectExpr(_, _ string) (string, error) {
 	return "", fmt.Errorf("lookup tables are not supported for %s dialect", b.String())
+}
+
+func (b *BaseDialect) SelectMapKeys(db, dbSchema, table, column, pattern string, limit int) (string, error) {
+	return "", fmt.Errorf("map dimensions are not supported for %s dialect", b.String())
+}
+
+func (b *BaseDialect) MapAccessExpr(column, key string) string {
+	return fmt.Sprintf("%s[%s]", b.escapeIdentifier(column), EscapeStringValue(key))
 }
 
 func (b *BaseDialect) SanitizeQueryForLogging(sql string) string { return sql }

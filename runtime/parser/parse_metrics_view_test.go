@@ -1252,3 +1252,62 @@ explore:
 	require.Nil(t, e3.DimensionsSelector)
 	require.Equal(t, &runtimev1.FieldSelector{Selector: &runtimev1.FieldSelector_Regex{Regex: "count.*"}}, e3.MeasuresSelector)
 }
+
+func TestMetricsViewMapColumnParsing(t *testing.T) {
+	ctx := context.Background()
+
+	// Valid map_column with discover options
+	p, err := Parse(ctx, makeRepo(t, map[string]string{
+		`rill.yaml`: ``,
+		`metrics/mv1.yaml`: `
+version: 1
+type: metrics_view
+table: t1
+dimensions:
+- map_column: attrs
+  discover:
+    limit: 20
+    pattern: '^http\.'
+measures:
+- name: count
+  expression: count(*)
+`,
+	}), "", "", "duckdb", true)
+	require.NoError(t, err)
+	require.Empty(t, p.Errors)
+	mv := p.Resources[ResourceName{Kind: ResourceKindMetricsView, Name: "mv1"}.Normalized()]
+	dim := mv.MetricsViewSpec.Dimensions[0]
+	require.Equal(t, "attrs", dim.Name)
+	require.Equal(t, "attrs", dim.MapColumn)
+	require.Equal(t, uint32(20), dim.DiscoverLimit)
+	require.Equal(t, `^http\.`, dim.DiscoverPattern)
+
+	// Invalid configurations
+	cases := []struct {
+		dimYAML string
+		errMsg  string
+	}{
+		{"- map_column: attrs\n  column: attrs", "cannot be combined"},
+		{"- column: foo\n  discover:\n    limit: 5", "discover can only be set"},
+		{"- map_column: attrs\n  discover:\n    pattern: '['", "invalid discover pattern"},
+		{"- map_column: attrs\n  discover:\n    limit: 1000", "may not exceed"},
+	}
+	for _, c := range cases {
+		p, err := Parse(ctx, makeRepo(t, map[string]string{
+			`rill.yaml`: ``,
+			`metrics/mv1.yaml`: `
+version: 1
+type: metrics_view
+table: t1
+dimensions:
+` + c.dimYAML + `
+measures:
+- name: count
+  expression: count(*)
+`,
+		}), "", "", "duckdb", true)
+		require.NoError(t, err)
+		require.Len(t, p.Errors, 1, "expected error for %q", c.dimYAML)
+		require.Contains(t, p.Errors[0].Message, c.errMsg)
+	}
+}

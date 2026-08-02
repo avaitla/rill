@@ -3852,6 +3852,20 @@ definitions:
         type: boolean
       uri:
         type: string
+      mapColumn:
+        type: string
+        description: |-
+          Name of a map-typed column whose keys are dynamically discovered and expanded into
+          concrete dimensions in the valid spec (one per key, accessing the key's value).
+          Mutually exclusive with column and expression.
+          NOTE: 17 is reserved for a pending drill_through field.
+      discoverLimit:
+        type: integer
+        format: int64
+        description: Maximum number of keys to discover for a map_column dimension (most frequent keys first).
+      discoverPattern:
+        type: string
+        description: Optional regex; only map keys matching the pattern are expanded.
       lookupTable:
         type: string
         title: Lookup fields for the dimension
@@ -6758,6 +6772,12 @@ definitions:
           If true, dimensions that fail validation (e.g. reference a column not present in the underlying table)
           are excluded from the valid spec with a warning instead of failing the whole metrics view.
           Useful for schema-on-read data sources such as structured logs, where fields vary between rows.
+      skipEmptyDimensions:
+        type: boolean
+        description: |-
+          If true, dimensions whose values are NULL in every row of the underlying table are excluded from the valid spec with a warning.
+          Useful for schemaless data sources where the table schema is a union of all fields ever ingested,
+          so fields not present in the current data show up as all-NULL columns.
   v1MetricsViewSpecAnnotation:
     type: object
     properties:

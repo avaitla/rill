@@ -200,6 +200,20 @@ func (d *dialect) SelectInlineResults(result *drivers.Result) (string, []any, []
 	return prefix + suffix, args, dimVals, nil
 }
 
+func (d *dialect) SelectMapKeys(db, dbSchema, table, column, pattern string, limit int) (string, error) {
+	where := "WHERE k IS NOT NULL"
+	if pattern != "" {
+		where += fmt.Sprintf(" AND regexp_matches(k, %s)", drivers.EscapeStringValue(pattern))
+	}
+	return fmt.Sprintf(
+		"SELECT k FROM (SELECT unnest(map_keys(%s)) AS k FROM %s) %s GROUP BY k ORDER BY count(*) DESC, k LIMIT %d",
+		d.EscapeIdentifier(column),
+		d.EscapeTable(db, dbSchema, table),
+		where,
+		limit,
+	), nil
+}
+
 func (d *dialect) ColumnCardinality(db, dbSchema, table, column string) (string, error) {
 	return fmt.Sprintf("SELECT approx_count_distinct(%s) AS count FROM %s", d.EscapeIdentifier(column), d.EscapeTable(db, dbSchema, table)), nil
 }

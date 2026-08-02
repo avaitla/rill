@@ -2097,6 +2097,9 @@ definitions:
           skip_invalid_dimensions:
             type: boolean
             description: When true, dimensions that fail validation (e.g. reference a column not present in the underlying table) are excluded from the dashboard with a warning instead of failing the whole metrics view. Useful for schema-on-read data sources such as structured logs, where fields vary between rows.
+          skip_empty_dimensions:
+            type: boolean
+            description: When true, dimensions whose values are NULL in every row of the underlying table are hidden from the dashboard with a warning. Useful for schemaless data sources where the table schema is a union of all fields ever ingested, so fields not present in the current data show up as all-NULL columns.
           dimensions:
             type: array
             description: Relates to exploring segments or dimensions of your data and filtering the dashboard
@@ -2129,6 +2132,20 @@ definitions:
                 unnest:
                   type: boolean
                   description: If true, allows multi-valued dimensions to be unnested (such as lists), and filters will automatically switch to "contains" instead of exact match.
+                map_column:
+                  type: string
+                  description: Name of a map-typed column (e.g. a ClickHouse `Map` column holding structured log attributes) whose keys are dynamically discovered and expanded into one dimension per key. Mutually exclusive with `column` and `expression`. Supported for ClickHouse and DuckDB.
+                discover:
+                  type: object
+                  description: Controls key discovery for a `map_column` dimension.
+                  properties:
+                    limit:
+                      type: integer
+                      description: Maximum number of keys to discover, most frequent first. Defaults to 50, capped at 500.
+                    pattern:
+                      type: string
+                      description: Optional regex; only map keys matching the pattern are expanded into dimensions.
+                  additionalProperties: false
                 uri:
                   type:
                     - string

@@ -216,6 +216,15 @@ message MetricsViewSpec {
     string expression = 6;
     bool unnest = 5;
     string uri = 7;
+    // Name of a map-typed column whose keys are dynamically discovered and expanded into
+    // concrete dimensions in the valid spec (one per key, accessing the key's value).
+    // Mutually exclusive with column and expression.
+    // NOTE: 17 is reserved for a pending drill_through field.
+    string map_column = 18;
+    // Maximum number of keys to discover for a map_column dimension (most frequent keys first).
+    uint32 discover_limit = 19;
+    // Optional regex; only map keys matching the pattern are expanded.
+    string discover_pattern = 20;
     // Lookup fields for the dimension
     string lookup_table = 8;
     string lookup_key_column = 9;
@@ -390,6 +399,10 @@ message MetricsViewSpec {
   // are excluded from the valid spec with a warning instead of failing the whole metrics view.
   // Useful for schema-on-read data sources such as structured logs, where fields vary between rows.
   bool skip_invalid_dimensions = 38;
+  // If true, dimensions whose values are NULL in every row of the underlying table are excluded from the valid spec with a warning.
+  // Useful for schemaless data sources where the table schema is a union of all fields ever ingested,
+  // so fields not present in the current data show up as all-NULL columns.
+  bool skip_empty_dimensions = 39;
 }
 
 message SecurityRule {

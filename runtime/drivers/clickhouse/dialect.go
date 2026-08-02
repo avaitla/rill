@@ -287,6 +287,19 @@ func getArgExpr(val any, typ runtimev1.Type_Code) (string, any, error) {
 	return "?", val, nil
 }
 
+func (d *dialect) SelectMapKeys(db, dbSchema, table, column, pattern string, limit int) (string, error) {
+	sql := fmt.Sprintf(
+		"SELECT k FROM (SELECT arrayJoin(mapKeys(%s)) AS k FROM %s)",
+		d.EscapeIdentifier(column),
+		d.EscapeTable(db, dbSchema, table),
+	)
+	if pattern != "" {
+		sql += fmt.Sprintf(" WHERE match(k, %s)", drivers.EscapeStringValue(pattern))
+	}
+	sql += fmt.Sprintf(" GROUP BY k ORDER BY count(*) DESC, k LIMIT %d", limit)
+	return sql, nil
+}
+
 func lookupExpr(lookupTable, lookupValueColumn, lookupKeyExpr, lookupDefaultExpression string) (string, error) {
 	if lookupDefaultExpression != "" {
 		return fmt.Sprintf("dictGetOrDefault('%s', '%s', %s, %s)", lookupTable, lookupValueColumn, lookupKeyExpr, lookupDefaultExpression), nil
