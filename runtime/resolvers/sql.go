@@ -121,8 +121,8 @@ func newSQL(ctx context.Context, opts *runtime.ResolverOptions) (runtime.Resolve
 
 	// Wrap the SQL with an outer SELECT to apply the limit.
 	if limit > 0 {
-		if olap.Dialect().String() == drivers.DialectNameMySQL {
-			// subqueries in MySQL require an alias
+		if olap.Dialect().String() == drivers.DialectNameMySQL || olap.Dialect().String() == drivers.DialectNamePostgres {
+			// subqueries in MySQL and Postgres require an alias
 			sql = fmt.Sprintf("SELECT * FROM (\n%s\n) AS subquery LIMIT %d", sql, limit)
 		} else {
 			sql = fmt.Sprintf("SELECT * FROM (%s\n) LIMIT %d", sql, limit)
@@ -190,7 +190,7 @@ func (r *sqlResolver) ResolveExport(ctx context.Context, w io.Writer, opts *runt
 			return queries.DuckDBCopyExport(ctx, w, exportOpts, r.sql, nil, filename, r.olap, opts.Format)
 		}
 		return r.generalExport(ctx, w, filename, exportOpts)
-	case drivers.DialectNameDruid, drivers.DialectNameClickHouse:
+	case drivers.DialectNameDruid, drivers.DialectNameClickHouse, drivers.DialectNamePostgres:
 		return r.generalExport(ctx, w, filename, exportOpts)
 	default:
 		return fmt.Errorf("export not available for dialect %q", r.olap.Dialect().String())
