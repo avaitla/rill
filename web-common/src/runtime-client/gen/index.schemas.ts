@@ -69,6 +69,8 @@ export interface MetricsViewSpecDimension {
   /** Name of a map-typed column whose keys are dynamically discovered and expanded into
 concrete dimensions in the valid spec (one per key). Mutually exclusive with column and expression. */
   mapColumn?: string;
+  /** If true, the dimension is expanded into one concrete dimension per column of the underlying table. */
+  allColumns?: boolean;
   /** Maximum number of keys to discover for a map_column dimension (most frequent keys first). */
   discoverLimit?: number;
   /** Optional regex; only map keys matching the pattern are expanded. */

@@ -1282,6 +1282,25 @@ measures:
 	require.Equal(t, uint32(20), dim.DiscoverLimit)
 	require.Equal(t, `^http\.`, dim.DiscoverPattern)
 
+	// Valid columns wildcard
+	p, err = Parse(ctx, makeRepo(t, map[string]string{
+		`rill.yaml`: ``,
+		`metrics/mv1.yaml`: `
+version: 1
+type: metrics_view
+table: t1
+dimensions:
+- columns: '*'
+measures:
+- name: count
+  expression: count(*)
+`,
+	}), "", "", "duckdb", true)
+	require.NoError(t, err)
+	require.Empty(t, p.Errors)
+	mv = p.Resources[ResourceName{Kind: ResourceKindMetricsView, Name: "mv1"}.Normalized()]
+	require.True(t, mv.MetricsViewSpec.Dimensions[0].AllColumns)
+
 	// Invalid configurations
 	cases := []struct {
 		dimYAML string
@@ -1291,6 +1310,9 @@ measures:
 		{"- column: foo\n  discover:\n    limit: 5", "discover can only be set"},
 		{"- map_column: attrs\n  discover:\n    pattern: '['", "invalid discover pattern"},
 		{"- map_column: attrs\n  discover:\n    limit: 1000", "may not exceed"},
+		{"- columns: 'foo'", "only \"*\" is supported"},
+		{"- columns: '*'\n  column: foo", "cannot be combined"},
+		{"- columns: '*'\n  map_column: attrs", "cannot be combined"},
 	}
 	for _, c := range cases {
 		p, err := Parse(ctx, makeRepo(t, map[string]string{

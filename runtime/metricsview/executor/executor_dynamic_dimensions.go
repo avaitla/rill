@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 	"unicode"
 
@@ -15,23 +16,25 @@ import (
 // defaultMapDimensionDiscoverLimit is the number of map keys discovered for a map_column dimension when discover.limit is not set.
 const defaultMapDimensionDiscoverLimit = 100
 
-// ExpandMapDimensions returns a copy of the executor's metrics view spec where each dimension that declares a map_column
-// is replaced by concrete dimensions for the keys discovered in the data, most frequent keys first.
-// It supports schemaless data sources where variable fields are ingested into a single map-typed column.
-// It returns a nil spec if the metrics view has no map dimensions or the underlying table does not exist
+// ExpandDynamicDimensions returns a copy of the executor's metrics view spec where dimensions that declare
+// a map_column or columns wildcard are replaced by concrete dimensions discovered in the data:
+// one dimension per map key (most frequent keys first) or per table column respectively.
+// It supports schemaless data sources where the schema is a union of all fields ever ingested,
+// whether the variable fields land in a map-typed column or as individual columns.
+// It returns a nil spec if the metrics view has no dynamic dimensions or the underlying table does not exist
 // (the latter so validation can produce its standard error).
 // If the metrics view has skip_invalid_dimensions enabled, a map dimension whose keys cannot be discovered
 // (e.g. because the map column is missing from the current schema) is dropped with a warning instead of failing.
-func (e *Executor) ExpandMapDimensions(ctx context.Context) (*runtimev1.MetricsViewSpec, []string, error) {
+func (e *Executor) ExpandDynamicDimensions(ctx context.Context) (*runtimev1.MetricsViewSpec, []string, error) {
 	mv := e.metricsView
-	hasMap := false
+	hasDynamic := false
 	for _, d := range mv.Dimensions {
-		if d.MapColumn != "" {
-			hasMap = true
+		if d.MapColumn != "" || d.AllColumns {
+			hasDynamic = true
 			break
 		}
 	}
-	if !hasMap {
+	if !hasDynamic {
 		return nil, nil, nil
 	}
 
@@ -56,8 +59,15 @@ func (e *Executor) ExpandMapDimensions(ctx context.Context) (*runtimev1.MetricsV
 	dims := make([]*runtimev1.MetricsViewSpec_Dimension, 0, len(expanded.Dimensions))
 	var warnings []string
 	for _, d := range expanded.Dimensions {
-		if d.MapColumn == "" {
+		if d.MapColumn == "" && !d.AllColumns {
 			dims = append(dims, d)
+			continue
+		}
+
+		if d.AllColumns {
+			expandedDims, dimWarnings := expandTableColumns(t, d, taken)
+			dims = append(dims, expandedDims...)
+			warnings = append(warnings, dimWarnings...)
 			continue
 		}
 
@@ -130,6 +140,72 @@ func (e *Executor) discoverMapKeys(ctx context.Context, t *drivers.OlapTable, co
 		keys = append(keys, k)
 	}
 	return keys, rows.Err()
+}
+
+// nonGroupableTypeCodes are column types that are not expanded into dimensions by a columns wildcard,
+// since grouping and filtering by them is not meaningful.
+var nonGroupableTypeCodes = map[runtimev1.Type_Code]bool{
+	runtimev1.Type_CODE_UNSPECIFIED: true,
+	runtimev1.Type_CODE_ARRAY:       true,
+	runtimev1.Type_CODE_MAP:         true,
+	runtimev1.Type_CODE_STRUCT:      true,
+	runtimev1.Type_CODE_JSON:        true,
+	runtimev1.Type_CODE_BYTES:       true,
+}
+
+// expandTableColumns expands a columns wildcard dimension into one dimension per groupable column
+// of the underlying table, in schema order.
+// Column names are sanitized for use as dimension names, since schemaless ingestion may produce
+// column names that are unsafe in identifiers elsewhere (e.g. flattened nested fields like "user.name");
+// the display name and the referenced column keep the original name.
+func expandTableColumns(t *drivers.OlapTable, d *runtimev1.MetricsViewSpec_Dimension, taken map[string]bool) ([]*runtimev1.MetricsViewSpec_Dimension, []string) {
+	var pattern *regexp.Regexp
+	if d.DiscoverPattern != "" {
+		// The pattern is validated at parse time.
+		pattern = regexp.MustCompile(d.DiscoverPattern)
+	}
+
+	limit := int(d.DiscoverLimit)
+	if limit == 0 {
+		limit = defaultMapDimensionDiscoverLimit
+	}
+
+	var dims []*runtimev1.MetricsViewSpec_Dimension
+	var warnings []string
+	for _, f := range t.Schema.Fields {
+		if nonGroupableTypeCodes[f.Type.Code] {
+			continue
+		}
+		if pattern != nil && !pattern.MatchString(f.Name) {
+			continue
+		}
+		if taken[strings.ToLower(f.Name)] {
+			// Explicitly declared dimensions and measures win; not a conflict worth warning about.
+			continue
+		}
+		if len(dims) >= limit {
+			warnings = append(warnings, fmt.Sprintf("dimension %q: hit the discover limit of %d columns; additional columns are not shown", d.Name, limit))
+			break
+		}
+		name := safeFieldName(f.Name)
+		if name == "" || taken[strings.ToLower(name)] {
+			name = safeFieldName(fmt.Sprintf("%s_%s", d.Name, f.Name))
+			if name == "" || taken[strings.ToLower(name)] {
+				warnings = append(warnings, fmt.Sprintf("dimension %q: skipped column %q: conflicts with an existing dimension or measure name", d.Name, f.Name))
+				continue
+			}
+		}
+		taken[strings.ToLower(f.Name)] = true
+		taken[strings.ToLower(name)] = true
+		dims = append(dims, &runtimev1.MetricsViewSpec_Dimension{
+			Name:        name,
+			DisplayName: f.Name,
+			Description: d.Description,
+			Column:      f.Name,
+			Tags:        d.Tags,
+		})
+	}
+	return dims, warnings
 }
 
 // safeFieldName converts a discovered map key to a name that is safe to use as a dimension name,

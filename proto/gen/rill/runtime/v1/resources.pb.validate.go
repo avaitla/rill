@@ -13049,6 +13049,8 @@ func (m *MetricsViewSpec_Dimension) validate(all bool) error {
 
 	// no validation rules for MapColumn
 
+	// no validation rules for AllColumns
+
 	// no validation rules for DiscoverLimit
 
 	// no validation rules for DiscoverPattern

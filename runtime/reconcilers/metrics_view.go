@@ -141,7 +141,7 @@ func (r *MetricsViewReconciler) Reconcile(ctx context.Context, n *runtimev1.Reso
 
 	// Expand dimensions that declare a map_column by discovering the map's keys in the data.
 	// The expanded spec is what gets validated and captured in the state; mv.Spec itself is left untouched.
-	baseSpec, validateWarnings, validateErr := r.expandMapDimensions(ctx, mv.Spec)
+	baseSpec, validateWarnings, validateErr := r.expandDynamicDimensions(ctx, mv.Spec)
 	if baseSpec == nil {
 		baseSpec = mv.Spec
 	}
@@ -216,18 +216,18 @@ func (r *MetricsViewReconciler) Reconcile(ctx context.Context, n *runtimev1.Reso
 	return runtime.ReconcileResult{Warnings: validateWarnings}
 }
 
-// expandMapDimensions replaces dimensions that declare a map_column with concrete dimensions
-// for the keys discovered in the data, returning a new spec and leaving the input spec untouched.
-// It returns a nil spec if the input spec has no map dimensions.
-func (r *MetricsViewReconciler) expandMapDimensions(ctx context.Context, spec *runtimev1.MetricsViewSpec) (*runtimev1.MetricsViewSpec, []string, error) {
-	hasMap := false
+// expandDynamicDimensions replaces dimensions that declare a map_column or columns wildcard with
+// concrete dimensions discovered in the data, returning a new spec and leaving the input spec untouched.
+// It returns a nil spec if the input spec has no dynamic dimensions.
+func (r *MetricsViewReconciler) expandDynamicDimensions(ctx context.Context, spec *runtimev1.MetricsViewSpec) (*runtimev1.MetricsViewSpec, []string, error) {
+	hasDynamic := false
 	for _, d := range spec.Dimensions {
-		if d.MapColumn != "" {
-			hasMap = true
+		if d.MapColumn != "" || d.AllColumns {
+			hasDynamic = true
 			break
 		}
 	}
-	if !hasMap {
+	if !hasDynamic {
 		return nil, nil, nil
 	}
 
@@ -237,7 +237,7 @@ func (r *MetricsViewReconciler) expandMapDimensions(ctx context.Context, spec *r
 		return nil, nil, fmt.Errorf("failed to create metrics view executor: %w", err)
 	}
 	defer e.Close()
-	return e.ExpandMapDimensions(ctx)
+	return e.ExpandDynamicDimensions(ctx)
 }
 
 // pruneInvalidDimensions attempts to produce a valid spec by removing dimensions that fail validation.

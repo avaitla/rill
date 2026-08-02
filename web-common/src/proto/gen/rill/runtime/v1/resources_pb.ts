@@ -1778,6 +1778,15 @@ export class MetricsViewSpec_Dimension extends Message<MetricsViewSpec_Dimension
   mapColumn = "";
 
   /**
+   * If true, the dimension is expanded into one concrete dimension per column of the underlying table.
+   * Useful for schemaless data sources where the table schema is a union of all fields ever ingested,
+   * so the set of columns changes as data arrives. Mutually exclusive with column, expression and map_column.
+   *
+   * @generated from field: bool all_columns = 21;
+   */
+  allColumns = false;
+
+  /**
    * Maximum number of keys to discover for a map_column dimension (most frequent keys first).
    *
    * @generated from field: uint32 discover_limit = 19;
@@ -1845,6 +1854,7 @@ export class MetricsViewSpec_Dimension extends Message<MetricsViewSpec_Dimension
     { no: 5, name: "unnest", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
     { no: 7, name: "uri", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 18, name: "map_column", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 21, name: "all_columns", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
     { no: 19, name: "discover_limit", kind: "scalar", T: 13 /* ScalarType.UINT32 */ },
     { no: 20, name: "discover_pattern", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 8, name: "lookup_table", kind: "scalar", T: 9 /* ScalarType.STRING */ },

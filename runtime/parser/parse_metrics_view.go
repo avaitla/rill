@@ -53,6 +53,7 @@ type MetricsViewYAML struct {
 		Unnest      bool
 		URI         string
 		MapColumn   string `yaml:"map_column"`
+		Columns     string `yaml:"columns"`
 		Discover    *struct {
 			Limit   uint32 `yaml:"limit"`
 			Pattern string `yaml:"pattern"`
@@ -367,6 +368,8 @@ func (p *Parser) parseMetricsView(node *Node) error {
 				dim.Name = dim.Column
 			case dim.MapColumn != "":
 				dim.Name = dim.MapColumn
+			case dim.Columns != "":
+				dim.Name = fmt.Sprintf("columns_%d", i)
 			default:
 				dim.Name = fmt.Sprintf("dimension_%d", i)
 			}
@@ -382,13 +385,19 @@ func (p *Parser) parseMetricsView(node *Node) error {
 			dim.DisplayName = ToDisplayName(dim.Name)
 		}
 
-		// The "column", "expression" and "map_column" properties are mutually exclusive
-		if dim.MapColumn != "" {
+		// The "column", "expression", "map_column" and "columns" properties are mutually exclusive
+		if dim.Columns != "" && dim.Columns != "*" {
+			return fmt.Errorf(`invalid columns %q for dimension %q: only "*" is supported (use discover.pattern to filter)`, dim.Columns, dim.Name)
+		}
+		if dim.MapColumn != "" || dim.Columns != "" {
+			if dim.MapColumn != "" && dim.Columns != "" {
+				return fmt.Errorf("map_column and columns cannot be combined for dimension: %q", dim.Name)
+			}
 			if dim.Column != "" || dim.Expression != "" {
-				return fmt.Errorf("map_column cannot be combined with column or expression for dimension: %q", dim.Name)
+				return fmt.Errorf("map_column or columns cannot be combined with column or expression for dimension: %q", dim.Name)
 			}
 			if dim.Unnest || dim.URI != "" || dim.LookupTable != "" {
-				return fmt.Errorf("map_column cannot be combined with unnest, uri or lookup fields for dimension: %q", dim.Name)
+				return fmt.Errorf("map_column or columns cannot be combined with unnest, uri or lookup fields for dimension: %q", dim.Name)
 			}
 			if dim.Discover != nil && dim.Discover.Pattern != "" {
 				if _, err := regexp.Compile(dim.Discover.Pattern); err != nil {
@@ -399,7 +408,7 @@ func (p *Parser) parseMetricsView(node *Node) error {
 				return fmt.Errorf("discover limit for dimension %q may not exceed %d", dim.Name, maxMapDimensionDiscoverLimit)
 			}
 		} else if dim.Discover != nil {
-			return fmt.Errorf("discover can only be set for map_column dimensions: %q", dim.Name)
+			return fmt.Errorf("discover can only be set for map_column or columns dimensions: %q", dim.Name)
 		} else if (dim.Column == "" && dim.Expression == "") || (dim.Column != "" && dim.Expression != "") {
 			return fmt.Errorf("exactly one of column or expression should be set for dimension: %q", dim.Name)
 		}
@@ -467,6 +476,7 @@ func (p *Parser) parseMetricsView(node *Node) error {
 			Unnest:                  dim.Unnest,
 			Uri:                     dim.URI,
 			MapColumn:               dim.MapColumn,
+			AllColumns:              dim.Columns == "*",
 			LookupTable:             dim.LookupTable,
 			LookupKeyColumn:         dim.LookupKeyColumn,
 			LookupValueColumn:       dim.LookupValueColumn,

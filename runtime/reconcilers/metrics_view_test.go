@@ -432,3 +432,73 @@ explore:
 	}
 	require.Equal(t, []string{"time", "http_method"}, names)
 }
+
+func TestMetricsViewAllColumnsDimensions(t *testing.T) {
+	rt, id := testruntime.NewInstanceWithOptions(t, testruntime.InstanceOptions{
+		Files: map[string]string{
+			// Schemaless-style data: the table schema is a union of all fields ever ingested
+			// (as with e.g. read_json with union_by_name), so rows carry NULLs for fields they lack
+			// and some columns (legacy) are all-NULL.
+			"m1.sql": `
+SELECT '2024-01-01T00:00:00Z'::TIMESTAMP AS "time", 'checkout' AS service, 'GET' AS http_method, 'alice' AS "user.name", NULL::VARCHAR AS legacy, 1 AS num
+UNION ALL BY NAME
+SELECT '2024-01-02T00:00:00Z'::TIMESTAMP AS "time", 'worker' AS service, 'debug' AS log_level, 'bob' AS "user.name", NULL::VARCHAR AS legacy, 2 AS num`,
+			"mv_cols.yaml": `
+type: metrics_view
+model: m1
+timeseries: time
+skip_empty_dimensions: true
+dimensions:
+- columns: '*'
+measures:
+- name: num
+  expression: sum(num)
+explore:
+  skip: true
+`,
+			"mv_cols_pattern.yaml": `
+type: metrics_view
+model: m1
+timeseries: time
+dimensions:
+- columns: '*'
+  discover:
+    pattern: '^log_'
+measures:
+- name: num
+  expression: sum(num)
+explore:
+  skip: true
+`,
+		},
+	})
+	testruntime.RequireReconcileState(t, rt, id, 4, 0, 0)
+
+	// mv_cols: every groupable column becomes a dimension; measure columns and the time
+	// dimension are not duplicated; the all-NULL column is hidden with a warning.
+	mvCols := testruntime.GetResource(t, rt, id, runtime.ResourceKindMetricsView, "mv_cols")
+	require.Empty(t, mvCols.Meta.ReconcileError)
+	validSpec := mvCols.GetMetricsView().State.ValidSpec
+	require.NotNil(t, validSpec)
+	var names []string
+	for _, d := range validSpec.Dimensions {
+		names = append(names, d.Name)
+	}
+	require.Equal(t, []string{"time", "service", "http_method", "user_name", "log_level"}, names)
+	require.Equal(t, "service", validSpec.Dimensions[1].Column)
+	// Column names that are unsafe as dimension names (e.g. flattened nested fields from
+	// schemaless ingestion) are sanitized, while the display name and column are preserved.
+	require.Equal(t, "user.name", validSpec.Dimensions[3].DisplayName)
+	require.Equal(t, "user.name", validSpec.Dimensions[3].Column)
+	require.Len(t, mvCols.Meta.ReconcileWarnings, 1)
+	require.Contains(t, mvCols.Meta.ReconcileWarnings[0], "legacy")
+
+	// mv_cols_pattern: only columns matching the pattern are expanded.
+	mvPattern := testruntime.GetResource(t, rt, id, runtime.ResourceKindMetricsView, "mv_cols_pattern")
+	require.Empty(t, mvPattern.Meta.ReconcileError)
+	names = nil
+	for _, d := range mvPattern.GetMetricsView().State.ValidSpec.Dimensions {
+		names = append(names, d.Name)
+	}
+	require.Equal(t, []string{"time", "log_level"}, names)
+}
