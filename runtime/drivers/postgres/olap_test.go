@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	runtimev1 "github.com/rilldata/rill/proto/gen/rill/runtime/v1"
 	"github.com/rilldata/rill/runtime/drivers"
 	"github.com/rilldata/rill/runtime/pkg/activity"
 	"github.com/rilldata/rill/runtime/storage"
@@ -67,6 +68,22 @@ func TestPgxOLAP(t *testing.T) {
 
 	t.Run("test LoadDDL", func(t *testing.T) {
 		testLoadDDL(t, olap)
+	})
+
+	t.Run("test query args rebinding", func(t *testing.T) {
+		testQueryArgsRebinding(t, olap)
+	})
+
+	t.Run("test query schema", func(t *testing.T) {
+		testQuerySchema(t, olap)
+	})
+
+	t.Run("test session timezone", func(t *testing.T) {
+		testSessionTimezone(t, olap)
+	})
+
+	t.Run("test dialect queries", func(t *testing.T) {
+		testDialectQueries(t, olap)
 	})
 }
 
@@ -421,6 +438,171 @@ func testLoadDDL(t *testing.T, olap drivers.OLAPStore) {
 	require.NoError(t, err)
 	require.Contains(t, view.DDL, "CREATE VIEW")
 	require.Contains(t, view.DDL, tableName)
+}
+
+func testQueryArgsRebinding(t *testing.T, olap drivers.OLAPStore) {
+	// The runtime generates SQL with '?' placeholders that the driver must rebind to Postgres '$N' style.
+	res, err := olap.Query(t.Context(), &drivers.Statement{
+		Query: "SELECT name, age FROM all_datatypes WHERE age > ? AND name ILIKE ? ORDER BY age",
+		Args:  []any{26, "%o%"},
+	})
+	require.NoError(t, err)
+	var names []string
+	for res.Next() {
+		var name string
+		var age int
+		require.NoError(t, res.Scan(&name, &age))
+		names = append(names, name)
+	}
+	require.NoError(t, res.Err())
+	require.NoError(t, res.Close())
+	require.Equal(t, []string{"John Doe", "Sophia Davis", "Bob Brown"}, names)
+
+	// Time range filters are passed as time.Time args (see AST.sqlForTimeRange).
+	res, err = olap.Query(t.Context(), &drivers.Statement{
+		Query: "SELECT count(*) FROM all_datatypes WHERE created_at >= ? AND created_at < ?",
+		Args: []any{
+			time.Date(2023, 7, 1, 0, 0, 0, 0, time.UTC),
+			time.Date(2023, 10, 1, 0, 0, 0, 0, time.UTC),
+		},
+	})
+	require.NoError(t, err)
+	require.True(t, res.Next())
+	var count int
+	require.NoError(t, res.Scan(&count))
+	require.NoError(t, res.Close())
+	require.Equal(t, 3, count)
+}
+
+func testQuerySchema(t *testing.T, olap drivers.OLAPStore) {
+	schema, err := olap.QuerySchema(t.Context(), "SELECT id, name, created_at, last_login FROM all_datatypes WHERE id = ?", []any{1})
+	require.NoError(t, err)
+	require.Len(t, schema.Fields, 4)
+	require.Equal(t, "id", schema.Fields[0].Name)
+	require.Equal(t, runtimev1.Type_CODE_INT64, schema.Fields[0].Type.Code)
+	require.Equal(t, "name", schema.Fields[1].Name)
+	require.Equal(t, runtimev1.Type_CODE_STRING, schema.Fields[1].Type.Code)
+	require.Equal(t, "created_at", schema.Fields[2].Name)
+	require.Equal(t, runtimev1.Type_CODE_TIMESTAMP, schema.Fields[2].Type.Code)
+	require.Equal(t, "last_login", schema.Fields[3].Name)
+	require.Equal(t, runtimev1.Type_CODE_TIMESTAMP, schema.Fields[3].Type.Code)
+}
+
+func testSessionTimezone(t *testing.T, olap drivers.OLAPStore) {
+	// The driver pins the session timezone to UTC so dialect SQL can rely on deterministic timestamp casts.
+	res, err := olap.Query(t.Context(), &drivers.Statement{Query: "SELECT current_setting('TimeZone') AS tz"})
+	require.NoError(t, err)
+	require.True(t, res.Next())
+	var tz string
+	require.NoError(t, res.Scan(&tz))
+	require.NoError(t, res.Close())
+	require.Equal(t, "UTC", tz)
+}
+
+func testDialectQueries(t *testing.T, olap drivers.OLAPStore) {
+	d := olap.Dialect()
+
+	grains := []runtimev1.TimeGrain{
+		runtimev1.TimeGrain_TIME_GRAIN_MILLISECOND,
+		runtimev1.TimeGrain_TIME_GRAIN_SECOND,
+		runtimev1.TimeGrain_TIME_GRAIN_MINUTE,
+		runtimev1.TimeGrain_TIME_GRAIN_HOUR,
+		runtimev1.TimeGrain_TIME_GRAIN_DAY,
+		runtimev1.TimeGrain_TIME_GRAIN_WEEK,
+		runtimev1.TimeGrain_TIME_GRAIN_MONTH,
+		runtimev1.TimeGrain_TIME_GRAIN_QUARTER,
+		runtimev1.TimeGrain_TIME_GRAIN_YEAR,
+	}
+
+	// DateTruncExpr must produce executable SQL for every grain, timezone and first day/month shift,
+	// on both timestamptz (last_login) and timestamp (created_at) columns.
+	for _, tz := range []string{"UTC", "America/New_York", "Asia/Kolkata"} {
+		for _, col := range []string{"last_login", "created_at"} {
+			for _, grain := range grains {
+				expr, err := d.DateTruncExpr(&runtimev1.MetricsViewSpec_Dimension{Column: col}, grain, tz, 7, 4)
+				require.NoError(t, err)
+				res, err := olap.Query(t.Context(), &drivers.Statement{
+					Query: fmt.Sprintf("SELECT %s AS t FROM all_datatypes GROUP BY 1 ORDER BY 1 NULLS LAST", expr),
+				})
+				require.NoError(t, err, "grain %s tz %s col %s", grain, tz, col)
+				for res.Next() {
+				}
+				require.NoError(t, res.Err())
+				require.NoError(t, res.Close())
+			}
+		}
+	}
+
+	// SelectTimeRangeBins across a DST transition (America/New_York springs forward on 2024-03-10).
+	loc, err := time.LoadLocation("America/New_York")
+	require.NoError(t, err)
+	sql, args, err := d.SelectTimeRangeBins(
+		time.Date(2024, 3, 10, 5, 0, 0, 0, time.UTC), // midnight in New York
+		time.Date(2024, 3, 13, 4, 0, 0, 0, time.UTC),
+		runtimev1.TimeGrain_TIME_GRAIN_DAY,
+		"timestamp", loc, 1, 1,
+	)
+	require.NoError(t, err)
+	res, err := olap.Query(t.Context(), &drivers.Statement{Query: sql, Args: args})
+	require.NoError(t, err)
+	var bins []time.Time
+	for res.Next() {
+		var bin time.Time
+		require.NoError(t, res.Scan(&bin))
+		bins = append(bins, bin)
+	}
+	require.NoError(t, res.Err())
+	require.NoError(t, res.Close())
+	// Bins are UTC wall times of New York midnights; the second one reflects the DST shift (EST -> EDT).
+	require.Equal(t, []time.Time{
+		time.Date(2024, 3, 10, 5, 0, 0, 0, time.UTC),
+		time.Date(2024, 3, 11, 4, 0, 0, 0, time.UTC),
+		time.Date(2024, 3, 12, 4, 0, 0, 0, time.UTC),
+	}, bins)
+
+	// SelectTimeRangeBins must produce executable SQL for every grain.
+	for _, grain := range grains {
+		sql, args, err := d.SelectTimeRangeBins(
+			time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
+			time.Date(2023, 1, 1, 0, 0, 2, 0, time.UTC),
+			grain, "timestamp", loc, 1, 1,
+		)
+		require.NoError(t, err)
+		err = olap.Exec(t.Context(), &drivers.Statement{Query: sql, Args: args})
+		require.NoError(t, err, "grain %s", grain)
+	}
+
+	// DateDiff + IntervalSubtract compose into the comparison time-shift expression.
+	for _, grain := range grains {
+		diff, err := d.DateDiff(grain, time.Date(2023, 5, 1, 0, 0, 0, 0, time.UTC), time.Date(2023, 9, 1, 0, 0, 0, 0, time.UTC))
+		require.NoError(t, err)
+		expr, err := d.IntervalSubtract("created_at", diff, grain)
+		require.NoError(t, err)
+		err = olap.Exec(t.Context(), &drivers.Statement{
+			Query: fmt.Sprintf("SELECT %s FROM all_datatypes LIMIT 1", expr),
+		})
+		require.NoError(t, err, "grain %s", grain)
+	}
+
+	// AnyValueExpression and SafeDivideExpression are used in comparison queries; SafeDivide must return NULL on division by zero.
+	res, err = olap.Query(t.Context(), &drivers.Statement{
+		Query: fmt.Sprintf(
+			"SELECT %s AS name, %s AS ratio, %s AS null_ratio FROM all_datatypes",
+			d.AnyValueExpression(`"name"`),
+			d.SafeDivideExpression("sum(age)", "count(*)"),
+			d.SafeDivideExpression("sum(age)", "sum(0)"),
+		),
+	})
+	require.NoError(t, err)
+	require.True(t, res.Next())
+	var name string
+	var ratio *float64
+	var nullRatio *float64
+	require.NoError(t, res.Scan(&name, &ratio, &nullRatio))
+	require.NoError(t, res.Close())
+	require.NotEmpty(t, name)
+	require.NotNil(t, ratio)
+	require.Nil(t, nullRatio)
 }
 
 func acquireTestPostgres(t *testing.T) (drivers.Handle, drivers.OLAPStore) {
