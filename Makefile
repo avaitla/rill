@@ -19,6 +19,22 @@ cli.prepare: runtime.examples.embed
 	cp -r web-local/build/* cli/pkg/web/embed/dist
 	go run scripts/embed_duckdb_ext/main.go
 
+# Builds the CLI (if needed), starts the demo databases (docker compose: seeded
+# ClickHouse + Postgres) and serves the all-features demo project on port 9009.
+# See demo/README.md for what to look at. Tear down databases with `make demo-down`.
+.PHONY: demo
+demo: demo-up
+	@if [ ! -x ./rill ]; then echo "rill binary not found: running 'make cli' (first build takes several minutes)..."; $(MAKE) cli; fi
+	cd demo/project && ../../rill start --no-open --port 9009 --port-grpc 49009
+
+.PHONY: demo-up
+demo-up:
+	docker compose -f demo/docker-compose.yaml up -d --wait
+
+.PHONY: demo-down
+demo-down:
+	docker compose -f demo/docker-compose.yaml down -v
+
 .PHONY: coverage.go
 coverage.go:
 	rm -rf coverage/go.out

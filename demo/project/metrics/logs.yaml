@@ -1,0 +1,19 @@
+# Feature 5: dynamic map dimensions — LogAttributes/ResourceAttributes keys are
+# discovered in the data at reconcile time and expanded into dimensions.
+version: 1
+type: metrics_view
+display_name: Logs (ClickHouse)
+connector: clickhouse
+table: otel_logs
+timeseries: Timestamp
+skip_invalid_dimensions: true
+skip_empty_dimensions: true
+dimensions:
+  - column: ServiceName
+  - column: SeverityText
+  - map_column: LogAttributes
+  - map_column: ResourceAttributes
+measures:
+  - name: events
+    display_name: Log Events
+    expression: count(*)

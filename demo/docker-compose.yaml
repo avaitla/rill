@@ -1,0 +1,34 @@
+# Demo databases for the all-features Rill build. Start with `make demo` from the repo root.
+services:
+  clickhouse:
+    image: clickhouse/clickhouse-server:24.8
+    container_name: rill-demo-clickhouse
+    environment:
+      CLICKHOUSE_USER: rill
+      CLICKHOUSE_PASSWORD: rillpass
+    ports:
+      - "18123:8123"
+    volumes:
+      - ./seed/clickhouse:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "clickhouse-client", "-u", "rill", "--password", "rillpass", "-q", "SELECT count(*) FROM otel_logs"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+
+  postgres:
+    image: postgres:16
+    container_name: rill-demo-postgres
+    environment:
+      POSTGRES_USER: rill
+      POSTGRES_PASSWORD: rillpass
+      POSTGRES_DB: rill_demo
+    ports:
+      - "15432:5432"
+    volumes:
+      - ./seed/postgres:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "psql -U rill -d rill_demo -c 'SELECT count(*) FROM orders' >/dev/null 2>&1"]
+      interval: 2s
+      timeout: 5s
+      retries: 30

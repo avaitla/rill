@@ -1,0 +1,6 @@
+# Feature 5: hide_empty_dimensions — filter to one service and the other
+# services' attribute leaderboards disappear.
+type: explore
+display_name: RED Service Detail
+metrics_view: red
+hide_empty_dimensions: true

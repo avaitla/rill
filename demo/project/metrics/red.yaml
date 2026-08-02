@@ -1,0 +1,33 @@
+# Features 3+4+5: RED metrics over a wide schemaless table. `columns: '*'`
+# discovers one dimension per service attribute; `drill_through` links the
+# service dimension to the detail explore; empty leaderboards hide under filters.
+version: 1
+type: metrics_view
+display_name: Service Requests (RED)
+table: red_requests
+timeseries: ts
+skip_invalid_dimensions: true
+skip_empty_dimensions: true
+dimensions:
+  - column: service
+    drill_through: red_detail_explore
+  - columns: '*'
+    discover:
+      pattern: '^(error|http_|payment_|cart_|query_|shard|job_|retry_)'
+measures:
+  - name: requests
+    display_name: Requests
+    expression: count(*)
+  - name: errors
+    display_name: Errors
+    expression: count(error)
+  - name: error_rate
+    display_name: Error Rate
+    expression: count(error) * 1.0 / count(*)
+    format_preset: percentage
+  - name: p50_duration
+    display_name: p50 Duration (ms)
+    expression: quantile_cont(duration_ms, 0.5)
+  - name: p95_duration
+    display_name: p95 Duration (ms)
+    expression: quantile_cont(duration_ms, 0.95)

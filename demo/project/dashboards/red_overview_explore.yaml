@@ -1,0 +1,7 @@
+# Feature 4: click a service value's drill icon to jump to the detail explore
+# with that service filtered.
+type: explore
+display_name: RED Overview
+metrics_view: red
+dimensions: [service]
+measures: '*'

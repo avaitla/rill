@@ -1,0 +1,4 @@
+type: explore
+display_name: Events (Versioned Tables)
+metrics_view: events
+refresh_intervals: [30s, 1m, 5m]

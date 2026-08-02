@@ -1,0 +1,4 @@
+type: explore
+display_name: Logs (ClickHouse)
+metrics_view: logs
+hide_empty_dimensions: true

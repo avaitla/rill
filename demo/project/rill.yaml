@@ -1,0 +1,5 @@
+compiler: rillv1
+display_name: All Features Demo
+# Default OLAP is DuckDB (models below build into it); the orders and logs
+# dashboards use the Postgres and ClickHouse connectors from docker-compose.
+olap_connector: duckdb

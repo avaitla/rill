@@ -1,0 +1,20 @@
+# Feature 6: table_options — one metrics view, user-selectable backing tables.
+# events_v1 lacks http_method/region; skip_invalid_dimensions prunes them there.
+version: 1
+type: metrics_view
+display_name: Events (Versioned Tables)
+table: events_v2
+table_options: [events_v1, events_v2]
+timeseries: ts
+skip_invalid_dimensions: true
+dimensions:
+  - column: service
+  - column: http_method
+  - column: region
+measures:
+  - name: events
+    display_name: Events
+    expression: count(*)
+  - name: p95_duration
+    display_name: p95 Duration (ms)
+    expression: quantile_cont(duration_ms, 0.95)

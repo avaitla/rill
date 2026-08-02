@@ -1,0 +1,7 @@
+# Feature 2: Grafana-style refresh intervals (dropdown + `refresh` URL param).
+type: explore
+display_name: Orders (Postgres)
+metrics_view: orders
+refresh_intervals: [10s, 30s, 1m, 5m, 15m, 1h]
+defaults:
+  refresh_interval: auto

@@ -1,0 +1,28 @@
+# Feature 1: Postgres OLAP connector — queried live, no ingestion.
+version: 1
+type: metrics_view
+display_name: Orders (Postgres)
+connector: postgres
+table: orders
+timeseries: ordered_at
+dimensions:
+  - column: country
+  - column: category
+  - column: product
+  - column: channel
+  - column: status
+measures:
+  - name: total_orders
+    display_name: Orders
+    expression: count(*)
+  - name: total_revenue
+    display_name: Revenue
+    expression: sum(revenue)
+    format_preset: currency_usd
+  - name: avg_order_value
+    display_name: Avg Order Value
+    expression: sum(revenue) / count(*)
+    format_preset: currency_usd
+  - name: units
+    display_name: Units Sold
+    expression: sum(quantity)

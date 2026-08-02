@@ -13,6 +13,12 @@ demo runbook that can be executed from scratch in a fresh session.
 | 5 | [`avaitla/dynamic-map-dimensions`](05-dynamic-map-dimensions.md) | Schemaless dimensions: map keys, column wildcards, empty-hiding | `avaitla/skip-invalid-dimensions` |
 | 6 | [`avaitla/metrics-view-table-options`](06-metrics-view-table-options.md) | Multiple selectable tables behind one metrics view | `avaitla/skip-invalid-dimensions` |
 
+**Quick start:** the `avaitla/all-features` branch merges all six and ships a one-command
+demo — `make demo` builds the CLI, provisions seeded ClickHouse + Postgres via docker
+compose, and serves a project exercising every feature at http://localhost:9009
+(`make demo-down` tears down the databases). See `demo/README.md` on that branch.
+The per-branch runbooks below remain the way to demo a feature in isolation.
+
 Branches 5 and 6 are stacked on branch 3 (they use its pruning machinery); merge 3 first.
 Two proto field numbers are deliberately reserved to avoid cross-branch collisions:
 `MetricsViewSpec.Dimension` field 17 (held for `drill_through`) and `ExploreSpec` field 22
