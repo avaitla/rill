@@ -390,6 +390,20 @@ message MetricsViewSpec {
   // are excluded from the valid spec with a warning instead of failing the whole metrics view.
   // Useful for schema-on-read data sources such as structured logs, where fields vary between rows.
   bool skip_invalid_dimensions = 38;
+  // TableOption is a selectable table that can back this metrics view.
+  message TableOption {
+    // Table backing this option.
+    string table = 1;
+    // Name of the metrics view that serves this option.
+    // For the default table this is the metrics view itself; for other tables it is a parser-generated variant.
+    string metrics_view = 2;
+  }
+  // Selectable tables that can back this metrics view, populated from the `table_options` YAML property.
+  // Always includes the default table. Only set on the primary metrics view, not on its variants.
+  // Useful when several versions of a table exist (e.g. with differing columns); combine with
+  // skip_invalid_dimensions so tables that lack some columns degrade gracefully.
+  // NOTE: 39 is reserved for a pending skip_empty_dimensions field.
+  repeated TableOption table_options = 40;
 }
 
 message SecurityRule {
@@ -591,6 +605,11 @@ message ExplorePreset {
 
   // Chart display settings (frontend-only; persisted in URL state)
   optional bool chart_dynamic_y_axis = 35;
+
+  // Selected table option backing the dashboard (frontend-only; persisted in URL state).
+  // It corresponds to the `table` values of the metrics view's `table_options`.
+  // NOTE: 40 is reserved for a pending refresh_interval field.
+  optional string table_option = 41;
   reserved 36; // was chart_force_line; replaced by chart_type URL param
 }
 

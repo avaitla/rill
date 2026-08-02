@@ -2097,6 +2097,11 @@ definitions:
           skip_invalid_dimensions:
             type: boolean
             description: When true, dimensions that fail validation (e.g. reference a column not present in the underlying table) are excluded from the dashboard with a warning instead of failing the whole metrics view. Useful for schema-on-read data sources such as structured logs, where fields vary between rows.
+          table_options:
+            type: array
+            description: List of tables the end user can select to back this metrics view via a dropdown on the dashboard, e.g. different versions of the same table. The default `table` is always selectable. Combine with `skip_invalid_dimensions` so tables that lack some columns degrade gracefully.
+            items:
+              type: string
           dimensions:
             type: array
             description: Relates to exploring segments or dimensions of your data and filtering the dashboard

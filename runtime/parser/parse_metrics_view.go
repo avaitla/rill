@@ -10,12 +10,21 @@ import (
 	runtimev1 "github.com/rilldata/rill/proto/gen/rill/runtime/v1"
 	"github.com/rilldata/rill/runtime/pkg/duration"
 	"github.com/rilldata/rill/runtime/pkg/rilltime"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/structpb"
 	"gopkg.in/yaml.v3"
 
 	// Load IANA time zone data
 	_ "time/tzdata"
 )
+
+// tableOptionSanitizeRegex matches characters that are unsafe in resource names derived from table names.
+var tableOptionSanitizeRegex = regexp.MustCompile(`[^a-zA-Z0-9_-]+`)
+
+// variantMetricsViewName returns the resource name of the metrics view variant backed by the given table option.
+func variantMetricsViewName(name, table string) string {
+	return fmt.Sprintf("%s__%s", name, tableOptionSanitizeRegex.ReplaceAllString(table, "_"))
+}
 
 // MetricsViewYAML is the raw structure of a MetricsView resource defined in YAML
 type MetricsViewYAML struct {
@@ -36,6 +45,7 @@ type MetricsViewYAML struct {
 	FirstMonthOfYear      uint32           `yaml:"first_month_of_year"`
 	MaxQueryTimeRange     string           `yaml:"max_query_time_range"`
 	SkipInvalidDimensions bool             `yaml:"skip_invalid_dimensions"`
+	TableOptions          []string         `yaml:"table_options"`
 	Dimensions            []*struct {
 		Name                    string
 		DisplayName             string `yaml:"display_name"`
@@ -272,6 +282,17 @@ func (p *Parser) parseMetricsView(node *Node) error {
 	// Backwards compatibility
 	if tmp.Title != "" && tmp.DisplayName == "" {
 		tmp.DisplayName = tmp.Title
+	}
+
+	if len(tmp.TableOptions) > 0 {
+		if tmp.Table == "" {
+			return errors.New(`"table_options" requires "table" to be set to the default table`)
+		}
+		for _, t := range tmp.TableOptions {
+			if t == "" {
+				return errors.New(`"table_options" entries must be non-empty table names`)
+			}
+		}
 	}
 
 	if tmp.Table != "" && tmp.Model != "" {
@@ -711,6 +732,11 @@ func (p *Parser) parseMetricsView(node *Node) error {
 		// Not setting Kind so that inference kicks in.
 		node.Refs = append(node.Refs, ResourceName{Name: tmp.Table})
 	}
+	for _, t := range tmp.TableOptions {
+		if t != tmp.Table {
+			node.Refs = append(node.Refs, ResourceName{Name: t})
+		}
+	}
 
 	// Attempt to link the lookup tables in the DAG in case they are models.
 	// If they are not models, the upstream logic for refs will filter them out.
@@ -847,6 +873,30 @@ func (p *Parser) parseMetricsView(node *Node) error {
 		}
 	}
 
+	// Normalize and validate table option variants before any resource is inserted, since errors are not allowed afterwards.
+	var tableOptionTables []string
+	tableOptionNames := make(map[string]string) // table -> variant metrics view name
+	if len(tmp.TableOptions) > 0 {
+		seenTables := map[string]bool{tmp.Table: true}
+		seenNames := map[string]bool{strings.ToLower(node.Name): true}
+		for _, t := range tmp.TableOptions {
+			if seenTables[t] {
+				continue
+			}
+			seenTables[t] = true
+			variantName := variantMetricsViewName(node.Name, t)
+			if seenNames[strings.ToLower(variantName)] {
+				return fmt.Errorf("table option %q produces a duplicate metrics view name %q", t, variantName)
+			}
+			seenNames[strings.ToLower(variantName)] = true
+			if _, ok := p.Resources[ResourceName{Kind: ResourceKindMetricsView, Name: variantName}.Normalized()]; ok {
+				return fmt.Errorf("table option %q conflicts with an existing resource named %q", t, variantName)
+			}
+			tableOptionTables = append(tableOptionTables, t)
+			tableOptionNames[t] = variantName
+		}
+	}
+
 	// validate and insert inline explore, if true and no error is returned from the method then an explore resource is created so no error should be returned after this point
 	skipExplore, exploreRes, err := p.parseAndInsertInlineExplore(tmp, node.Name, node.Paths, node.Tags)
 	if err != nil {
@@ -864,6 +914,17 @@ func (p *Parser) parseMetricsView(node *Node) error {
 	}
 	// NOTE: After calling insertResource, an error must not be returned. Any validation should be done before calling it.
 	spec := r.MetricsViewSpec
+
+	// Insert one hidden variant metrics view per additional table option. Their specs are populated at the end,
+	// once the primary spec is fully built. Collisions were checked above, so insertion must not fail.
+	tableOptionResources := make(map[string]*Resource, len(tableOptionTables))
+	for _, t := range tableOptionTables {
+		vr, err := p.insertResource(ResourceKindMetricsView, tableOptionNames[t], node.Paths, node.Tags, node.Refs...)
+		if err != nil {
+			panic(fmt.Sprintf("failed to insert table option variant %q for metrics view %q: %s", tableOptionNames[t], node.Name, err))
+		}
+		tableOptionResources[t] = vr
+	}
 
 	spec.Parent = tmp.Parent
 	spec.Connector = node.Connector
@@ -939,6 +1000,19 @@ func (p *Parser) parseMetricsView(node *Node) error {
 	spec.CacheKeySql = tmp.Cache.KeySQL
 	spec.CacheKeyTtlSeconds = int64(cacheTTLDuration.Seconds())
 	spec.QueryAttributes = tmp.QueryAttributes
+
+	// Populate the table option variants as copies of the now fully-built primary spec with a different table,
+	// and record the option-to-variant mapping on the primary spec for the frontend's table selector.
+	if len(tableOptionTables) > 0 {
+		spec.TableOptions = []*runtimev1.MetricsViewSpec_TableOption{{Table: spec.Table, MetricsView: node.Name}}
+		for _, t := range tableOptionTables {
+			vspec := proto.Clone(spec).(*runtimev1.MetricsViewSpec)
+			vspec.Table = t
+			vspec.TableOptions = nil
+			tableOptionResources[t].MetricsViewSpec = vspec
+			spec.TableOptions = append(spec.TableOptions, &runtimev1.MetricsViewSpec_TableOption{Table: t, MetricsView: tableOptionNames[t]})
+		}
+	}
 
 	// When version is greater than 0 or inline explore is defined or skip explore set to true, we skip creating a default explore resource. Application should set version to 0 now to enable automatic explore emission.
 	if node.Version > 0 || skipExplore {

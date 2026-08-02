@@ -1582,6 +1582,17 @@ export class MetricsViewSpec extends Message<MetricsViewSpec> {
    */
   skipInvalidDimensions = false;
 
+  /**
+   * Selectable tables that can back this metrics view, populated from the `table_options` YAML property.
+   * Always includes the default table. Only set on the primary metrics view, not on its variants.
+   * Useful when several versions of a table exist (e.g. with differing columns); combine with
+   * skip_invalid_dimensions so tables that lack some columns degrade gracefully.
+   * NOTE: 39 is reserved for a pending skip_empty_dimensions field.
+   *
+   * @generated from field: repeated rill.runtime.v1.MetricsViewSpec.TableOption table_options = 40;
+   */
+  tableOptions: MetricsViewSpec_TableOption[] = [];
+
   constructor(data?: PartialMessage<MetricsViewSpec>) {
     super();
     proto3.util.initPartial(data, this);
@@ -1619,6 +1630,7 @@ export class MetricsViewSpec extends Message<MetricsViewSpec> {
     { no: 34, name: "rollups", kind: "message", T: MetricsViewSpec_Rollup, repeated: true },
     { no: 36, name: "max_query_time_range", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 38, name: "skip_invalid_dimensions", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 40, name: "table_options", kind: "message", T: MetricsViewSpec_TableOption, repeated: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): MetricsViewSpec {
@@ -2312,6 +2324,56 @@ export class MetricsViewSpec_Rollup extends Message<MetricsViewSpec_Rollup> {
 
   static equals(a: MetricsViewSpec_Rollup | PlainMessage<MetricsViewSpec_Rollup> | undefined, b: MetricsViewSpec_Rollup | PlainMessage<MetricsViewSpec_Rollup> | undefined): boolean {
     return proto3.util.equals(MetricsViewSpec_Rollup, a, b);
+  }
+}
+
+/**
+ * TableOption is a selectable table that can back this metrics view.
+ *
+ * @generated from message rill.runtime.v1.MetricsViewSpec.TableOption
+ */
+export class MetricsViewSpec_TableOption extends Message<MetricsViewSpec_TableOption> {
+  /**
+   * Table backing this option.
+   *
+   * @generated from field: string table = 1;
+   */
+  table = "";
+
+  /**
+   * Name of the metrics view that serves this option.
+   * For the default table this is the metrics view itself; for other tables it is a parser-generated variant.
+   *
+   * @generated from field: string metrics_view = 2;
+   */
+  metricsView = "";
+
+  constructor(data?: PartialMessage<MetricsViewSpec_TableOption>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rill.runtime.v1.MetricsViewSpec.TableOption";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "table", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "metrics_view", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): MetricsViewSpec_TableOption {
+    return new MetricsViewSpec_TableOption().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): MetricsViewSpec_TableOption {
+    return new MetricsViewSpec_TableOption().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): MetricsViewSpec_TableOption {
+    return new MetricsViewSpec_TableOption().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: MetricsViewSpec_TableOption | PlainMessage<MetricsViewSpec_TableOption> | undefined, b: MetricsViewSpec_TableOption | PlainMessage<MetricsViewSpec_TableOption> | undefined): boolean {
+    return proto3.util.equals(MetricsViewSpec_TableOption, a, b);
   }
 }
 
@@ -3272,6 +3334,15 @@ export class ExplorePreset extends Message<ExplorePreset> {
    */
   chartDynamicYAxis?: boolean;
 
+  /**
+   * Selected table option backing the dashboard (frontend-only; persisted in URL state).
+   * It corresponds to the `table` values of the metrics view's `table_options`.
+   * NOTE: 40 is reserved for a pending refresh_interval field.
+   *
+   * @generated from field: optional string table_option = 41;
+   */
+  tableOption?: string;
+
   constructor(data?: PartialMessage<ExplorePreset>) {
     super();
     proto3.util.initPartial(data, this);
@@ -3315,6 +3386,7 @@ export class ExplorePreset extends Message<ExplorePreset> {
     { no: 38, name: "pivot_show_totals_row", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
     { no: 39, name: "pivot_formatting", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
     { no: 35, name: "chart_dynamic_y_axis", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
+    { no: 41, name: "table_option", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ExplorePreset {

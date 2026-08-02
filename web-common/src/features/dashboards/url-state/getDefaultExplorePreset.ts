@@ -44,6 +44,7 @@ export function getDefaultExplorePreset(
       getDefaultTimeRange(metricsViewSpec.smallestTimeGrain, timeRangeSummary),
     timezone: getDefaultTimeZone(explore),
     timeGrain: "",
+    tableOption: "",
     comparisonMode: V1ExploreComparisonMode.EXPLORE_COMPARISON_MODE_NONE,
     compareTimeRange: "",
     comparisonDimension: "",

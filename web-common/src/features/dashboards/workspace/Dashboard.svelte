@@ -27,7 +27,10 @@
   import RowsViewerAccordion from "../rows-viewer/RowsViewerAccordion.svelte";
   import { getStateManagers } from "../state-managers/state-managers";
   import ThemeProvider from "../ThemeProvider.svelte";
-  import { useTimeControlStore } from "../time-controls/time-control-store";
+  import {
+    useTimeControlStore,
+    type TimeControlState,
+  } from "../time-controls/time-control-store";
   import TimeDimensionDisplay from "../time-dimension-details/TimeDimensionDisplay.svelte";
   import MetricsTimeSeriesCharts from "../time-series/MetricsTimeSeriesCharts.svelte";
   import {
@@ -55,7 +58,18 @@
       pivot: { showPivot },
     },
     dashboardStore,
+    metricsViewName: metricsViewNameStore,
   } = StateManagers;
+
+  // When a table option is selected, the state managers point the dashboard at the variant
+  // metrics view backing that table; all child components must follow it.
+  // NOTE: An explicit subscription is used since the store is also written from within another
+  // store's derivation, which the auto-subscription does not reliably pick up.
+  let effectiveMetricsViewName = metricsViewName;
+  const unsubscribeMetricsViewName = metricsViewNameStore.subscribe(
+    (name) => (effectiveMetricsViewName = name || metricsViewName),
+  );
+  onDestroy(unsubscribeMetricsViewName);
 
   const { cloudDataViewer, readOnly } = featureFlags;
 
@@ -103,6 +117,14 @@
 
   $: hidePivot = isEmbedded && exploreSpec?.embedsHidePivot;
 
+  // NOTE: An explicit subscription is used (instead of `$timeControlsStore`) since the store
+  // updates through the table-option chain, which the auto-subscription does not reliably pick up.
+  let timeControlsState: TimeControlState | undefined = undefined;
+  const unsubscribeTimeControls = timeControlsStore.subscribe(
+    (state) => (timeControlsState = state),
+  );
+  onDestroy(unsubscribeTimeControls);
+
   $: ({
     timeStart: start,
     timeEnd: end,
@@ -110,7 +132,7 @@
     comparisonTimeStart,
     comparisonTimeEnd,
     ready: timeControlsReady = false,
-  } = $timeControlsStore);
+  } = timeControlsState ?? ({} as TimeControlState));
 
   $: timeRange = {
     start,
@@ -166,7 +188,11 @@
       {:else}
         {#key exploreName}
           <section class="flex relative justify-between gap-x-4 py-4 pb-6 px-4">
-            <Filters {timeRanges} {metricsViewName} {hasTimeSeries} />
+            <Filters
+              {timeRanges}
+              metricsViewName={effectiveMetricsViewName}
+              {hasTimeSeries}
+            />
             <div class="absolute bottom-0 flex flex-col right-0">
               <TabBar {hidePivot} {exploreName} onPivot={$showPivot} />
             </div>
@@ -210,7 +236,10 @@
                 tddChartHeight={$tddChartHeight}
               />
             {:else}
-              <MeasuresContainer {exploreContainerWidth} {metricsViewName} />
+              <MeasuresContainer
+                {exploreContainerWidth}
+                metricsViewName={effectiveMetricsViewName}
+              />
             {/if}
           {/key}
         </div>
@@ -256,7 +285,7 @@
             {#if showDimensionTable && selectedDimension}
               <DimensionDisplay
                 dimension={selectedDimension}
-                {metricsViewName}
+                metricsViewName={effectiveMetricsViewName}
                 {whereFilter}
                 {dimensionThresholdFilters}
                 {timeRange}
@@ -267,7 +296,7 @@
               />
             {:else}
               <LeaderboardDisplay
-                {metricsViewName}
+                metricsViewName={effectiveMetricsViewName}
                 {whereFilter}
                 {dimensionThresholdFilters}
                 {timeRange}
@@ -283,7 +312,10 @@
     <CellInspector />
 
     {#if (isRillDeveloper || $cloudDataViewer) && !showTimeDimensionDetail && !mockUserHasNoAccess}
-      <RowsViewerAccordion {metricsViewName} {exploreName} />
+      <RowsViewerAccordion
+        metricsViewName={effectiveMetricsViewName}
+        {exploreName}
+      />
     {/if}
   </article>
 </ThemeProvider>

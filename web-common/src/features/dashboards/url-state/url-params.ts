@@ -11,6 +11,7 @@ export enum ExploreStateURLParams {
   TimeGrain = "grain",
   ComparisonDimension = "compare_dim",
   HighlightedTimeRange = "highlighted_tr",
+  TableOption = "table",
 
   Filters = "f",
 
@@ -51,6 +52,7 @@ export const ExploreStateKeyToURLParamMap: Partial<
 
   selectedTimezone: ExploreStateURLParams.TimeZone,
   selectedComparisonDimension: ExploreStateURLParams.ComparisonDimension,
+  selectedTableOption: ExploreStateURLParams.TableOption,
 
   selectedDimensionName: ExploreStateURLParams.ExpandedDimension,
   leaderboardSortByMeasureName: ExploreStateURLParams.SortBy,

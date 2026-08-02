@@ -236,6 +236,11 @@ export function convertURLToExplorePreset(
     }
   }
 
+  if (searchParams.has(ExploreStateURLParams.TableOption)) {
+    preset.tableOption =
+      searchParams.get(ExploreStateURLParams.TableOption) ?? "";
+  }
+
   return { preset, errors };
 }
 

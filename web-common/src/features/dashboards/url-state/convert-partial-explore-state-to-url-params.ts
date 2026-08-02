@@ -100,6 +100,8 @@ export function convertPartialExploreStateToUrlParams(
       ] ?? ExploreUrlWebView.Explore,
   );
 
+  maybeSetParam(searchParams, partialExploreState, "selectedTableOption");
+
   // timeControlsState will be undefined for dashboards without timeseries
   if (timeControlsState?.selectedTimeRange) {
     copyParamsToTarget(

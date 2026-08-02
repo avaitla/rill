@@ -875,6 +875,8 @@
   "dashboard_tdd_error": "We encountered an error while loading the data. Please try refreshing the page.",
   "dashboard_tdd_no_comparison": "No Comparison",
   "dashboard_tdd_time": "Time",
+  "dashboard_table": "Table",
+  "dashboard_table_selector": "Table selector",
   "dashboard_time": "Time",
   "dashboard_time_axis": "Time axis",
   "dashboard_time_label": "TIME",
