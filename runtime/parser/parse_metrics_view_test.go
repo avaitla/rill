@@ -1332,6 +1332,8 @@ measures:
 		require.Len(t, p.Errors, 1, "expected error for %q", c.dimYAML)
 		require.Contains(t, p.Errors[0].Message, c.errMsg)
 	}
+}
+
 func TestMetricsViewDimensionDrillThrough(t *testing.T) {
 	files := map[string]string{
 		`rill.yaml`: ``,
