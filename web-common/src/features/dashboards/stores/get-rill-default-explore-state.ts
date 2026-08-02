@@ -50,6 +50,8 @@ export function getRillDefaultExploreState(
     dimensionFilterExcludeMode: new Map(),
     temporaryFilterName: null,
 
+    selectedTableOption: "",
+
     ...getRillDefaultExploreTimeState(
       metricsViewSpec,
       exploreSpec,

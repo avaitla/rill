@@ -108,6 +108,10 @@ export function convertPresetToExploreState(
 
   partialExploreState.dynamicYAxisScale = preset.chartDynamicYAxis ?? false;
 
+  if (preset.tableOption !== undefined) {
+    partialExploreState.selectedTableOption = preset.tableOption;
+  }
+
   return { partialExploreState, errors };
 }
 

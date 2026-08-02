@@ -3447,6 +3447,40 @@ func (m *MetricsViewSpec) validate(all bool) error {
 
 	// no validation rules for SkipEmptyDimensions
 
+	for idx, item := range m.GetTableOptions() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, MetricsViewSpecValidationError{
+						field:  fmt.Sprintf("TableOptions[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, MetricsViewSpecValidationError{
+						field:  fmt.Sprintf("TableOptions[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return MetricsViewSpecValidationError{
+					field:  fmt.Sprintf("TableOptions[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
 	if m.CacheEnabled != nil {
 		// no validation rules for CacheEnabled
 	}
@@ -5615,6 +5649,10 @@ func (m *ExplorePreset) validate(all bool) error {
 
 	if m.ChartDynamicYAxis != nil {
 		// no validation rules for ChartDynamicYAxis
+	}
+
+	if m.TableOption != nil {
+		// no validation rules for TableOption
 	}
 
 	if len(errors) > 0 {
@@ -14025,3 +14063,110 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = MetricsViewSpec_RollupValidationError{}
+
+// Validate checks the field values on MetricsViewSpec_TableOption with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *MetricsViewSpec_TableOption) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on MetricsViewSpec_TableOption with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// MetricsViewSpec_TableOptionMultiError, or nil if none found.
+func (m *MetricsViewSpec_TableOption) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *MetricsViewSpec_TableOption) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Table
+
+	// no validation rules for MetricsView
+
+	if len(errors) > 0 {
+		return MetricsViewSpec_TableOptionMultiError(errors)
+	}
+
+	return nil
+}
+
+// MetricsViewSpec_TableOptionMultiError is an error wrapping multiple
+// validation errors returned by MetricsViewSpec_TableOption.ValidateAll() if
+// the designated constraints aren't met.
+type MetricsViewSpec_TableOptionMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m MetricsViewSpec_TableOptionMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m MetricsViewSpec_TableOptionMultiError) AllErrors() []error { return m }
+
+// MetricsViewSpec_TableOptionValidationError is the validation error returned
+// by MetricsViewSpec_TableOption.Validate if the designated constraints
+// aren't met.
+type MetricsViewSpec_TableOptionValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e MetricsViewSpec_TableOptionValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e MetricsViewSpec_TableOptionValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e MetricsViewSpec_TableOptionValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e MetricsViewSpec_TableOptionValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e MetricsViewSpec_TableOptionValidationError) ErrorName() string {
+	return "MetricsViewSpec_TableOptionValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e MetricsViewSpec_TableOptionValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sMetricsViewSpec_TableOption.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = MetricsViewSpec_TableOptionValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = MetricsViewSpec_TableOptionValidationError{}

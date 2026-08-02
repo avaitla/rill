@@ -312,6 +312,22 @@ timeseries: time
 skip_empty_dimensions: true
 dimensions:
 - column: service
+func TestMetricsViewTableOptions(t *testing.T) {
+	rt, id := testruntime.NewInstanceWithOptions(t, testruntime.InstanceOptions{
+		Files: map[string]string{
+			// Two versions of a table: v1 predates the http_method and region columns.
+			"events_v1.sql": `SELECT '2024-01-01T00:00:00Z'::TIMESTAMP AS "time", 'checkout' AS service, 1 AS num`,
+			"events_v2.sql": `SELECT '2024-02-01T00:00:00Z'::TIMESTAMP AS "time", 'checkout' AS service, 'GET' AS http_method, 'eu' AS region, 2 AS num`,
+			"mv.yaml": `
+type: metrics_view
+table: events_v2
+table_options: [events_v1, events_v2]
+timeseries: time
+skip_invalid_dimensions: true
+dimensions:
+- column: service
+- column: http_method
+- column: region
 measures:
 - name: num
   expression: sum(num)
@@ -501,4 +517,36 @@ explore:
 		names = append(names, d.Name)
 	}
 	require.Equal(t, []string{"time", "log_level"}, names)
+	testruntime.RequireReconcileState(t, rt, id, 5, 0, 0)
+
+	// The primary metrics view is backed by the default table and carries the option mapping.
+	primary := testruntime.GetResource(t, rt, id, runtime.ResourceKindMetricsView, "mv")
+	require.Empty(t, primary.Meta.ReconcileError)
+	primarySpec := primary.GetMetricsView().State.ValidSpec
+	require.NotNil(t, primarySpec)
+	require.Equal(t, "events_v2", primarySpec.Table)
+	var names []string
+	for _, d := range primarySpec.Dimensions {
+		names = append(names, d.Name)
+	}
+	require.Equal(t, []string{"time", "service", "http_method", "region"}, names)
+	require.Len(t, primarySpec.TableOptions, 2)
+	require.Equal(t, "events_v2", primarySpec.TableOptions[0].Table)
+	require.Equal(t, "mv", primarySpec.TableOptions[0].MetricsView)
+	require.Equal(t, "events_v1", primarySpec.TableOptions[1].Table)
+	require.Equal(t, "mv__events_v1", primarySpec.TableOptions[1].MetricsView)
+
+	// The variant is backed by the old table; its missing columns are pruned by skip_invalid_dimensions.
+	variant := testruntime.GetResource(t, rt, id, runtime.ResourceKindMetricsView, "mv__events_v1")
+	require.Empty(t, variant.Meta.ReconcileError)
+	variantSpec := variant.GetMetricsView().State.ValidSpec
+	require.NotNil(t, variantSpec)
+	require.Equal(t, "events_v1", variantSpec.Table)
+	require.Empty(t, variantSpec.TableOptions)
+	names = nil
+	for _, d := range variantSpec.Dimensions {
+		names = append(names, d.Name)
+	}
+	require.Equal(t, []string{"time", "service"}, names)
+	require.Len(t, variant.Meta.ReconcileWarnings, 2)
 }

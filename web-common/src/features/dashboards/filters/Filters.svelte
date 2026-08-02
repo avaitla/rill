@@ -32,6 +32,7 @@
     useExploreState,
   } from "../stores/dashboard-stores";
   import ComparisonPill from "../time-controls/comparison-pill/ComparisonPill.svelte";
+  import TableSelector from "../time-controls/TableSelector.svelte";
   import {
     CUSTOM_TIME_RANGE_ALIAS,
     deriveInterval,
@@ -130,6 +131,8 @@
   } = $timeControlsStore);
 
   $: exploreSpec = $validSpecStore.data?.explore ?? {};
+  $: tableOptions = $validSpecStore.data?.metricsView?.tableOptions ?? [];
+  $: defaultTableOption = tableOptions[0]?.table ?? "";
   $: metricsViewSpec = $validSpecStore.data?.metricsView ?? {};
 
   $: exploreState = useExploreState($exploreName);
@@ -512,6 +515,21 @@
             />
           </Tooltip.Content>
         </Tooltip.Root>
+      {/if}
+
+      {#if tableOptions.length > 1}
+        <div class="ml-auto">
+          <TableSelector
+            options={tableOptions}
+            selected={$dashboardStore?.selectedTableOption ||
+              defaultTableOption}
+            onSelect={(table) =>
+              metricsExplorerStore.setTableOption(
+                $exploreName,
+                table === defaultTableOption ? "" : table,
+              )}
+          />
+        </div>
       {/if}
     </div>
   {/if}

@@ -4024,6 +4024,18 @@ definitions:
     description: |-
       Pre-aggregated rollup that can be used to accelerate queries.
       The system automatically routes queries to a rollup when the query can be satisfied from the pre-aggregated data.
+  MetricsViewSpecTableOption:
+    type: object
+    properties:
+      table:
+        type: string
+        description: Table backing this option.
+      metricsView:
+        type: string
+        description: |-
+          Name of the metrics view that serves this option.
+          For the default table this is the metrics view itself; for other tables it is a parser-generated variant.
+    description: TableOption is a selectable table that can back this metrics view.
   NumericHistogramBinsBin:
     type: object
     properties:
@@ -5413,6 +5425,12 @@ definitions:
       chartDynamicYAxis:
         type: boolean
         title: Chart display settings (frontend-only; persisted in URL state)
+      tableOption:
+        type: string
+        description: |-
+          Selected table option backing the dashboard (frontend-only; persisted in URL state).
+          It corresponds to the `table` values of the metrics view's `table_options`.
+          NOTE: 40 is reserved for a pending refresh_interval field.
   v1ExploreSortType:
     type: string
     enum:
@@ -6790,6 +6808,16 @@ definitions:
           If true, dimensions whose values are NULL in every row of the underlying table are excluded from the valid spec with a warning.
           Useful for schemaless data sources where the table schema is a union of all fields ever ingested,
           so fields not present in the current data show up as all-NULL columns.
+      tableOptions:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/MetricsViewSpecTableOption'
+        description: |-
+          Selectable tables that can back this metrics view, populated from the `table_options` YAML property.
+          Always includes the default table. Only set on the primary metrics view, not on its variants.
+          Useful when several versions of a table exist (e.g. with differing columns); combine with
+          skip_invalid_dimensions so tables that lack some columns degrade gracefully.
   v1MetricsViewSpecAnnotation:
     type: object
     properties:

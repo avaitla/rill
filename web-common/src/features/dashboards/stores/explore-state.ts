@@ -126,6 +126,11 @@ export interface ExploreState {
   selectedTimezone: string;
 
   /**
+   * user selected table option backing the dashboard; empty means the metrics view's default table
+   */
+  selectedTableOption?: string;
+
+  /**
    * user selected time column, should default to undefined if no other value is set
    */
   selectedTimeDimension: string | undefined;

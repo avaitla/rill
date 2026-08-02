@@ -884,6 +884,8 @@
   "dashboard_tdd_error": "Encontramos un error al cargar los datos. Por favor, intenta actualizar la página.",
   "dashboard_tdd_no_comparison": "Sin comparación",
   "dashboard_tdd_time": "Tiempo",
+  "dashboard_table": "Tabla",
+  "dashboard_table_selector": "Selector de tabla",
   "dashboard_time": "Tiempo",
   "dashboard_time_axis": "Eje de tiempo",
   "dashboard_time_label": "TIEMPO",

@@ -497,6 +497,12 @@ const metricsViewReducers = {
     });
   },
 
+  setTableOption(name: string, table: string) {
+    updateMetricsExplorerByName(name, (exploreState) => {
+      exploreState.selectedTableOption = table;
+    });
+  },
+
   displayTimeComparison(name: string, showTimeComparison: boolean) {
     updateMetricsExplorerByName(name, (exploreState) => {
       exploreState.showTimeComparison = showTimeComparison;

@@ -933,6 +933,8 @@ If not found in `time_ranges`, it should be added to the list. */
   timeGrain?: string;
   selectTimeRange?: string;
   timeDimension?: string;
+  /** Selected table option backing the dashboard (frontend-only; persisted in URL state). */
+  tableOption?: string;
   comparisonMode?: V1ExploreComparisonMode;
   compareTimeRange?: string;
   /** If comparison_mode is EXPLORE_COMPARISON_MODE_DIMENSION, this indicates the dimension to use. */
@@ -1752,6 +1754,19 @@ are excluded from the valid spec with a warning instead of failing the whole met
   /** If true, dimensions whose values are NULL in every row of the underlying table are excluded
 from the valid spec with a warning. */
   skipEmptyDimensions?: boolean;
+  /** Selectable tables that can back this metrics view. Always includes the default table.
+Only set on the primary metrics view, not on its variants. */
+  tableOptions?: MetricsViewSpecTableOption[];
+}
+
+/**
+ * TableOption is a selectable table that can back a metrics view.
+ */
+export interface MetricsViewSpecTableOption {
+  /** Table backing this option. */
+  table?: string;
+  /** Name of the metrics view that serves this option. */
+  metricsView?: string;
 }
 
 /**

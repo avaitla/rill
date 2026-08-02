@@ -1,5 +1,9 @@
 import { type ExploreState } from "@rilldata/web-common/features/dashboards/stores/explore-state";
 import { getDefaultExplorePreset } from "@rilldata/web-common/features/dashboards/url-state/getDefaultExplorePreset";
+import {
+  ResourceKind,
+  useResource,
+} from "@rilldata/web-common/features/entity-management/resource-selectors";
 import { type ExploreValidSpecResponse } from "@rilldata/web-common/features/explores/selectors";
 import {
   type V1ExplorePreset,
@@ -84,7 +88,7 @@ export function createStateManagers({
   exploreName: string;
   runtimeClient: RuntimeClient;
 }): StateManagers {
-  const metricsViewNameStore = writable(metricsViewName);
+  const primaryMetricsViewNameStore = writable(metricsViewName);
   const exploreNameStore = writable(exploreName);
   const timeDimension = writable<string | undefined>(undefined);
 
@@ -96,7 +100,7 @@ export function createStateManagers({
     },
   );
 
-  const validSpecStore: Readable<
+  const primaryValidSpecStore: Readable<
     QueryObserverResult<ExploreValidSpecResponse, Error>
   > = derived([exploreNameStore], ([exploreName], set) =>
     createRuntimeServiceGetExplore(
@@ -115,6 +119,74 @@ export function createStateManagers({
       queryClient,
     ).subscribe(set),
   );
+
+  // When the user selects a table option, swap in the valid spec of the variant metrics view backing
+  // that table so all dashboard queries and field lists follow the selection.
+  // The primary's table options are carried over so the table selector stays populated,
+  // and metricsViewNameStore is kept in sync so queries target the selected variant.
+  const validSpecStore: Readable<
+    QueryObserverResult<ExploreValidSpecResponse, Error>
+  > = derived(
+    [primaryValidSpecStore, dashboardStore],
+    ([primary, exploreState], set) => {
+      const primaryName = primary.data?.explore?.metricsView ?? metricsViewName;
+      const option = exploreState?.selectedTableOption
+        ? primary.data?.metricsView?.tableOptions?.find(
+            (o) => o.table === exploreState.selectedTableOption,
+          )
+        : undefined;
+      if (!option?.metricsView || option.metricsView === primaryName) {
+        set(primary);
+        return;
+      }
+      return useResource<V1MetricsViewSpec | undefined>(
+        runtimeClient,
+        option.metricsView,
+        ResourceKind.MetricsView,
+        {
+          select: (data) => data?.resource?.metricsView?.state?.validSpec,
+        },
+        queryClient,
+      ).subscribe((variant) => {
+        if (!variant.data) {
+          // Keep serving the primary spec while the variant loads.
+          set(primary);
+          return;
+        }
+        set(<QueryObserverResult<ExploreValidSpecResponse, Error>>{
+          ...primary,
+          data: <ExploreValidSpecResponse>{
+            explore: primary.data?.explore,
+            metricsView: {
+              ...variant.data,
+              tableOptions: primary.data?.metricsView?.tableOptions,
+            },
+          },
+        });
+      });
+    },
+  );
+
+  // The metrics view name backing all dashboard queries. Reads resolve to the variant metrics view
+  // when a table option is selected; writes update the primary name (used by visual editing).
+  const effectiveMetricsViewNameStore: Readable<string> = derived(
+    [primaryMetricsViewNameStore, primaryValidSpecStore, dashboardStore],
+    ([primaryNameFallback, primary, exploreState]) => {
+      const primaryName =
+        primary.data?.explore?.metricsView ?? primaryNameFallback;
+      const option = exploreState?.selectedTableOption
+        ? primary.data?.metricsView?.tableOptions?.find(
+            (o) => o.table === exploreState.selectedTableOption,
+          )
+        : undefined;
+      return option?.metricsView || primaryName;
+    },
+  );
+  const metricsViewNameStore: Writable<string> = {
+    subscribe: effectiveMetricsViewNameStore.subscribe,
+    set: primaryMetricsViewNameStore.set,
+    update: primaryMetricsViewNameStore.update,
+  };
 
   const timeRangeSummaryStore: Readable<
     QueryObserverResult<V1MetricsViewTimeRangeResponse, unknown>
