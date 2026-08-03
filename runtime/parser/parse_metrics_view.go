@@ -3,6 +3,7 @@ package parser
 import (
 	"errors"
 	"fmt"
+	"net/url"
 	"regexp"
 	"strings"
 	"time"
@@ -35,7 +36,11 @@ type MetricsViewYAML struct {
 	FirstDayOfWeek    uint32           `yaml:"first_day_of_week"`
 	FirstMonthOfYear  uint32           `yaml:"first_month_of_year"`
 	MaxQueryTimeRange string           `yaml:"max_query_time_range"`
-	Dimensions        []*struct {
+	RowLinks          []*struct {
+		Label string `yaml:"label"`
+		URL   string `yaml:"url"`
+	} `yaml:"row_links"`
+	Dimensions []*struct {
 		Name                    string
 		DisplayName             string `yaml:"display_name"`
 		Label                   string // Deprecated: use display_name
@@ -938,6 +943,25 @@ func (p *Parser) parseMetricsView(node *Node) error {
 	spec.CacheKeyTtlSeconds = int64(cacheTTLDuration.Seconds())
 	spec.QueryAttributes = tmp.QueryAttributes
 
+	for _, link := range tmp.RowLinks {
+		if link == nil {
+			continue
+		}
+		if err := validateRowLink(link.URL); err != nil {
+			return fmt.Errorf(`invalid row link: %w`, err)
+		}
+		label := link.Label
+		if label == "" {
+			if u, err := url.Parse(rowLinkPlaceholderRegex.ReplaceAllString(link.URL, "x")); err == nil {
+				label = u.Host
+			}
+		}
+		spec.RowLinks = append(spec.RowLinks, &runtimev1.MetricsViewSpec_RowLink{
+			Label: label,
+			Url:   link.URL,
+		})
+	}
+
 	// When version is greater than 0 or inline explore is defined or skip explore set to true, we skip creating a default explore resource. Application should set version to 0 now to enable automatic explore emission.
 	if node.Version > 0 || skipExplore {
 		return nil
@@ -1180,3 +1204,23 @@ func validateQueryAttributes(attrs map[string]string) error {
 }
 
 var queryAttributeKeyRegex = regexp.MustCompile(`^[a-zA-Z0-9_.-]+$`)
+
+// validateRowLink validates a row link URL template.
+// The template may contain "{{ <column> }}" placeholders, which the UI replaces with the
+// URL-encoded value of that column in the clicked row.
+func validateRowLink(rawURL string) error {
+	if rawURL == "" {
+		return errors.New(`"url" is required`)
+	}
+	probe := rowLinkPlaceholderRegex.ReplaceAllString(rawURL, "x")
+	u, err := url.Parse(probe)
+	if err != nil {
+		return fmt.Errorf("invalid url %q: %w", rawURL, err)
+	}
+	if u.Scheme != "http" && u.Scheme != "https" {
+		return fmt.Errorf("invalid url %q: must be an absolute http(s) URL", rawURL)
+	}
+	return nil
+}
+
+var rowLinkPlaceholderRegex = regexp.MustCompile(`\{\{\s*[^}]+\s*\}\}`)

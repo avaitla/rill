@@ -2085,6 +2085,21 @@ definitions:
           smallest_time_grain:
             type: string
             description: 'Refers to the smallest time granularity the user is allowed to view. The valid values are: millisecond, second, minute, hour, day, week, month, quarter, year'
+          row_links:
+            type: array
+            description: Links attached to every raw row in the Logs view (e.g. a trace viewer). Each link's `url` is a template where `{{ <column> }}` placeholders are replaced with the URL-encoded value of that column in the clicked row.
+            items:
+              type: object
+              properties:
+                label:
+                  type: string
+                  description: Display name for the link. Defaults to the URL's hostname.
+                url:
+                  type: string
+                  description: Absolute http(s) URL template with `{{ <column> }}` placeholders.
+              required:
+                - url
+              additionalProperties: false
           first_day_of_week:
             type: integer
             description: Refers to the first day of the week for time grain aggregation (for example, Sunday instead of Monday). The valid values are 1 through 7 where Monday=1 and Sunday=7

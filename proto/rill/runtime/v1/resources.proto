@@ -386,6 +386,15 @@ message MetricsViewSpec {
   // Sub-day durations (hours, minutes, seconds) are not supported. Applies to queries that take a time range, including the comparison time range.
   // Time-range introspection RPCs are exempt. If unset, no limit is enforced.
   string max_query_time_range = 36;
+  // NOTE: 38-41 are reserved for pending skip/table-option fields.
+  // Links attached to every raw row in the Logs view (e.g. a trace viewer).
+  // The url is a template where "{{ <column> }}" placeholders are replaced with the
+  // URL-encoded value of that column in the clicked row.
+  message RowLink {
+    string label = 1;
+    string url = 2;
+  }
+  repeated RowLink row_links = 42;
 }
 
 message SecurityRule {

@@ -1252,3 +1252,37 @@ explore:
 	require.Nil(t, e3.DimensionsSelector)
 	require.Equal(t, &runtimev1.FieldSelector{Selector: &runtimev1.FieldSelector_Regex{Regex: "count.*"}}, e3.MeasuresSelector)
 }
+
+func TestMetricsViewRowLinks(t *testing.T) {
+	files := map[string]string{
+		`rill.yaml`: ``,
+		`metrics/mv1.yaml`: `
+version: 1
+type: metrics_view
+table: t1
+row_links:
+- label: Trace
+  url: "https://tracing.example.com/search?service={{ service }}&trace={{ trace_id }}"
+- url: "https://logs.example.com/{{ id }}"
+dimensions:
+- column: service
+measures:
+- name: count
+  expression: count(*)
+`,
+	}
+
+	ctx := context.Background()
+	repo := makeRepo(t, files)
+	p, err := Parse(ctx, repo, "", "", "duckdb", true)
+	require.NoError(t, err)
+	require.Empty(t, p.Errors)
+
+	mv := p.Resources[ResourceName{Kind: ResourceKindMetricsView, Name: "mv1"}.Normalized()]
+	require.NotNil(t, mv)
+	links := mv.MetricsViewSpec.RowLinks
+	require.Len(t, links, 2)
+	require.Equal(t, "Trace", links[0].Label)
+	// Label defaults to the URL's hostname
+	require.Equal(t, "logs.example.com", links[1].Label)
+}

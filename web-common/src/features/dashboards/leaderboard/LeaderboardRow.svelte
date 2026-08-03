@@ -2,6 +2,7 @@
   import FormattedDataType from "@rilldata/web-common/components/data-types/FormattedDataType.svelte";
   import PercentageChange from "@rilldata/web-common/components/data-types/PercentageChange.svelte";
   import ExternalLink from "@rilldata/web-common/components/icons/ExternalLink.svelte";
+  import { m } from "@rilldata/web-common/lib/i18n/gen/messages";
   import LeaderboardCell from "@rilldata/web-common/features/dashboards/leaderboard/LeaderboardCell.svelte";
   import { clamp } from "@rilldata/web-common/lib/clamp";
   import { formatMeasurePercentageDifference } from "@rilldata/web-common/lib/number-formatting/percentage-formatter";
@@ -55,6 +56,10 @@
       measureName === leaderboardSortByMeasureName
     );
   }
+
+  // When true, values get a hover "View rows" action jumping to the Logs view.
+  export let viewRowsEnabled = false;
+  export let onViewRows: (dimensionValue: string) => void = () => {};
 
   let hovered = false;
   let valueRect = new DOMRect(0, 0, DEFAULT_COLUMN_WIDTH);
@@ -225,7 +230,10 @@
     {/if}
 
     {#if href}
-      <span class="external-link-wrapper">
+      <span
+        class="external-link-wrapper"
+        style:right="{viewRowsEnabled ? 20 : 0}px"
+      >
         <a
           target="_blank"
           rel="noopener noreferrer"
@@ -238,6 +246,23 @@
         >
           <ExternalLink className="fill-primary-600" />
         </a>
+      </span>
+    {/if}
+
+    {#if viewRowsEnabled}
+      <span class="view-rows-wrapper">
+        <button
+          type="button"
+          title={m.dashboard_view_rows()}
+          aria-label={m.dashboard_view_rows()}
+          onclick={(e) => {
+            e.stopPropagation();
+            onViewRows(dimensionValue);
+          }}
+          class:hovered
+        >
+          <ExploreIcon size="14px" className="fill-primary-600" />
+        </button>
       </span>
     {/if}
   </LeaderboardCell>
@@ -366,6 +391,27 @@
 
   tr:hover td[data-comparison-cell] {
     @apply bg-popover-accent;
+  }
+
+  .view-rows-wrapper button {
+    opacity: 0;
+    position: absolute;
+    right: 0;
+    top: 0;
+    height: 20px;
+    width: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .view-rows-wrapper button.hovered {
+    opacity: 0.7;
+    pointer-events: auto;
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+  }
+  .view-rows-wrapper button.hovered:hover {
+    opacity: 1;
   }
 
   .external-link-wrapper a {

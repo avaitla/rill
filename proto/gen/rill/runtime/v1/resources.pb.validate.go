@@ -3443,6 +3443,40 @@ func (m *MetricsViewSpec) validate(all bool) error {
 
 	// no validation rules for MaxQueryTimeRange
 
+	for idx, item := range m.GetRowLinks() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, MetricsViewSpecValidationError{
+						field:  fmt.Sprintf("RowLinks[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, MetricsViewSpecValidationError{
+						field:  fmt.Sprintf("RowLinks[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return MetricsViewSpecValidationError{
+					field:  fmt.Sprintf("RowLinks[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
 	if m.CacheEnabled != nil {
 		// no validation rules for CacheEnabled
 	}
@@ -14013,3 +14047,109 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = MetricsViewSpec_RollupValidationError{}
+
+// Validate checks the field values on MetricsViewSpec_RowLink with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *MetricsViewSpec_RowLink) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on MetricsViewSpec_RowLink with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// MetricsViewSpec_RowLinkMultiError, or nil if none found.
+func (m *MetricsViewSpec_RowLink) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *MetricsViewSpec_RowLink) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Label
+
+	// no validation rules for Url
+
+	if len(errors) > 0 {
+		return MetricsViewSpec_RowLinkMultiError(errors)
+	}
+
+	return nil
+}
+
+// MetricsViewSpec_RowLinkMultiError is an error wrapping multiple validation
+// errors returned by MetricsViewSpec_RowLink.ValidateAll() if the designated
+// constraints aren't met.
+type MetricsViewSpec_RowLinkMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m MetricsViewSpec_RowLinkMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m MetricsViewSpec_RowLinkMultiError) AllErrors() []error { return m }
+
+// MetricsViewSpec_RowLinkValidationError is the validation error returned by
+// MetricsViewSpec_RowLink.Validate if the designated constraints aren't met.
+type MetricsViewSpec_RowLinkValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e MetricsViewSpec_RowLinkValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e MetricsViewSpec_RowLinkValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e MetricsViewSpec_RowLinkValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e MetricsViewSpec_RowLinkValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e MetricsViewSpec_RowLinkValidationError) ErrorName() string {
+	return "MetricsViewSpec_RowLinkValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e MetricsViewSpec_RowLinkValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sMetricsViewSpec_RowLink.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = MetricsViewSpec_RowLinkValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = MetricsViewSpec_RowLinkValidationError{}

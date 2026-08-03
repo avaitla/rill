@@ -1,5 +1,7 @@
 <script lang="ts">
+  import ExternalLink from "@rilldata/web-common/components/icons/ExternalLink.svelte";
   import { mergeDimensionAndMeasureFilters } from "@rilldata/web-common/features/dashboards/filters/measure-filters/measure-filter-utils";
+  import { resolveRowLink } from "@rilldata/web-common/features/dashboards/logs-view/row-links";
   import { getStateManagers } from "@rilldata/web-common/features/dashboards/state-managers/state-managers";
   import { sanitiseExpression } from "@rilldata/web-common/features/dashboards/stores/filter-utils";
   import { useTimeControlStore } from "@rilldata/web-common/features/dashboards/time-controls/time-control-store";
@@ -16,6 +18,7 @@
   $: metricsViewSpec = $validSpecStore.data?.metricsView ?? {};
   $: exploreSpec = $validSpecStore.data?.explore ?? {};
   $: timeDimension = metricsViewSpec.timeDimension;
+  $: rowLinks = metricsViewSpec.rowLinks ?? [];
   $: configuredColumns = exploreSpec.logsViewColumns ?? [];
 
   $: ({ timeStart, timeEnd, ready: timeControlsReady } = $timeControlsStore);
@@ -80,6 +83,9 @@
       <table>
         <thead>
           <tr>
+            {#if rowLinks.length}
+              <th class="w-8"></th>
+            {/if}
             {#each columns as col (col)}
               <th class:time-col={col === timeDimension}>{col}</th>
             {/each}
@@ -91,6 +97,22 @@
               class:expanded={expanded === i}
               onclick={() => (expanded = expanded === i ? null : i)}
             >
+              {#if rowLinks.length}
+                <td class="links-cell">
+                  {#each rowLinks as link (link.url)}
+                    <a
+                      href={resolveRowLink(link.url ?? "", row)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title={link.label}
+                      aria-label={link.label}
+                      onclick={(e) => e.stopPropagation()}
+                    >
+                      <ExternalLink size="12px" className="fill-primary-600" />
+                    </a>
+                  {/each}
+                </td>
+              {/if}
               {#each columns as col (col)}
                 <td class:time-col={col === timeDimension}>
                   {format(row[col])}
@@ -99,7 +121,7 @@
             </tr>
             {#if expanded === i}
               <tr class="detail-row">
-                <td colspan={columns.length}>
+                <td colspan={columns.length + (rowLinks.length ? 1 : 0)}>
                   <dl>
                     {#each allColumns as col (col)}
                       <div>
@@ -161,6 +183,13 @@
   td.time-col,
   th.time-col {
     @apply text-fg-muted;
+  }
+
+  .links-cell {
+    @apply whitespace-nowrap;
+  }
+  .links-cell a {
+    @apply inline-flex align-middle opacity-60 hover:opacity-100 mr-1;
   }
 
   .detail-row {

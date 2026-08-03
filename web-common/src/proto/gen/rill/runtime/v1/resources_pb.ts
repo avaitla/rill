@@ -1579,6 +1579,11 @@ export class MetricsViewSpec extends Message<MetricsViewSpec> {
    */
   maxQueryTimeRange = "";
 
+  /**
+   * @generated from field: repeated rill.runtime.v1.MetricsViewSpec.RowLink row_links = 42;
+   */
+  rowLinks: MetricsViewSpec_RowLink[] = [];
+
   constructor(data?: PartialMessage<MetricsViewSpec>) {
     super();
     proto3.util.initPartial(data, this);
@@ -1615,6 +1620,7 @@ export class MetricsViewSpec extends Message<MetricsViewSpec> {
     { no: 33, name: "query_attributes", kind: "map", K: 9 /* ScalarType.STRING */, V: {kind: "scalar", T: 9 /* ScalarType.STRING */} },
     { no: 34, name: "rollups", kind: "message", T: MetricsViewSpec_Rollup, repeated: true },
     { no: 36, name: "max_query_time_range", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 42, name: "row_links", kind: "message", T: MetricsViewSpec_RowLink, repeated: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): MetricsViewSpec {
@@ -2308,6 +2314,54 @@ export class MetricsViewSpec_Rollup extends Message<MetricsViewSpec_Rollup> {
 
   static equals(a: MetricsViewSpec_Rollup | PlainMessage<MetricsViewSpec_Rollup> | undefined, b: MetricsViewSpec_Rollup | PlainMessage<MetricsViewSpec_Rollup> | undefined): boolean {
     return proto3.util.equals(MetricsViewSpec_Rollup, a, b);
+  }
+}
+
+/**
+ * NOTE: 38-41 are reserved for pending skip/table-option fields.
+ * Links attached to every raw row in the Logs view (e.g. a trace viewer).
+ * The url is a template where "{{ <column> }}" placeholders are replaced with the
+ * URL-encoded value of that column in the clicked row.
+ *
+ * @generated from message rill.runtime.v1.MetricsViewSpec.RowLink
+ */
+export class MetricsViewSpec_RowLink extends Message<MetricsViewSpec_RowLink> {
+  /**
+   * @generated from field: string label = 1;
+   */
+  label = "";
+
+  /**
+   * @generated from field: string url = 2;
+   */
+  url = "";
+
+  constructor(data?: PartialMessage<MetricsViewSpec_RowLink>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rill.runtime.v1.MetricsViewSpec.RowLink";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "label", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): MetricsViewSpec_RowLink {
+    return new MetricsViewSpec_RowLink().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): MetricsViewSpec_RowLink {
+    return new MetricsViewSpec_RowLink().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): MetricsViewSpec_RowLink {
+    return new MetricsViewSpec_RowLink().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: MetricsViewSpec_RowLink | PlainMessage<MetricsViewSpec_RowLink> | undefined, b: MetricsViewSpec_RowLink | PlainMessage<MetricsViewSpec_RowLink> | undefined): boolean {
+    return proto3.util.equals(MetricsViewSpec_RowLink, a, b);
   }
 }
 

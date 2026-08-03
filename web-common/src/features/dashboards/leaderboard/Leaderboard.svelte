@@ -14,6 +14,7 @@
     createQueryServiceMetricsViewAggregation,
     V1Operation,
   } from "@rilldata/web-common/runtime-client";
+  import { page } from "$app/stores";
   import { useRuntimeClient } from "@rilldata/web-common/runtime-client/v2";
   import { onMount } from "svelte";
   import type { DimensionThresholdFilter } from "web-common/src/features/dashboards/stores/explore-state";
@@ -24,6 +25,9 @@
   import { mergeDimensionAndMeasureFilters } from "../filters/measure-filters/measure-filter-utils";
   import { SortType } from "../proto-state/derived-types";
   import { getFiltersForOtherDimensions } from "../selectors";
+  import { get } from "svelte/store";
+  import { gotoViewRows } from "../logs-view/view-rows";
+  import { getStateManagers } from "../state-managers/state-managers";
   import { getMeasuresForDimensionOrLeaderboardDisplay } from "../state-managers/selectors/dashboard-queries";
   import type { selectedDimensionValues } from "../state-managers/selectors/dimension-filters";
   import {
@@ -45,6 +49,11 @@
   import { COMPARISON_COLUMN_WIDTH, valueColumn } from "./leaderboard-widths";
 
   const runtimeClient = useRuntimeClient();
+  // Optional: absent when rendered outside the explore context (e.g. canvas).
+  const stateManagers = getStateManagers();
+  const dashboardStore = stateManagers?.dashboardStore;
+  const leaderboardValidSpecStore = stateManagers?.validSpecStore;
+  const currentExploreName = stateManagers?.exploreName;
   const gutterWidth = 24;
 
   export let dimension: MetricsViewSpecDimension;
@@ -112,6 +121,24 @@
     );
     observer.observe(container);
   });
+
+  // "View rows" jumps to this explore's Logs view with the clicked value filtered.
+  $: viewRowsEnabled =
+    !!(leaderboardValidSpecStore && $leaderboardValidSpecStore?.data?.explore?.logsView) &&
+    !!currentExploreName;
+
+  function onViewRows(dimensionValue: string) {
+    if (!currentExploreName) return;
+    void gotoViewRows(
+      runtimeClient,
+      get(currentExploreName),
+      dimensionName,
+      dimensionValue,
+      dashboardStore ? get(dashboardStore) : undefined,
+      $page.params.organization,
+      $page.params.project,
+    ).catch((error) => console.warn("View rows navigation error:", error));
+  }
 
   let container: HTMLElement;
 
@@ -409,6 +436,8 @@
             {dimensionColumnWidth}
             {maxValues}
             {lowerIsBetterMap}
+            {viewRowsEnabled}
+            {onViewRows}
           />
         {/each}
       </DelayedLoadingRows>
@@ -433,6 +462,8 @@
           {dimensionColumnWidth}
           {maxValues}
           {lowerIsBetterMap}
+          {viewRowsEnabled}
+          {onViewRows}
         />
       {/each}
     </tbody>

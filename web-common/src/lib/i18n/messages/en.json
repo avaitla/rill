@@ -837,6 +837,7 @@
   "dashboard_percentage_change": "Percentage change over comparison period",
   "dashboard_pivot": "Pivot",
   "dashboard_logs": "Logs",
+  "dashboard_view_rows": "View rows",
   "dashboard_logs_showing": "{count} rows",
   "dashboard_logs_showing_latest": "Latest {count} rows",
   "dashboard_logs_empty": "No rows match the current filters and time range.",

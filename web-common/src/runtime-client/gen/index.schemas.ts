@@ -1703,7 +1703,16 @@ Keys and values are stored as templates and will be resolved at query time.
  */
 export type V1MetricsViewSpecQueryAttributes = { [key: string]: string };
 
+export interface MetricsViewSpecRowLink {
+  label?: string;
+  /** URL template; "{{ <column> }}" is replaced with the URL-encoded value of that column in the row. */
+  url?: string;
+}
+
 export interface V1MetricsViewSpec {
+  /** Links attached to every raw row in the Logs view. The url is a template where
+"{{ <column> }}" placeholders are replaced with the URL-encoded value of that column. */
+  rowLinks?: MetricsViewSpecRowLink[];
   /** name of parent metrics view, if this is a derived metrics view. If this is set then certain fields like table, connector, database*, model, dimensions, and measures will only be set in `state.valid_spec`. */
   parent?: string;
   connector?: string;

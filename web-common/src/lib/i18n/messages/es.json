@@ -837,6 +837,7 @@
   "dashboard_percentage_change": "Cambio porcentual respecto al período de comparación",
   "dashboard_pivot": "Pivote",
   "dashboard_logs": "Registros",
+  "dashboard_view_rows": "Ver filas",
   "dashboard_logs_showing": "{count} filas",
   "dashboard_logs_showing_latest": "Últimas {count} filas",
   "dashboard_logs_empty": "Ninguna fila coincide con los filtros y el rango de tiempo actuales.",
