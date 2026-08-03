@@ -3,6 +3,8 @@
   import { getStateManagers } from "@rilldata/web-common/features/dashboards/state-managers/state-managers";
   import { sanitiseExpression } from "@rilldata/web-common/features/dashboards/stores/filter-utils";
   import { useTimeControlStore } from "@rilldata/web-common/features/dashboards/time-controls/time-control-store";
+  import CopyIcon from "@rilldata/web-common/components/icons/CopyIcon.svelte";
+  import { copyToClipboard } from "@rilldata/web-common/lib/actions/copy-to-clipboard";
   import { m } from "@rilldata/web-common/lib/i18n/gen/messages";
   import { createQueryServiceMetricsViewRows } from "@rilldata/web-common/runtime-client/v2/gen/query-service";
 
@@ -102,6 +104,14 @@
     return prettyJson(value) ?? String(value);
   }
 
+  function copyRow(row: Record<string, unknown>) {
+    copyToClipboard(JSON.stringify(row, null, 2));
+  }
+
+  function copyField(value: unknown) {
+    copyToClipboard(formatDetail(value));
+  }
+
   // Row cells show only the first line of multiline values (e.g. stack traces),
   // with a line-count hint; the expanded detail shows the full text.
   function formatCell(value: unknown): string {
@@ -165,11 +175,42 @@
             {#if expanded === i}
               <tr class="detail-row">
                 <td colspan={columns.length}>
+                  <div class="detail-toolbar">
+                    <button
+                      type="button"
+                      class="copy-btn"
+                      title={m.dashboard_logs_copy_row()}
+                      aria-label={m.dashboard_logs_copy_row()}
+                      onclick={(e) => {
+                        e.stopPropagation();
+                        copyRow(row);
+                      }}
+                    >
+                      <CopyIcon size="12px" />
+                      {m.dashboard_logs_copy_row()}
+                    </button>
+                  </div>
                   <dl>
                     {#each allColumns as col (col)}
                       <div>
                         <dt>{col}</dt>
-                        <dd>{formatDetail(row[col])}</dd>
+                        <dd>
+                          {formatDetail(row[col])}
+                          <button
+                            type="button"
+                            class="copy-btn field-copy"
+                            title={m.dashboard_logs_copy_field({ field: col })}
+                            aria-label={m.dashboard_logs_copy_field({
+                              field: col,
+                            })}
+                            onclick={(e) => {
+                              e.stopPropagation();
+                              copyField(row[col]);
+                            }}
+                          >
+                            <CopyIcon size="11px" />
+                          </button>
+                        </dd>
                       </div>
                     {/each}
                   </dl>
@@ -247,6 +288,26 @@
   .detail-row td {
     @apply whitespace-normal bg-surface-subtle;
   }
+  .detail-toolbar {
+    @apply flex justify-end px-2 pt-2;
+  }
+
+  .copy-btn {
+    @apply inline-flex items-center gap-x-1 text-fg-muted;
+    @apply hover:text-fg-primary cursor-pointer;
+  }
+
+  .field-copy {
+    @apply ml-1.5 align-middle opacity-0;
+  }
+
+  .detail-row dd:hover .field-copy {
+    opacity: 0.7;
+  }
+  .field-copy:hover {
+    opacity: 1 !important;
+  }
+
   .detail-row dl {
     @apply grid gap-x-6 gap-y-1 p-2;
     grid-template-columns: max-content 1fr;
