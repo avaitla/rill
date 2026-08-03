@@ -18,6 +18,9 @@ table_options: [events_v1, events_v2]  # user-selectable tables
 skip_invalid_dimensions: true
 ```
 
+![Table selector dropdown](screenshots/06-table-options.png)
+*The "Table" dropdown in the dashboard header switching between `events_v1` and `events_v2`; the selection persists in the `table` URL param.*
+
 ## How it works
 
 **Backend** — the parser emits one **variant metrics view per additional table**

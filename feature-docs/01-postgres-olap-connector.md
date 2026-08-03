@@ -32,6 +32,9 @@ missing pieces:
 Gotchas discovered live: `INTERVAL '1 QUARTER'` is invalid (quarter is a `date_trunc`
 field, not an interval unit → use `3 MONTH`); `date_trunc` needs plural `milliseconds`.
 
+![Orders dashboard querying Postgres live](screenshots/01-postgres-orders.png)
+*The orders explore — every number and chart is a live Postgres query; no ingestion.*
+
 ## Usage
 
 ```yaml

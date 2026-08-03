@@ -38,6 +38,12 @@ explore:
   hide_empty_dimensions: true
 ```
 
+![Auto-discovered map-key dimensions](screenshots/05-map-dimensions.png)
+*Leaderboards for `http.method`, `http.status_code`, `user.id` and `k8s.namespace.name` — discovered from ClickHouse `Map` columns, none declared in YAML.*
+
+![hide_empty_dimensions under a filter](screenshots/05-hide-empty-worker.png)
+*The RED detail explore filtered to `worker`: checkout/search attribute leaderboards hide themselves, leaving only worker's `job_name`, `job_queue`, `retry_count` and `error`.*
+
 ## How it works
 
 - Proto: `Dimension.map_column = 18`, `discover_limit = 19`, `discover_pattern = 20`,
