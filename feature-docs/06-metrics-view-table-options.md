@@ -18,6 +18,9 @@ table_options: [events_v1, events_v2]  # user-selectable tables
 skip_invalid_dimensions: true
 ```
 
+![Table selector dropdown](screenshots/06-table-options.png)
+*The "Table" dropdown in the dashboard header switching between `events_v1` and `events_v2`; the selection persists in the `table` URL param.*
+
 ## How it works
 
 **Backend** — the parser emits one **variant metrics view per additional table**
@@ -28,6 +31,9 @@ for URL state). Variants are inserted alongside the primary (collision-prechecke
 errors are forbidden after the first `insertResource`), get the same refs, and reconcile
 **independently** — which is exactly where `skip_invalid_dimensions` prunes per table.
 All existing query APIs work against variants unchanged; zero query-path changes.
+Variants carry `MetricsViewSpec.table_option_of = <primary name>` (field 41) so the
+frontend can tell them apart from primaries — the file-to-resource mapping skips them,
+keeping the file's inspector/profile on the primary's table.
 
 **Frontend** — one substitution point: the state managers
 (`web-common/src/features/dashboards/state-managers/state-managers.ts`) expose the
