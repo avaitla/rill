@@ -39,6 +39,9 @@ dimensions:
 `label` is optional: it defaults to the URL's hostname for `url` links and to the
 explore name for `explore` links. Exactly one of `url`/`explore` must be set per link.
 
+![Value links menu on a dimension value](screenshots/04-value-links.png)
+*Hovering `checkout` and opening its links menu: an explore drill-through plus two external URL templates. Note the link indicator next to the "Service" header.*
+
 ## How it works
 
 - Proto: `MetricsViewSpec.Dimension.ValueLink {label = 1, url = 2, explore = 3}`,
