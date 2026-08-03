@@ -553,6 +553,7 @@ explore:
 	require.NotNil(t, variantSpec)
 	require.Equal(t, "events_v1", variantSpec.Table)
 	require.Empty(t, variantSpec.TableOptions)
+	require.Equal(t, "mv", variantSpec.TableOptionOf)
 	names = nil
 	for _, d := range variantSpec.Dimensions {
 		names = append(names, d.Name)

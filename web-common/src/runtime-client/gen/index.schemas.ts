@@ -1776,6 +1776,9 @@ from the valid spec with a warning. */
   /** Selectable tables that can back this metrics view. Always includes the default table.
 Only set on the primary metrics view, not on its variants. */
   tableOptions?: MetricsViewSpecTableOption[];
+  /** Name of the primary metrics view this spec is a table-option variant of.
+Only set on parser-generated variants; empty on primary metrics views. */
+  tableOptionOf?: string;
 }
 
 /**

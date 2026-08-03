@@ -432,6 +432,11 @@ export class FileArtifact {
     const isSubResource = !!resource.component?.spec?.definedInCanvas;
     if (isSubResource) return;
 
+    // Table-option variants share their primary metrics view's file but must
+    // never claim it: the file's inspector, breadcrumbs and navigation should
+    // reflect the primary (e.g. profile the default table, not a variant's).
+    if (resource.metricsView?.spec?.tableOptionOf) return;
+
     const curName = get(this.resourceName);
 
     // Much code currently assumes that a file is associated with 0 or 1 resource.
