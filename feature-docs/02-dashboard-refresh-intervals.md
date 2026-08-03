@@ -18,6 +18,9 @@ underneath that ticks and resets on every refresh.
 (An earlier revision also had an `auto` mode that polled the metrics view watermark and
 refreshed only on new data; it was removed by request — only explicit timers remain.)
 
+![Refresh interval dropdown](screenshots/02-refresh-intervals.png)
+*The refresh control with the interval dropdown open (Off + configured durations) and the "Last refreshed" caption.*
+
 ## Usage
 
 ```yaml
