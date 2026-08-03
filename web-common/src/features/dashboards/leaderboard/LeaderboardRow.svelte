@@ -264,42 +264,7 @@
       </span>
     {/if}
 
-    {#if valueLinks.length === 1 && valueLinks[0].url}
-      <span class="value-links-wrapper" style:right="0px">
-        <a
-          target="_blank"
-          rel="noopener noreferrer"
-          href={resolveDimensionValueLink(valueLinks[0].url, dimensionValue)}
-          title={valueLinks[0].label}
-          aria-label={m.dashboard_dimension_links({
-            value: String(dimensionValue),
-          })}
-          onclick={(e) => {
-            e.stopPropagation();
-          }}
-          class:hovered={effectiveHovered}
-        >
-          <ExternalLink className="fill-primary-600" />
-        </a>
-      </span>
-    {:else if valueLinks.length === 1 && valueLinks[0].explore}
-      <span class="value-links-wrapper" style:right="0px">
-        <button
-          type="button"
-          title={valueLinks[0].label}
-          aria-label={m.dashboard_dimension_links({
-            value: String(dimensionValue),
-          })}
-          onclick={(e) => {
-            e.stopPropagation();
-            onExploreLink(valueLinks[0].explore ?? "", dimensionValue);
-          }}
-          class:hovered={effectiveHovered}
-        >
-          <ExploreIcon size="14px" className="fill-primary-600" />
-        </button>
-      </span>
-    {:else if valueLinks.length > 1}
+    {#if valueLinks.length}
       <span class="value-links-wrapper" style:right="0px">
         <DropdownMenu.Root bind:open={linksMenuOpen}>
           <DropdownMenu.Trigger>
