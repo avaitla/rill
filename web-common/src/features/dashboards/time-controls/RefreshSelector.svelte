@@ -5,20 +5,15 @@
   import { m } from "@rilldata/web-common/lib/i18n/gen/messages";
   import { queryClient } from "@rilldata/web-common/lib/svelte-query/globalQueryClient";
   import { timeAgo } from "@rilldata/web-common/lib/time/relative-time";
-  import { getQueryServiceMetricsViewTimeRangeQueryOptions } from "@rilldata/web-common/runtime-client";
   import { invalidateMetricsViewData } from "@rilldata/web-common/runtime-client/invalidation";
-  import type { RuntimeClient } from "@rilldata/web-common/runtime-client/v2";
   import {
-    AUTO_REFRESH_POLL_INTERVAL_MS,
     DEFAULT_REFRESH_INTERVALS,
     isValidRefreshInterval,
-    REFRESH_INTERVAL_AUTO,
     REFRESH_INTERVAL_OFF,
     refreshIntervalToMs,
   } from "./refresh-intervals";
 
   interface Props {
-    runtimeClient: RuntimeClient;
     metricsViewName: string;
     /** Selectable durations, from the explore YAML's `refresh_intervals`. Falls back to a default list. */
     refreshIntervals?: string[];
@@ -26,13 +21,8 @@
     onSelect: (interval: string) => void;
   }
 
-  let {
-    runtimeClient,
-    metricsViewName,
-    refreshIntervals,
-    selected,
-    onSelect,
-  }: Props = $props();
+  let { metricsViewName, refreshIntervals, selected, onSelect }: Props =
+    $props();
 
   let open = $state(false);
   let refreshing = $state(false);
@@ -67,38 +57,7 @@
     }
   }
 
-  // In "auto" mode, poll the metrics view's watermark and refresh only when it changes,
-  // so dashboards refetch when new data lands instead of on a fixed cadence.
-  let lastWatermark: string | undefined;
-  async function pollWatermark() {
-    try {
-      const options = getQueryServiceMetricsViewTimeRangeQueryOptions(
-        runtimeClient,
-        { metricsViewName },
-      );
-      const resp = await queryClient.fetchQuery({ ...options, staleTime: 0 });
-      const watermark =
-        resp.timeRangeSummary?.watermark ?? resp.timeRangeSummary?.max;
-      if (lastWatermark !== undefined && watermark !== lastWatermark) {
-        await refresh();
-      }
-      lastWatermark = watermark;
-    } catch {
-      // Ignore polling errors and retry on the next tick
-    }
-  }
-
   $effect(() => {
-    lastWatermark = undefined;
-    if (selected === REFRESH_INTERVAL_AUTO) {
-      // Capture the baseline watermark immediately so the first poll tick can already detect changes
-      void pollWatermark();
-      const timer = setInterval(
-        () => void pollWatermark(),
-        AUTO_REFRESH_POLL_INTERVAL_MS,
-      );
-      return () => clearInterval(timer);
-    }
     const ms = refreshIntervalToMs(selected);
     if (ms === undefined) return;
     const timer = setInterval(() => void refresh(), ms);
@@ -107,7 +66,6 @@
 
   function labelFor(interval: string): string {
     if (interval === REFRESH_INTERVAL_OFF) return m.dashboard_refresh_off();
-    if (interval === REFRESH_INTERVAL_AUTO) return m.dashboard_refresh_auto();
     return interval;
   }
 </script>
@@ -157,19 +115,6 @@
           onSelect={() => onSelect(REFRESH_INTERVAL_OFF)}
         >
           {m.dashboard_refresh_off()}
-        </DropdownMenu.CheckboxItem>
-        <DropdownMenu.CheckboxItem
-          checkRight
-          closeOnSelect
-          checked={selected === REFRESH_INTERVAL_AUTO}
-          onSelect={() => onSelect(REFRESH_INTERVAL_AUTO)}
-        >
-          <div class="flex flex-col">
-            <span>{m.dashboard_refresh_auto()}</span>
-            <span class="text-xs text-fg-muted">
-              {m.dashboard_refresh_auto_hint()}
-            </span>
-          </div>
         </DropdownMenu.CheckboxItem>
         <DropdownMenu.Separator />
         {#each intervalOptions as interval (interval)}

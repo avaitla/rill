@@ -1,23 +1,22 @@
 # 2. Dashboard Refresh Intervals
 
-**Branch:** `avaitla/dashboard-refresh-intervals` (1 commit, off `main`)
+**Branch:** `avaitla/dashboard-refresh-intervals` (off `main`)
 
 ## What it does
 
 A Grafana-style refresh control in the explore dashboard header: a manual "⟳ Refresh"
-button plus an interval dropdown (Off, Auto, then a duration list — default
+button plus an interval dropdown (Off, then a duration list — default
 `5s 10s 30s 1m 5m 15m 30m 1h 2h 1d`), with a relative "Last refreshed …" caption
 underneath that ticks and resets on every refresh.
 
 - **Fixed interval**: a timer calls `invalidateMetricsViewData(queryClient, metricsViewName)`
   → every active dashboard query refetches
-- **Auto**: polls the metrics view's watermark every 30s
-  (`getQueryServiceMetricsViewTimeRangeQueryOptions` + `fetchQuery` with `staleTime: 0`)
-  and refetches **only when new data has actually arrived** — the baseline watermark is
-  captured immediately when auto engages so the first tick can already detect changes
 - The selection round-trips through the **`refresh` URL param**, cleaned when it equals
   the dashboard default (same convention as `tz`/`grain`)
 - Available durations and the initial selection are **YAML-configurable**
+
+(An earlier revision also had an `auto` mode that polled the metrics view watermark and
+refreshed only on new data; it was removed by request — only explicit timers remain.)
 
 ## Usage
 
@@ -25,11 +24,11 @@ underneath that ticks and resets on every refresh.
 # explore yaml (standalone or inline in a metrics view)
 refresh_intervals: ['5s', '30s', '1m', '5m', '15m', '1h']   # dropdown options
 defaults:
-  refresh_interval: auto     # a duration, "off" (default) or "auto"
+  refresh_interval: 30s      # a duration, or "off" (default)
 ```
 
 Parser validates durations (Go syntax plus a `d` day suffix, min 1s) and rejects
-`off`/`auto` inside `refresh_intervals` (they're always selectable).
+`off` inside `refresh_intervals` (it's always selectable).
 
 ## Key files
 
@@ -54,7 +53,8 @@ Frontend url-state/store suites: `cd web-common && npx vitest run src/features/d
 
 Works with any OLAP engine. Fastest standalone demo uses DuckDB (no external deps);
 the most impressive demo combines it with the Postgres connector branch (insert rows
-live and watch Auto pick them up) — for that, create a local merge of both branches.
+live and watch a short interval pick them up) — for that, create a local merge of both
+branches.
 
 ```bash
 mkdir -p /tmp/refreshdemo/models /tmp/refreshdemo/metrics /tmp/refreshdemo/dashboards
@@ -82,18 +82,18 @@ explore:
   name: orders_explore
   refresh_intervals: ['5s', '30s', '1m', '5m', '15m', '1h']
   defaults:
-    refresh_interval: auto
+    refresh_interval: 30s
 EOF
 cd /tmp/refreshdemo && /path/to/rill/rill start --no-open --port 9009 --port-grpc 49009
 ```
 
 **What to show** at http://localhost:9009/explore/orders_explore:
 
-- Selector defaults to **Auto** (from YAML), dropdown lists the configured intervals with
-  Off/Auto on top; "Last refreshed Just now" under the pill, ticking to "1 minute ago"
+- Selector defaults to **30s** (from YAML), dropdown lists the configured intervals with
+  Off on top; "Last refreshed Just now" under the pill, ticking to "1 minute ago"
 - Pick `5s` → URL becomes `?refresh=5s`; server log shows queries re-firing every 5s
   (`log_queries: true` on the connector makes this visible)
 - Deep-link `?refresh=15m` → selector shows 15m
-- Auto + live data: with the Postgres merge, `INSERT` rows and watch totals update within
-  one 30s poll — no reload. (With DuckDB, edit the model SQL to change data instead.)
+- Live data: with the Postgres merge, `INSERT` rows and watch totals update on the next
+  tick — no reload. (With DuckDB, edit the model SQL to change data instead.)
 - Manual ⟳ button resets the caption to "Just now"

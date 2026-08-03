@@ -142,12 +142,12 @@ defaults:
 type: explore
 metrics_view: mv1
 defaults:
-  refresh_interval: auto
+  refresh_interval: off
 `,
 	}
 
 	refreshInterval1 := "5m"
-	refreshInterval2 := "auto"
+	refreshInterval2 := "off"
 	resources := []*Resource{
 		{
 			Name:  ResourceName{Kind: ResourceKindExplore, Name: "e1"},
