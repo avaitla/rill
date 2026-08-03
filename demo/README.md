@@ -29,8 +29,8 @@ RawDuck-style schemaless store).
 
 - **Orders (Postgres)** — `/explore/orders_explore`
   - *Postgres OLAP connector*: every query runs live against Postgres, no ingestion.
-  - *Refresh intervals*: header dropdown (defaults to `auto`), `refresh` URL param,
-    "Last refreshed" caption. Try `?refresh=30s`.
+  - *Refresh intervals*: header dropdown (defaults to `30s`), `refresh` URL param,
+    "Last refreshed" caption. Try `?refresh=5m`.
 - **Logs (ClickHouse)** — `/explore/logs_explore`
   - *Dynamic map dimensions*: leaderboards for `http.method`, `http.status_code`,
     `user.id`, `k8s.namespace.name` are discovered from the `Map` columns at reconcile

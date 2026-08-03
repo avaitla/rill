@@ -2662,7 +2662,7 @@ definitions:
               type: string
           refresh_intervals:
             type: array
-            description: Overrides the list of auto-refresh intervals available in the refresh dropdown, e.g. `['30s', '5m', '1h']`. The special values `off` and `auto` are always selectable and should not be included.
+            description: Overrides the list of auto-refresh intervals available in the refresh dropdown, e.g. `['30s', '5m', '1h']`. The special value `off` is always selectable and should not be included.
             items:
               type: string
           lock_time_zone:
@@ -2711,7 +2711,7 @@ definitions:
                 description: 'For dimension mode, specify the comparison dimension by name.'
                 type: string
               refresh_interval:
-                description: Refers to the default auto-refresh interval selected when a user initially loads the dashboard. The value must be a duration such as `30s`, `5m` or `1h`, or one of the special values `off` (the default) and `auto`.
+                description: Refers to the default auto-refresh interval selected when a user initially loads the dashboard. The value must be a duration such as `30s`, `5m` or `1h`, or the special value `off` (the default).
                 type: string
             additionalProperties: false
           embeds:
@@ -4184,7 +4184,7 @@ definitions:
               type: string
           refresh_intervals:
             type: array
-            description: Overrides the list of auto-refresh intervals available in the refresh dropdown, e.g. `['30s', '5m', '1h']`. The special values `off` and `auto` are always selectable and should not be included.
+            description: Overrides the list of auto-refresh intervals available in the refresh dropdown, e.g. `['30s', '5m', '1h']`. The special value `off` is always selectable and should not be included.
             items:
               type: string
           lock_time_zone:
@@ -4217,7 +4217,7 @@ definitions:
                 description: Default dimension to use for comparison when comparison_mode is 'dimension'.
               refresh_interval:
                 type: string
-                description: Default auto-refresh interval selected when the explore view loads. A duration such as `30s`, `5m` or `1h`, or one of the special values `off` (the default) and `auto`.
+                description: Default auto-refresh interval selected when the explore view loads. A duration such as `30s`, `5m` or `1h`, or the special value `off` (the default).
             additionalProperties: false
           embeds:
             type: object

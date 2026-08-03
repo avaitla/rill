@@ -270,7 +270,7 @@ func (p *Parser) parseExploreDefinition(tmp *ExploreDefinitionYAML) (*exploreDef
 
 	// Validate refresh intervals
 	for _, ri := range tmp.RefreshIntervals {
-		if ri == refreshIntervalOff || ri == refreshIntervalAuto {
+		if ri == refreshIntervalOff {
 			return nil, fmt.Errorf("refresh interval %q should not be listed in refresh_intervals since it is always selectable", ri)
 		}
 		if err := validateRefreshInterval(ri); err != nil {
@@ -299,7 +299,7 @@ func (p *Parser) parseExploreDefinition(tmp *ExploreDefinitionYAML) (*exploreDef
 			return nil, errors.New("can only set comparison_dimension when comparison_mode is 'dimension'")
 		}
 
-		if tmp.Defaults.RefreshInterval != "" && tmp.Defaults.RefreshInterval != refreshIntervalOff && tmp.Defaults.RefreshInterval != refreshIntervalAuto {
+		if tmp.Defaults.RefreshInterval != "" && tmp.Defaults.RefreshInterval != refreshIntervalOff {
 			if err := validateRefreshInterval(tmp.Defaults.RefreshInterval); err != nil {
 				return nil, err
 			}
@@ -406,11 +406,9 @@ func (p *Parser) parseThemeRef(n *yaml.Node) (string, *runtimev1.ThemeSpec, erro
 	}
 }
 
-// Special refresh interval values that are always selectable in the UI.
-const (
-	refreshIntervalOff  = "off"
-	refreshIntervalAuto = "auto"
-)
+// refreshIntervalOff is the special refresh interval value that disables auto-refresh;
+// it is always selectable in the UI.
+const refreshIntervalOff = "off"
 
 // validateRefreshInterval validates an auto-refresh interval such as "30s", "5m", "1h" or "1d".
 func validateRefreshInterval(s string) error {

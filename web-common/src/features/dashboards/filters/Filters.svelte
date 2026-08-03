@@ -535,7 +535,6 @@
       {/if}
       <div class="ml-auto">
         <RefreshSelector
-          runtimeClient={client}
           {metricsViewName}
           refreshIntervals={exploreSpec.refreshIntervals}
           selected={$dashboardStore?.selectedRefreshInterval ??

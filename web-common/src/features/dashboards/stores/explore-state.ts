@@ -131,7 +131,7 @@ export interface ExploreState {
   selectedTableOption?: string;
 
   /**
-   * user selected auto-refresh interval: a duration like "5m", or "off" or "auto"
+   * user selected auto-refresh interval: a duration like "5m", or "off"
    */
   selectedRefreshInterval?: string;
 
