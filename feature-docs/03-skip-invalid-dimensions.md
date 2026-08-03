@@ -20,6 +20,9 @@ dimensions:
   - column: status_code   # not in the table yet? dashboard still works
 ```
 
+![Pruned dimensions on an old table version](screenshots/03-skip-invalid-pruned.png)
+*The events dashboard backed by `events_v1`, which lacks `http_method`/`region`: the missing dimensions are pruned instead of erroring (only the Service leaderboard remains).*
+
 ## How it works
 
 - Proto: `MetricsViewSpec.skip_invalid_dimensions = 38`
