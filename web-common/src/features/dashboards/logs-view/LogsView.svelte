@@ -2,7 +2,9 @@
   import { page } from "$app/stores";
   import { get } from "svelte/store";
   import * as DropdownMenu from "@rilldata/web-common/components/dropdown-menu";
+  import CopyIcon from "@rilldata/web-common/components/icons/CopyIcon.svelte";
   import ExternalLink from "@rilldata/web-common/components/icons/ExternalLink.svelte";
+  import { copyToClipboard } from "@rilldata/web-common/lib/actions/copy-to-clipboard";
   import {
     gotoDrillThroughExplore,
     openDimensionValueLink,
@@ -35,6 +37,21 @@
       .filter((d) => d.links?.length && d.column)
       .map((d) => [d.column as string, d]),
   );
+
+  function linkTargets(dim: { links?: { label?: string; url?: string; explore?: string }[] }): string {
+    return (dim.links ?? [])
+      .map((l) => l.label || l.url || l.explore || "")
+      .filter(Boolean)
+      .join(", ");
+  }
+
+  function copyRow(row: Record<string, unknown>) {
+    copyToClipboard(JSON.stringify(row, null, 2));
+  }
+
+  function copyField(value: unknown) {
+    copyToClipboard(formatDetail(value));
+  }
 
   function onCellExploreLink(
     targetExplore: string,
@@ -169,6 +186,7 @@
               <th class="w-8"></th>
             {/if}
             {#each columns as col (col)}
+              {@const headerDim = dimensionLinksByColumn.get(col)}
               <th
                 class:time-col={col === timeDimension}
                 aria-sort={effectiveSortCol === col
@@ -179,6 +197,19 @@
               >
                 <button type="button" onclick={() => toggleSort(col)}>
                   {col}
+                  {#if headerDim}
+                    <span
+                      class="header-link-hint"
+                      title={m.dashboard_dimension_has_links({
+                        targets: linkTargets(headerDim),
+                      })}
+                      aria-label={m.dashboard_dimension_has_links({
+                        targets: linkTargets(headerDim),
+                      })}
+                    >
+                      <ExternalLink size="10px" className="fill-current" />
+                    </span>
+                  {/if}
                   {#if effectiveSortCol === col}
                     <span class="sort-arrow">{sortDesc ? "\u2193" : "\u2191"}</span>
                   {/if}
@@ -266,11 +297,42 @@
             {#if expanded === i}
               <tr class="detail-row">
                 <td colspan={columns.length + (rowLinks.length ? 1 : 0)}>
+                  <div class="detail-toolbar">
+                    <button
+                      type="button"
+                      class="copy-btn"
+                      title={m.dashboard_logs_copy_row()}
+                      aria-label={m.dashboard_logs_copy_row()}
+                      onclick={(e) => {
+                        e.stopPropagation();
+                        copyRow(row);
+                      }}
+                    >
+                      <CopyIcon size="12px" />
+                      {m.dashboard_logs_copy_row()}
+                    </button>
+                  </div>
                   <dl>
                     {#each allColumns as col (col)}
-                      <div>
+                      <div class="detail-field">
                         <dt>{col}</dt>
-                        <dd>{formatDetail(row[col])}</dd>
+                        <dd>
+                          {formatDetail(row[col])}
+                          <button
+                            type="button"
+                            class="copy-btn field-copy"
+                            title={m.dashboard_logs_copy_field({ field: col })}
+                            aria-label={m.dashboard_logs_copy_field({
+                              field: col,
+                            })}
+                            onclick={(e) => {
+                              e.stopPropagation();
+                              copyField(row[col]);
+                            }}
+                          >
+                            <CopyIcon size="11px" />
+                          </button>
+                        </dd>
                       </div>
                     {/each}
                   </dl>
@@ -365,8 +427,32 @@
   .detail-row td {
     @apply whitespace-normal bg-surface-subtle;
   }
+  .detail-toolbar {
+    @apply flex justify-end px-2 pt-2;
+  }
+
+  .copy-btn {
+    @apply inline-flex items-center gap-x-1 text-fg-muted;
+    @apply hover:text-fg-primary cursor-pointer;
+  }
+
+  .field-copy {
+    @apply ml-1.5 align-middle opacity-0;
+  }
+
+  .detail-row dd:hover .field-copy {
+    opacity: 0.7;
+  }
+  .field-copy:hover {
+    opacity: 1 !important;
+  }
+
+  .header-link-hint {
+    @apply inline-flex align-middle ml-0.5 text-fg-muted opacity-60;
+  }
+
   .detail-row dl {
-    @apply grid gap-x-6 gap-y-1 p-2;
+    @apply grid gap-x-6 gap-y-1 p-2 pt-0;
     grid-template-columns: max-content 1fr;
   }
   .detail-row dl div {
