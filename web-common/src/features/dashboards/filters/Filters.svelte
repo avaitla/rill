@@ -518,18 +518,15 @@
       {/if}
 
       {#if tableOptions.length > 1}
-        <div class="ml-auto">
-          <TableSelector
-            options={tableOptions}
-            selected={$dashboardStore?.selectedTableOption ||
-              defaultTableOption}
-            onSelect={(table) =>
-              metricsExplorerStore.setTableOption(
-                $exploreName,
-                table === defaultTableOption ? "" : table,
-              )}
-          />
-        </div>
+        <TableSelector
+          options={tableOptions}
+          selected={$dashboardStore?.selectedTableOption || defaultTableOption}
+          onSelect={(table) =>
+            metricsExplorerStore.setTableOption(
+              $exploreName,
+              table === defaultTableOption ? "" : table,
+            )}
+        />
       {/if}
     </div>
   {/if}
