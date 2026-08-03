@@ -113,6 +113,29 @@
     return String(value);
   }
 
+  // Detects a JSON payload (object/array value, or a string containing JSON)
+  // and pretty-prints it; returns null when the value is not JSON.
+  function prettyJson(value: unknown): string | null {
+    if (value !== null && typeof value === "object") {
+      return JSON.stringify(value, null, 2);
+    }
+    if (typeof value !== "string") return null;
+    const t = value.trim();
+    if (!t.startsWith("{") && !t.startsWith("[")) return null;
+    try {
+      return JSON.stringify(JSON.parse(t), null, 2);
+    } catch {
+      return null;
+    }
+  }
+
+  // Expanded detail: JSON payloads pretty-printed, everything else verbatim
+  // (newlines preserved via CSS).
+  function formatDetail(value: unknown): string {
+    if (value === null || value === undefined) return "";
+    return prettyJson(value) ?? String(value);
+  }
+
   // Row cells show only the first line of multiline values (e.g. stack traces),
   // with a line-count hint; the expanded detail shows the full text.
   function formatCell(value: unknown): string {
@@ -247,7 +270,7 @@
                     {#each allColumns as col (col)}
                       <div>
                         <dt>{col}</dt>
-                        <dd>{format(row[col])}</dd>
+                        <dd>{formatDetail(row[col])}</dd>
                       </div>
                     {/each}
                   </dl>

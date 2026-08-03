@@ -45,3 +45,15 @@ Caused by: com.shop.common.BeanInitializationException: circular dependency dete
   map('http.method', 'POST', 'http.status_code', '500', 'user.id', concat('u', toString(number % 5)), 'exception.type', 'NullPointerException'),
   map('k8s.namespace.name', 'prod')
 FROM numbers(8);
+
+-- A few INFO logs whose body is a large nested JSON payload, to exercise the
+-- Logs view's pretty-printed JSON rendering in the expanded row detail.
+INSERT INTO otel_logs
+SELECT
+  now() - toIntervalMinute(number * 11),
+  'api',
+  'INFO',
+  '{"event":"order.created","order":{"id":"ord_8842","total":249.99,"currency":"USD","items":[{"sku":"ELEC-1042","name":"Electronics Pro","qty":1,"price":199.99},{"sku":"HOME-0311","name":"Home Basic","qty":2,"price":25.0}],"shipping":{"method":"express","address":{"city":"Berlin","country":"DE","postal_code":"10115"}}},"customer":{"id":"cus_1187","segment":"pro","consents":{"marketing":true,"analytics":false}},"context":{"trace_id":"a1b2c3d4e5f6","span_id":"0011223344","feature_flags":["new_checkout","fast_shipping"]}}',
+  map('http.method', 'POST', 'http.status_code', '201', 'user.id', concat('u', toString(number))),
+  map('k8s.namespace.name', 'prod')
+FROM numbers(5);
