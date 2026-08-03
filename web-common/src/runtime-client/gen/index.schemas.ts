@@ -78,12 +78,21 @@ concrete dimensions in the valid spec (one per key). Mutually exclusive with col
   /** Name of another explore dashboard to open when a value of this dimension is clicked,
 with the clicked value applied as a filter. */
   drillThrough?: string;
+  /** External links shown on the dimension's values. The url is a template where
+"{{ value }}" is replaced with the URL-encoded dimension value. */
+  links?: MetricsViewSpecDimensionValueLink[];
   lookupTable?: string;
   lookupKeyColumn?: string;
   lookupValueColumn?: string;
   lookupDefaultExpression?: string;
   smallestTimeGrain?: V1TimeGrain;
   dataType?: Runtimev1Type;
+}
+
+export interface MetricsViewSpecDimensionValueLink {
+  label?: string;
+  /** URL template; "{{ value }}" is replaced with the URL-encoded dimension value. */
+  url?: string;
 }
 
 export interface MetricsViewSpecDimensionSelector {

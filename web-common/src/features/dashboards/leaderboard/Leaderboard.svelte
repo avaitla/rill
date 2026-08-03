@@ -132,6 +132,7 @@
     displayName = "",
     uri,
     drillThrough,
+    links: valueLinks = [],
   } = dimension);
 
   function onDrillThrough(dimensionValue: string) {
@@ -440,6 +441,7 @@
             {lowerIsBetterMap}
             {drillThrough}
             {onDrillThrough}
+            {valueLinks}
           />
         {/each}
       </DelayedLoadingRows>
@@ -466,6 +468,7 @@
           {lowerIsBetterMap}
           {drillThrough}
           {onDrillThrough}
+          {valueLinks}
         />
       {/each}
     </tbody>

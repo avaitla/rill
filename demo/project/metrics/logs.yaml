@@ -10,6 +10,9 @@ skip_invalid_dimensions: true
 skip_empty_dimensions: true
 dimensions:
   - column: ServiceName
+    links:
+      - label: Grafana
+        url: "https://play.grafana.org/d/logs?var-service={{ value }}"
   - column: SeverityText
   - map_column: LogAttributes
   - map_column: ResourceAttributes

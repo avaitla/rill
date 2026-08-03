@@ -19,6 +19,12 @@
   import ExternalLink from "@rilldata/web-common/components/icons/ExternalLink.svelte";
   import ExploreIcon from "@rilldata/web-common/components/icons/ExploreIcon.svelte";
   import { m } from "@rilldata/web-common/lib/i18n/gen/messages";
+  import * as DropdownMenu from "@rilldata/web-common/components/dropdown-menu";
+  import {
+    openDimensionValueLink,
+    resolveDimensionValueLink,
+  } from "@rilldata/web-common/features/dashboards/drill-through";
+  import type { MetricsViewSpecDimensionValueLink } from "@rilldata/web-common/runtime-client";
   import BarAndLabel from "../../BarAndLabel.svelte";
   import type { VirtualizedTableConfig } from "../types";
 
@@ -51,6 +57,9 @@
   // When set, renders a hover-revealed drill-through icon that invokes the callback.
   export let onDrill: (() => void) | undefined = undefined;
   export let drillThroughName: string | undefined = undefined;
+  // External links configured on the dimension (`links` in the metrics view YAML),
+  // rendered as hover-revealed icons resolving "{{ value }}" against this cell's value.
+  export let valueLinks: MetricsViewSpecDimensionValueLink[] = [];
 
   const config: VirtualizedTableConfig = getContext("config");
   const isDimensionTable = config.table === "DimensionTable";
@@ -176,7 +185,7 @@
       value={barValue}
       compact
     >
-      {#if href || onDrill}
+      {#if href || onDrill || valueLinks.length}
         <!-- URI dimension: lay the value button and external-link icon side by
         side. This wrapper only exists when there is a link, so non-URI cells
         keep the exact DOM (and text content) the table's matchers expect. -->
@@ -213,6 +222,52 @@
             >
               <ExternalLink className="fill-primary-600" />
             </a>
+          {/if}
+          {#if valueLinks.length === 1 && valueLinks[0].url}
+            <a
+              class="external-link shrink-0"
+              target="_blank"
+              rel="noopener noreferrer"
+              href={resolveDimensionValueLink(valueLinks[0].url, value)}
+              title={valueLinks[0].label}
+              aria-label={m.dashboard_dimension_links({ value: String(value) })}
+              onclick={(e) => e.stopPropagation()}
+            >
+              <ExternalLink className="fill-primary-600" />
+            </a>
+          {:else if valueLinks.length > 1}
+            <DropdownMenu.Root>
+              <DropdownMenu.Trigger>
+                {#snippet child({ props })}
+                  <button
+                    {...props}
+                    type="button"
+                    class="external-link shrink-0"
+                    title={m.dashboard_dimension_links({
+                      value: String(value),
+                    })}
+                    aria-label={m.dashboard_dimension_links({
+                      value: String(value),
+                    })}
+                    onclick={(e) => {
+                      e.stopPropagation();
+                      props.onclick?.(e);
+                    }}
+                  >
+                    <ExternalLink className="fill-primary-600" />
+                  </button>
+                {/snippet}
+              </DropdownMenu.Trigger>
+              <DropdownMenu.Content align="start" class="w-44">
+                {#each valueLinks as link (link.url)}
+                  <DropdownMenu.Item
+                    onSelect={() => openDimensionValueLink(link, value)}
+                  >
+                    {link.label || link.url}
+                  </DropdownMenu.Item>
+                {/each}
+              </DropdownMenu.Content>
+            </DropdownMenu.Root>
           {/if}
           {#if onDrill}
             <button

@@ -40,6 +40,10 @@ RawDuck-style schemaless store).
 - **RED Overview → RED Service Detail** — `/explore/red_overview_explore`
   - *Dimension drill-through*: hover a service in the leaderboard and click the drill
     icon → lands on the detail explore with that service filtered.
+  - *Dimension value links*: the service dimension also carries external links (Datadog
+    APM, GitHub search) — the hover link icon opens a menu; `{{ value }}` in each URL
+    template resolves to the clicked service. The logs dashboard's ServiceName has a
+    single Grafana link (direct icon, no menu).
   - *`columns: '*'` wildcard dimensions*: the detail explore's ~10 attribute
     leaderboards come from one wildcard dimension over the wide table.
   - *hide_empty_dimensions*: on the detail explore, filtering to `worker` hides the
@@ -54,6 +58,11 @@ Full per-feature docs (design, protos, gotchas, standalone runbooks) live in the
 `feature-docs/` directory committed at each feature branch's root.
 
 ## Notes
+
+- **If the demo server is restarted, hard-refresh any open browser tabs.** A tab that
+  outlives the server renders blank panes on in-app navigation (file editors, dashboards)
+  until reloaded. This is stock Rill dev-server behavior (reproduced on upstream `main`),
+  not specific to this branch.
 
 - Host ports 15432/18123 avoid clashing with local Postgres/ClickHouse installs; if
   they're taken, edit `docker-compose.yaml` and the DSNs in `project/connectors/`.

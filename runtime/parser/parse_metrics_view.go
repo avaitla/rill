@@ -3,6 +3,7 @@ package parser
 import (
 	"errors"
 	"fmt"
+	"net/url"
 	"regexp"
 	"strings"
 	"time"
@@ -63,7 +64,11 @@ type MetricsViewYAML struct {
 		Unnest       bool
 		URI          string
 		DrillThrough string `yaml:"drill_through"`
-		MapColumn    string `yaml:"map_column"`
+		Links        []*struct {
+			Label string `yaml:"label"`
+			URL   string `yaml:"url"`
+		} `yaml:"links"`
+		MapColumn string `yaml:"map_column"`
 		Columns      string `yaml:"columns"`
 		Discover     *struct {
 			Limit   uint32 `yaml:"limit"`
@@ -510,6 +515,24 @@ func (p *Parser) parseMetricsView(node *Node) error {
 		if dim.Discover != nil {
 			d.DiscoverLimit = dim.Discover.Limit
 			d.DiscoverPattern = dim.Discover.Pattern
+		}
+		for _, link := range dim.Links {
+			if link == nil {
+				continue
+			}
+			if err := validateDimensionLink(link.URL); err != nil {
+				return fmt.Errorf(`invalid link for dimension %q: %w`, dim.Name, err)
+			}
+			label := link.Label
+			if label == "" {
+				if u, err := url.Parse(link.URL); err == nil {
+					label = u.Host
+				}
+			}
+			d.Links = append(d.Links, &runtimev1.MetricsViewSpec_Dimension_ValueLink{
+				Label: label,
+				Url:   link.URL,
+			})
 		}
 		dimensions = append(dimensions, d)
 	}
@@ -1292,6 +1315,27 @@ func validateDataTimeRange(expr string) error {
 	}
 	return nil
 }
+
+// validateDimensionLink validates a dimension value link URL template.
+// The template may contain "{{ value }}" placeholders, which the UI replaces with the
+// URL-encoded dimension value; the URL must be absolute with an http or https scheme.
+func validateDimensionLink(rawURL string) error {
+	if rawURL == "" {
+		return errors.New(`"url" is required`)
+	}
+	// Substitute placeholders with a dummy value so templates parse as URLs.
+	probe := dimensionLinkPlaceholderRegex.ReplaceAllString(rawURL, "x")
+	u, err := url.Parse(probe)
+	if err != nil {
+		return fmt.Errorf("invalid url %q: %w", rawURL, err)
+	}
+	if u.Scheme != "http" && u.Scheme != "https" {
+		return fmt.Errorf("invalid url %q: must be an absolute http(s) URL", rawURL)
+	}
+	return nil
+}
+
+var dimensionLinkPlaceholderRegex = regexp.MustCompile(`\{\{\s*value\s*\}\}`)
 
 // validateQueryAttributes validates query attribute keys
 func validateQueryAttributes(attrs map[string]string) error {

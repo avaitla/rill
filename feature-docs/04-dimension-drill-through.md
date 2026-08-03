@@ -1,6 +1,6 @@
-# 4. Dimension Drill-Through
+# 4. Dimension Drill-Through & Value Links
 
-**Branch:** `avaitla/dimension-drill-through` (1 commit, off `main`)
+**Branch:** `avaitla/dimension-drill-through` (off `main`)
 
 ## What it does
 
@@ -12,11 +12,24 @@ a filter — e.g. `/explore/orders_detail?f=country+IN+('Japan')`.
 Use case: everyone starts on a high-level overview; clicking a specific dimension value
 takes them to a deeper, more detailed dashboard scoped to that value.
 
+Additionally, a per-dimension `links` list attaches **external URLs to dimension
+values** — another Rill dashboard, a Datadog service page, a GitHub search, anything
+http(s). Each `url` is a template where `{{ value }}` is replaced with the URL-encoded
+clicked value. One link renders as a direct hover icon opening in a new tab; multiple
+links render as a menu of labeled entries. Composes with `uri` and `drill_through`
+(icons stack at the row's right edge).
+
 ```yaml
 type: metrics_view
 dimensions:
   - column: country
     drill_through: orders_detail    # name of the target explore
+  - column: service
+    links:
+      - label: Datadog APM
+        url: "https://app.datadoghq.com/apm/services/{{ value }}"
+      - label: GitHub search
+        url: "https://github.com/search?q={{ value }}&type=code"
 ```
 
 ## How it works
@@ -33,11 +46,19 @@ dimensions:
   with the uri link shifting left when both are present)
 - Dimension table: `DimensionValueHeader.svelte` builds an `onDrill` per row (it has
   state-managers access) → generic `virtualized-table/core/Cell.svelte` renders the icon
-- i18n: `dashboard_drill_through` ("Drill through to {name}") in en/es
+- i18n: `dashboard_drill_through` ("Drill through to {name}") and
+  `dashboard_dimension_links` ("Links for {value}") in en/es
+- Value links: proto `MetricsViewSpec.Dimension.ValueLink` (`links = 22`, `{label, url}`);
+  parser validates absolute http(s) URLs (placeholders substituted before parsing) and
+  defaults `label` to the URL's hostname (`validateDimensionLink`). Frontend helpers
+  `resolveDimensionValueLink` / `openDimensionValueLink` in `drill-through.ts`; rendering
+  in `LeaderboardRow.svelte` and `virtualized-table/core/Cell.svelte` (single link = direct
+  anchor, multiple = `DropdownMenu`; all open in a new tab with `noopener`)
 
 ## Tests
 
-Parser: `TestMetricsViewDimensionDrillThrough` in `runtime/parser/parse_metrics_view_test.go`.
+Parser: `TestMetricsViewDimensionDrillThrough` and `TestMetricsViewDimensionValueLinks`
+in `runtime/parser/parse_metrics_view_test.go`.
 Full dashboard vitest suites pass (912 tests).
 
 ## Demo runbook (port 9009)

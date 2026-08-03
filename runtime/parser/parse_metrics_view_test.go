@@ -1362,3 +1362,61 @@ measures:
 	require.Equal(t, "orders_detail", mv.MetricsViewSpec.Dimensions[0].DrillThrough)
 	require.Empty(t, mv.MetricsViewSpec.Dimensions[1].DrillThrough)
 }
+
+func TestMetricsViewDimensionValueLinks(t *testing.T) {
+	files := map[string]string{
+		`rill.yaml`: ``,
+		`metrics/mv1.yaml`: `
+version: 1
+type: metrics_view
+table: t1
+dimensions:
+- column: service
+  links:
+  - label: Datadog
+    url: "https://app.datadoghq.com/apm/services/{{ value }}"
+  - url: "https://github.com/search?q={{value}}&type=code"
+- column: category
+measures:
+- name: count
+  expression: count(*)
+`,
+	}
+
+	ctx := context.Background()
+	repo := makeRepo(t, files)
+	p, err := Parse(ctx, repo, "", "", "duckdb", true)
+	require.NoError(t, err)
+	require.Empty(t, p.Errors)
+
+	mv := p.Resources[ResourceName{Kind: ResourceKindMetricsView, Name: "mv1"}.Normalized()]
+	require.NotNil(t, mv)
+	links := mv.MetricsViewSpec.Dimensions[0].Links
+	require.Len(t, links, 2)
+	require.Equal(t, "Datadog", links[0].Label)
+	require.Equal(t, "https://app.datadoghq.com/apm/services/{{ value }}", links[0].Url)
+	// Label defaults to the URL's hostname
+	require.Equal(t, "github.com", links[1].Label)
+	require.Empty(t, mv.MetricsViewSpec.Dimensions[1].Links)
+
+	// Invalid: relative URL
+	repo = makeRepo(t, map[string]string{
+		`rill.yaml`: ``,
+		`metrics/mv1.yaml`: `
+version: 1
+type: metrics_view
+table: t1
+dimensions:
+- column: service
+  links:
+  - url: "/relative/path"
+measures:
+- name: count
+  expression: count(*)
+`,
+	})
+	p, err = Parse(ctx, repo, "", "", "duckdb", true)
+	require.NoError(t, err)
+	require.Len(t, p.Errors, 1)
+	require.Contains(t, p.Errors[0].Message, "must be an absolute http(s) URL")
+}

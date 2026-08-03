@@ -48,9 +48,11 @@
     validSpecStore,
   } = getStateManagers();
 
-  $: drillThrough = $validSpecStore.data?.metricsView?.dimensions?.find(
+  $: dimensionSpec = $validSpecStore.data?.metricsView?.dimensions?.find(
     (d) => d.name === column.name,
-  )?.drillThrough;
+  );
+  $: drillThrough = dimensionSpec?.drillThrough;
+  $: valueLinks = dimensionSpec?.links ?? [];
 
   function onDrillValue(dimensionValue: string) {
     if (!drillThrough) return;
@@ -81,6 +83,7 @@
       href: makeDimensionHref(rows[row.index], column.name, value as string),
       onDrill: drillThrough ? () => onDrillValue(value as string) : undefined,
       drillThroughName: drillThrough,
+      valueLinks,
     };
   };
 </script>

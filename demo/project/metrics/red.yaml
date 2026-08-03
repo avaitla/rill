@@ -11,6 +11,11 @@ skip_empty_dimensions: true
 dimensions:
   - column: service
     drill_through: red_detail_explore
+    links:
+      - label: Datadog APM
+        url: "https://app.datadoghq.com/apm/services/{{ value }}"
+      - label: GitHub search
+        url: "https://github.com/search?q={{ value }}&type=code"
   - columns: '*'
     discover:
       pattern: '^(error|http_|payment_|cart_|query_|shard|job_|retry_)'
