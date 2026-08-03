@@ -16,9 +16,25 @@
   $: metricsViewSpec = $validSpecStore.data?.metricsView ?? {};
   $: exploreSpec = $validSpecStore.data?.explore ?? {};
   $: timeDimension = metricsViewSpec.timeDimension;
+
   $: configuredColumns = exploreSpec.logsViewColumns ?? [];
 
   $: ({ timeStart, timeEnd, ready: timeControlsReady } = $timeControlsStore);
+
+  // Sorting: defaults to the time dimension, newest first. Clicking a column
+  // header sorts by it; clicking again flips the direction.
+  let sortCol: string | undefined = undefined;
+  let sortDesc = true;
+  $: effectiveSortCol = sortCol ?? timeDimension;
+
+  function toggleSort(col: string) {
+    if (effectiveSortCol === col) {
+      sortDesc = !sortDesc;
+    } else {
+      sortCol = col;
+      sortDesc = true;
+    }
+  }
 
   $: where = sanitiseExpression(
     mergeDimensionAndMeasureFilters(
@@ -35,7 +51,9 @@
       timeStart,
       timeEnd,
       where,
-      sort: timeDimension ? [{ name: timeDimension, ascending: false }] : [],
+      sort: effectiveSortCol
+        ? [{ name: effectiveSortCol, ascending: !sortDesc }]
+        : [],
       limit: LOGS_ROW_LIMIT,
     },
     {
@@ -60,6 +78,16 @@
     if (typeof value === "object") return JSON.stringify(value);
     return String(value);
   }
+
+  // Row cells show only the first line of multiline values (e.g. stack traces),
+  // with a line-count hint; the expanded detail shows the full text.
+  function formatCell(value: unknown): string {
+    const s = format(value);
+    const nl = s.indexOf("\n");
+    if (nl === -1) return s;
+    const lines = s.split("\n").length;
+    return `${s.slice(0, nl)}  (+${lines - 1} lines)`;
+  }
 </script>
 
 <div class="logs-view" aria-label="Logs view">
@@ -81,7 +109,21 @@
         <thead>
           <tr>
             {#each columns as col (col)}
-              <th class:time-col={col === timeDimension}>{col}</th>
+              <th
+                class:time-col={col === timeDimension}
+                aria-sort={effectiveSortCol === col
+                  ? sortDesc
+                    ? "descending"
+                    : "ascending"
+                  : undefined}
+              >
+                <button type="button" onclick={() => toggleSort(col)}>
+                  {col}
+                  {#if effectiveSortCol === col}
+                    <span class="sort-arrow">{sortDesc ? "\u2193" : "\u2191"}</span>
+                  {/if}
+                </button>
+              </th>
             {/each}
           </tr>
         </thead>
@@ -93,7 +135,7 @@
             >
               {#each columns as col (col)}
                 <td class:time-col={col === timeDimension}>
-                  {format(row[col])}
+                  {formatCell(row[col])}
                 </td>
               {/each}
             </tr>
@@ -141,8 +183,20 @@
   }
 
   thead th {
-    @apply sticky top-0 z-10 bg-surface-subtle text-left px-3 py-1.5;
+    @apply sticky top-0 z-10 bg-surface-subtle text-left p-0;
     @apply font-semibold text-fg-secondary border-b whitespace-nowrap;
+  }
+
+  thead th button {
+    @apply w-full text-left px-3 py-1.5 font-semibold cursor-pointer;
+  }
+
+  thead th button:hover {
+    @apply text-fg-primary;
+  }
+
+  .sort-arrow {
+    @apply text-theme-600;
   }
 
   tbody tr {
@@ -163,6 +217,7 @@
     @apply text-fg-muted;
   }
 
+
   .detail-row {
     @apply cursor-default;
   }
@@ -180,6 +235,6 @@
     @apply text-fg-muted;
   }
   .detail-row dd {
-    @apply break-all;
+    @apply break-words whitespace-pre-wrap;
   }
 </style>
