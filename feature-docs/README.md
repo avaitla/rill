@@ -7,9 +7,9 @@ demo runbook that can be executed from scratch in a fresh session.
 | # | Branch | Feature | Base |
 |---|--------|---------|------|
 | 1 | [`avaitla/postgres-olap-connector`](01-postgres-olap-connector.md) | Postgres as a full OLAP engine | `main` |
-| 2 | [`avaitla/dashboard-refresh-intervals`](02-dashboard-refresh-intervals.md) | Grafana-style dashboard auto-refresh | `main` |
+| 2 | [`avaitla/dashboard-refresh-intervals`](02-dashboard-refresh-intervals.md) | Grafana-style refresh intervals (explicit timers) | `main` |
 | 3 | [`avaitla/skip-invalid-dimensions`](03-skip-invalid-dimensions.md) | Tolerate missing dimension columns | `main` |
-| 4 | [`avaitla/dimension-drill-through`](04-dimension-drill-through.md) | Click a dimension value → drill into another explore | `main` |
+| 4 | [`avaitla/dimension-drill-through`](04-dimension-drill-through.md) | Dimension value links: external URLs + explore drill-through | `main` |
 | 5 | [`avaitla/dynamic-map-dimensions`](05-dynamic-map-dimensions.md) | Schemaless dimensions: map keys, column wildcards, empty-hiding | `avaitla/skip-invalid-dimensions` |
 | 6 | [`avaitla/metrics-view-table-options`](06-metrics-view-table-options.md) | Multiple selectable tables behind one metrics view | `avaitla/skip-invalid-dimensions` |
 
