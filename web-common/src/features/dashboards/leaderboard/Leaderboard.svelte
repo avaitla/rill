@@ -22,10 +22,15 @@
     getComparisonRequestMeasures,
     getURIRequestMeasure,
   } from "../dashboard-utils";
-  import { gotoDrillThroughExplore } from "../drill-through";
+  import { get } from "svelte/store";
+  import {
+    gotoDrillThroughExplore,
+    pickDrillThroughContext,
+  } from "../drill-through";
   import { mergeDimensionAndMeasureFilters } from "../filters/measure-filters/measure-filter-utils";
   import { SortType } from "../proto-state/derived-types";
   import { getFiltersForOtherDimensions } from "../selectors";
+  import { getStateManagers } from "../state-managers/state-managers";
   import { getMeasuresForDimensionOrLeaderboardDisplay } from "../state-managers/selectors/dashboard-queries";
   import type { selectedDimensionValues } from "../state-managers/selectors/dimension-filters";
   import {
@@ -47,6 +52,8 @@
   import { COMPARISON_COLUMN_WIDTH, valueColumn } from "./leaderboard-widths";
 
   const runtimeClient = useRuntimeClient();
+  // Optional: absent when rendered outside the explore context (e.g. canvas).
+  const dashboardStore = getStateManagers()?.dashboardStore;
   const gutterWidth = 24;
 
   export let dimension: MetricsViewSpecDimension;
@@ -138,6 +145,7 @@
       targetExplore,
       dimensionName,
       dimensionValue,
+      dashboardStore ? pickDrillThroughContext(get(dashboardStore)) : undefined,
       $page.params.organization,
       $page.params.project,
     ).catch((error) => console.warn("Explore link navigation error:", error));
