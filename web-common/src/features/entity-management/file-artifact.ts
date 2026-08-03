@@ -402,15 +402,14 @@ export class FileArtifact {
           return get(store);
         }
 
-        return [
-          ...(
-            projectParser.data?.projectParser?.state?.parseErrors ?? []
-          ).filter((e) => e.filePath === this.path && e.warning),
-          ...(resource.data?.meta?.reconcileWarnings ?? []).map((w) => ({
-            filePath: this.path,
-            message: w,
-          })),
-        ];
+        // Reconcile warnings (e.g. dimensions skipped by skip_invalid_dimensions /
+        // skip_empty_dimensions) are intentionally not surfaced here: they are
+        // expected in schemaless setups and would keep the file tree and editor
+        // warning panel permanently flagged. They remain available on the
+        // resource's meta.reconcileWarnings via the resources API.
+        return (
+          projectParser.data?.projectParser?.state?.parseErrors ?? []
+        ).filter((e) => e.filePath === this.path && e.warning);
       },
       [],
     );
