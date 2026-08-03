@@ -1000,7 +1000,8 @@ func (a *AST) addTimeComparisonMeasure(n *SelectNode, m *runtimev1.MetricsViewSp
 // addOrderField adds a sort field to the given SelectNode.
 func (a *AST) addOrderField(n *SelectNode, name string, desc bool) error {
 	// We currently only allow sorting by selected dimensions and measures.
-	if !n.HasName(name) {
+	// When Rows is set, all underlying columns are selected via *, so any column name is in scope.
+	if !n.HasName(name) && !a.Query.Rows {
 		return errors.New("name not present in context")
 	}
 

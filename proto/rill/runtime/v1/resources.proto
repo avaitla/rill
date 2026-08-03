@@ -501,6 +501,13 @@ message ExploreSpec {
   bool allow_custom_time_range = 20;
   // When true, it indicates that the explore was defined in a metrics view either explicitly or emitted because version was not set.
   bool defined_in_metrics_view = 21;
+  // NOTE: 22 and 23 are reserved for pending refresh_intervals and hide_empty_dimensions fields.
+  // Enables the Logs web view: a raw-events tab that shows the underlying rows for the
+  // current filters and time range, newest first. Aimed at observability use cases where
+  // the drill path ends in reading the actual log lines.
+  bool logs_view = 24;
+  // Columns to show in the Logs view; defaults to all columns of the underlying table.
+  repeated string logs_view_columns = 25;
 }
 
 message ExploreState {
@@ -603,6 +610,7 @@ enum ExploreWebView {
   EXPLORE_WEB_VIEW_TIME_DIMENSION = 2;
   EXPLORE_WEB_VIEW_PIVOT = 3;
   EXPLORE_WEB_VIEW_CANVAS = 4;
+  EXPLORE_WEB_VIEW_LOGS = 5;
 }
 
 enum ExploreSortType {

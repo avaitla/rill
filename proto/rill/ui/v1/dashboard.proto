@@ -65,6 +65,7 @@ message DashboardState {
     ACTIVE_PAGE_DIMENSION_TABLE = 2;
     ACTIVE_PAGE_TIME_DIMENSIONAL_DETAIL = 3;
     ACTIVE_PAGE_PIVOT = 4;
+    ACTIVE_PAGE_LOGS = 5;
   }
 
   // Selected time range

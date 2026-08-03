@@ -482,8 +482,13 @@
   "canvas_see_less": "Ver menos",
   "canvas_see_more_values": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
       "match": {
         "countPlural=one": "Ver {count} valor más",
         "countPlural=other": "Ver {count} valores más"
@@ -571,8 +576,13 @@
   "chat_duration_less_than_second": "menos de un segundo",
   "chat_duration_minutes": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
       "match": {
         "countPlural=one": "{count} minuto",
         "countPlural=other": "{count} minutos"
@@ -581,8 +591,13 @@
   ],
   "chat_duration_seconds": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
       "match": {
         "countPlural=one": "{count} segundo",
         "countPlural=other": "{count} segundos"
@@ -650,8 +665,13 @@
   "common_none": "Ninguno",
   "common_other_values_selected": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
       "match": {
         "countPlural=one": "{count} otro valor seleccionado",
         "countPlural=other": "{count} otros valores seleccionados"
@@ -798,8 +818,13 @@
   "dashboard_open_dimension_details_aria": "Abrir detalles de dimensión",
   "dashboard_others": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
       "match": {
         "countPlural=one": "+{count} otro",
         "countPlural=other": "+{count} otros"
@@ -811,6 +836,10 @@
   "dashboard_percent_of_total": "Porcentaje del total",
   "dashboard_percentage_change": "Cambio porcentual respecto al período de comparación",
   "dashboard_pivot": "Pivote",
+  "dashboard_logs": "Registros",
+  "dashboard_logs_showing": "{count} filas",
+  "dashboard_logs_showing_latest": "Últimas {count} filas",
+  "dashboard_logs_empty": "Ninguna fila coincide con los filtros y el rango de tiempo actuales.",
   "dashboard_pivot_add_measure": "Agrega una medida para completar tu tabla.",
   "dashboard_pivot_building_table": "¡Un momento! Estamos construyendo tu tabla...",
   "dashboard_pivot_give_data": "Dale algunos datos para hacerle compañía.",
@@ -856,8 +885,13 @@
   "dashboard_select_time_range_aria": "Seleccionar rango de tiempo",
   "dashboard_selected": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
       "match": {
         "countPlural=one": "{count} seleccionado",
         "countPlural=other": "{count} seleccionados"
@@ -914,8 +948,13 @@
   "edit_changes_discard_all": "Descartar todo",
   "edit_changes_file_count": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
       "match": {
         "countPlural=one": "{count} archivo",
         "countPlural=other": "{count} archivos"
@@ -924,8 +963,13 @@
   ],
   "edit_changes_files_changed": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
       "match": {
         "countPlural=one": "{count} archivo modificado",
         "countPlural=other": "{count} archivos modificados"
@@ -938,8 +982,13 @@
   "edit_changes_revert": "Revertir",
   "edit_changes_revert_confirm_body": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
       "match": {
         "countPlural=one": "Esto descarta permanentemente los cambios locales de {count} archivo y no se puede deshacer.",
         "countPlural=other": "Esto descarta permanentemente los cambios locales de {count} archivos y no se puede deshacer."
@@ -950,8 +999,13 @@
   "edit_changes_revert_failed": "No se pudieron revertir los cambios",
   "edit_changes_revert_selected": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
       "match": {
         "countPlural=one": "Revertir {count} archivo",
         "countPlural=other": "Revertir {count} archivos"
@@ -960,8 +1014,13 @@
   ],
   "edit_changes_reverted": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
       "match": {
         "countPlural=one": "Se revirtió {count} archivo",
         "countPlural=other": "Se revirtieron {count} archivos"
@@ -1046,8 +1105,13 @@
   "env_documentation_link": "documentación",
   "env_duplicate_keys_error": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
       "match": {
         "countPlural=one": "Esta clave está duplicada",
         "countPlural=other": "No se permiten claves duplicadas"
@@ -1065,8 +1129,13 @@
   "env_key_placeholder": "Clave",
   "env_keys_exist_error": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
       "match": {
         "countPlural=one": "Esta clave ya existe en los entornos de destino",
         "countPlural=other": "Estas claves ya existen en los entornos de destino"
@@ -1328,8 +1397,13 @@
   "groups_table_header_group": "Grupo",
   "groups_total_count": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
       "match": {
         "countPlural=one": "{count} grupo en total",
         "countPlural=other": "{count} grupos en total"
@@ -1424,8 +1498,13 @@
   "organizations_overview_page_title": "Resumen de {title} - Rill",
   "pivot_apis_failed": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
       "match": {
         "countPlural=one": "Una o más APIs fallaron con el siguiente error:",
         "countPlural=other": "Una o más APIs fallaron con los siguientes errores:"
@@ -1437,8 +1516,13 @@
   "pivot_collapse_row": "Contraer fila",
   "pivot_dim_label": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
       "match": {
         "countPlural=one": "dim",
         "countPlural=other": "dims"
@@ -1453,8 +1537,13 @@
   "pivot_expand_row": "Expandir fila",
   "pivot_measure_label": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
       "match": {
         "countPlural=one": "medida",
         "countPlural=other": "medidas"
@@ -1466,8 +1555,13 @@
   "pivot_time_prefix": "Tiempo",
   "pivot_trace_ids_label": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
       "match": {
         "countPlural=one": "ID de traza",
         "countPlural=other": "IDs de traza"
@@ -1807,8 +1901,13 @@
   "status_complete": "Completo",
   "status_compute_units": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
       "match": {
         "countPlural=one": "{count} Unidad de cómputo",
         "countPlural=other": "{count} Unidades de cómputo"
@@ -1862,7 +1961,9 @@
         "input count",
         "local countPlural = count: plural"
       ],
-      "selectors": ["countPlural"],
+      "selectors": [
+        "countPlural"
+      ],
       "match": {
         "countPlural=one": "{first}, +{count} otro",
         "countPlural=other": "{first}, +{count} otros"
@@ -1918,8 +2019,13 @@
   "status_page_title": "Estado del proyecto",
   "status_parse_errors": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
       "match": {
         "countPlural=one": "Error de análisis",
         "countPlural=other": "Errores de análisis"
@@ -1942,8 +2048,13 @@
   "status_table": "Tabla",
   "status_table_label": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
       "match": {
         "countPlural=one": "Tabla",
         "countPlural=other": "Tablas"
@@ -1957,8 +2068,13 @@
   "status_view_all": "Ver todo",
   "status_view_label": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
       "match": {
         "countPlural=one": "Vista",
         "countPlural=other": "Vistas"
@@ -2022,8 +2138,13 @@
   "time_month_to_date_title": "Mes actual",
   "time_n_days_ago": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
       "match": {
         "countPlural=one": "hace {count} día",
         "countPlural=other": "hace {count} días"
@@ -2032,8 +2153,13 @@
   ],
   "time_n_hours_ago": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
       "match": {
         "countPlural=one": "hace {count} hora",
         "countPlural=other": "hace {count} horas"
@@ -2042,8 +2168,13 @@
   ],
   "time_n_minutes_ago": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
       "match": {
         "countPlural=one": "hace {count} minuto",
         "countPlural=other": "hace {count} minutos"
@@ -2052,8 +2183,13 @@
   ],
   "time_n_months_ago": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
       "match": {
         "countPlural=one": "hace {count} mes",
         "countPlural=other": "hace {count} meses"
@@ -2062,8 +2198,13 @@
   ],
   "time_n_weeks_ago": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
       "match": {
         "countPlural=one": "hace {count} semana",
         "countPlural=other": "hace {count} semanas"
@@ -2072,8 +2213,13 @@
   ],
   "time_n_years_ago": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
       "match": {
         "countPlural=one": "hace {count} año",
         "countPlural=other": "hace {count} años"
@@ -2126,7 +2272,9 @@
         "input role",
         "local countPlural = count: plural"
       ],
-      "selectors": ["countPlural"],
+      "selectors": [
+        "countPlural"
+      ],
       "match": {
         "countPlural=one": "Se agregó {count} grupo como {role}",
         "countPlural=other": "Se agregaron {count} grupos como {role}"
@@ -2140,7 +2288,9 @@
         "input count",
         "local countPlural = count: plural"
       ],
-      "selectors": ["countPlural"],
+      "selectors": [
+        "countPlural"
+      ],
       "match": {
         "countPlural=one": "{emails} ya es miembro de esta organización",
         "countPlural=other": "{emails} ya son miembros de esta organización"
@@ -2175,7 +2325,9 @@
         "input count",
         "local countPlural = count: plural"
       ],
-      "selectors": ["countPlural"],
+      "selectors": [
+        "countPlural"
+      ],
       "match": {
         "countPlural=one": "Error al agregar el grupo: {groups}",
         "countPlural=other": "Error al agregar grupos: {groups}"
@@ -2189,7 +2341,9 @@
         "input count",
         "local countPlural = count: plural"
       ],
-      "selectors": ["countPlural"],
+      "selectors": [
+        "countPlural"
+      ],
       "match": {
         "countPlural=one": "Error al invitar a {emails}",
         "countPlural=other": "Error al invitar a: {emails}"
@@ -2203,7 +2357,9 @@
         "input count",
         "local countPlural = count: plural"
       ],
-      "selectors": ["countPlural"],
+      "selectors": [
+        "countPlural"
+      ],
       "match": {
         "countPlural=one": "Error al invitar al usuario: {emails}",
         "countPlural=other": "Error al invitar usuarios: {emails}"
@@ -2226,8 +2382,13 @@
   "users_general_access": "Acceso general",
   "users_group_count": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
       "match": {
         "countPlural=one": "{count} Grupo",
         "countPlural=other": "{count} Grupos"
@@ -2243,7 +2404,9 @@
         "input role",
         "local countPlural = count: plural"
       ],
-      "selectors": ["countPlural"],
+      "selectors": [
+        "countPlural"
+      ],
       "match": {
         "countPlural=one": "Se invitó a {count} invitado como {role}",
         "countPlural=other": "Se invitó a {count} invitados como {role}"
@@ -2262,7 +2425,10 @@
         "local emailsPlural = emails: plural",
         "local groupsPlural = groups: plural"
       ],
-      "selectors": ["emailsPlural", "groupsPlural"],
+      "selectors": [
+        "emailsPlural",
+        "groupsPlural"
+      ],
       "match": {
         "emailsPlural=one, groupsPlural=one": "Se invitó a {emails} persona y se agregó {groups} grupo como {role}",
         "emailsPlural=one, groupsPlural=other": "Se invitó a {emails} persona y se agregaron {groups} grupos como {role}",
@@ -2278,7 +2444,9 @@
         "input role",
         "local countPlural = count: plural"
       ],
-      "selectors": ["countPlural"],
+      "selectors": [
+        "countPlural"
+      ],
       "match": {
         "countPlural=one": "Se invitó a {count} persona como {role}",
         "countPlural=other": "Se invitó a {count} personas como {role}"
@@ -2290,8 +2458,13 @@
   "users_loading_more": "Cargando más…",
   "users_member_count": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
       "match": {
         "countPlural=one": "{count} miembro",
         "countPlural=other": "{count} miembros"
@@ -2309,7 +2482,9 @@
         "input role",
         "local countPlural = count: plural"
       ],
-      "selectors": ["countPlural"],
+      "selectors": [
+        "countPlural"
+      ],
       "match": {
         "countPlural=one": "Se invitó correctamente a {count} persona como {role}",
         "countPlural=other": "Se invitó correctamente a {count} personas como {role}"
@@ -2322,8 +2497,13 @@
   "users_project_access": "Acceso al proyecto",
   "users_project_count": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
       "match": {
         "countPlural=one": "{count} Proyecto",
         "countPlural=other": "{count} Proyectos"
@@ -2356,8 +2536,13 @@
   "users_url_copied": "URL copiada",
   "users_user_count": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
       "match": {
         "countPlural=one": "{count} usuario",
         "countPlural=other": "{count} usuarios"
@@ -2376,8 +2561,13 @@
   "visual_metrics_items_delete_error": "Error al eliminar elementos",
   "visual_metrics_items_selected": [
     {
-      "declarations": ["input count", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
       "match": {
         "countPlural=one": "{count} elemento seleccionado:",
         "countPlural=other": "{count} elementos seleccionados:"

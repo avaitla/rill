@@ -135,6 +135,11 @@ export enum ExploreWebView {
    * @generated from enum value: EXPLORE_WEB_VIEW_CANVAS = 4;
    */
   CANVAS = 4,
+
+  /**
+   * @generated from enum value: EXPLORE_WEB_VIEW_LOGS = 5;
+   */
+  LOGS = 5,
 }
 // Retrieve enum metadata with: proto3.getEnumType(ExploreWebView)
 proto3.util.setEnumType(ExploreWebView, "rill.runtime.v1.ExploreWebView", [
@@ -143,6 +148,7 @@ proto3.util.setEnumType(ExploreWebView, "rill.runtime.v1.ExploreWebView", [
   { no: 2, name: "EXPLORE_WEB_VIEW_TIME_DIMENSION" },
   { no: 3, name: "EXPLORE_WEB_VIEW_PIVOT" },
   { no: 4, name: "EXPLORE_WEB_VIEW_CANVAS" },
+  { no: 5, name: "EXPLORE_WEB_VIEW_LOGS" },
 ]);
 
 /**
@@ -2869,6 +2875,23 @@ export class ExploreSpec extends Message<ExploreSpec> {
    */
   definedInMetricsView = false;
 
+  /**
+   * NOTE: 22 and 23 are reserved for pending refresh_intervals and hide_empty_dimensions fields.
+   * Enables the Logs web view: a raw-events tab that shows the underlying rows for the
+   * current filters and time range, newest first. Aimed at observability use cases where
+   * the drill path ends in reading the actual log lines.
+   *
+   * @generated from field: bool logs_view = 24;
+   */
+  logsView = false;
+
+  /**
+   * Columns to show in the Logs view; defaults to all columns of the underlying table.
+   *
+   * @generated from field: repeated string logs_view_columns = 25;
+   */
+  logsViewColumns: string[] = [];
+
   constructor(data?: PartialMessage<ExploreSpec>) {
     super();
     proto3.util.initPartial(data, this);
@@ -2895,6 +2918,8 @@ export class ExploreSpec extends Message<ExploreSpec> {
     { no: 19, name: "lock_time_zone", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
     { no: 20, name: "allow_custom_time_range", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
     { no: 21, name: "defined_in_metrics_view", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 24, name: "logs_view", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 25, name: "logs_view_columns", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ExploreSpec {

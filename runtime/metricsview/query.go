@@ -93,9 +93,6 @@ func (q *Query) Validate() error {
 		if len(q.Measures) > 0 {
 			return fmt.Errorf("measures not supported when rows is set, all model columns will be returned")
 		}
-		if len(q.Sort) > 0 {
-			return fmt.Errorf("sort not supported when rows is set")
-		}
 		if q.ComparisonTimeRange != nil {
 			return fmt.Errorf("comparison_time_range not supported when rows is set")
 		}

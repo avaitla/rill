@@ -542,6 +542,11 @@ export enum DashboardState_ActivePage {
    * @generated from enum value: ACTIVE_PAGE_PIVOT = 4;
    */
   PIVOT = 4,
+
+  /**
+   * @generated from enum value: ACTIVE_PAGE_LOGS = 5;
+   */
+  LOGS = 5,
 }
 // Retrieve enum metadata with: proto3.getEnumType(DashboardState_ActivePage)
 proto3.util.setEnumType(DashboardState_ActivePage, "rill.ui.v1.DashboardState.ActivePage", [
@@ -550,6 +555,7 @@ proto3.util.setEnumType(DashboardState_ActivePage, "rill.ui.v1.DashboardState.Ac
   { no: 2, name: "ACTIVE_PAGE_DIMENSION_TABLE" },
   { no: 3, name: "ACTIVE_PAGE_TIME_DIMENSIONAL_DETAIL" },
   { no: 4, name: "ACTIVE_PAGE_PIVOT" },
+  { no: 5, name: "ACTIVE_PAGE_LOGS" },
 ]);
 
 /**

@@ -34,6 +34,8 @@ type ExploreDefinitionYAML struct {
 	TimeRanges           []ExploreTimeRangeYAML `yaml:"time_ranges"`
 	TimeZones            []string               `yaml:"time_zones"` // Single time zone or list of time zones
 	LockTimeZone         bool                   `yaml:"lock_time_zone"`
+	LogsView             bool                   `yaml:"logs_view"`
+	LogsViewColumns      []string               `yaml:"logs_view_columns"`
 	AllowCustomTimeRange *bool                  `yaml:"allow_custom_time_range"`
 	Defaults             *ExploreDefaultsYAML   `yaml:"defaults"`
 	Embeds               struct {
@@ -342,6 +344,8 @@ func (d *exploreDefinition) applyToSpec(spec *runtimev1.ExploreSpec, tmp *Explor
 	spec.DefaultPreset = d.defaultPreset
 	spec.EmbedsHidePivot = tmp.Embeds.HidePivot
 	spec.LockTimeZone = tmp.LockTimeZone
+	spec.LogsView = tmp.LogsView
+	spec.LogsViewColumns = tmp.LogsViewColumns
 	spec.AllowCustomTimeRange = d.allowCustomTimeRange
 }
 

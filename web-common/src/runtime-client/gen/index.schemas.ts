@@ -997,6 +997,11 @@ These are not currently parsed from YAML, but will be derived from the parent me
   allowCustomTimeRange?: boolean;
   /** When true, it indicates that the explore was defined in a metrics view either explicitly or emitted because version was not set. */
   definedInMetricsView?: boolean;
+  /** Enables the Logs web view: a raw-events tab showing the underlying rows for the
+current filters and time range, newest first. */
+  logsView?: boolean;
+  /** Columns to show in the Logs view; defaults to all columns of the underlying table. */
+  logsViewColumns?: string[];
 }
 
 export interface V1ExploreState {
@@ -1021,6 +1026,7 @@ export const V1ExploreWebView = {
   EXPLORE_WEB_VIEW_TIME_DIMENSION: "EXPLORE_WEB_VIEW_TIME_DIMENSION",
   EXPLORE_WEB_VIEW_PIVOT: "EXPLORE_WEB_VIEW_PIVOT",
   EXPLORE_WEB_VIEW_CANVAS: "EXPLORE_WEB_VIEW_CANVAS",
+  EXPLORE_WEB_VIEW_LOGS: "EXPLORE_WEB_VIEW_LOGS",
 } as const;
 
 export type V1ExportFormat =

@@ -2629,6 +2629,14 @@ definitions:
             description: Refers to the time zones that should be pinned to the top of the time zone selector. It should be a list of [IANA time zone identifiers](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)
             items:
               type: string
+          logs_view:
+            type: boolean
+            description: Enables the Logs web view, a raw-events tab next to Explore/Pivot that shows the underlying rows for the current filters and time range, newest first.
+          logs_view_columns:
+            type: array
+            items:
+              type: string
+            description: Columns to show in the Logs view. Defaults to all columns of the underlying table. Every column remains visible in a row's expanded detail.
           lock_time_zone:
             type: boolean
             description: When true, the dashboard will be locked to the first time provided in the time_zones list. When no time_zones are provided, the dashboard will be locked to UTC
@@ -4140,6 +4148,14 @@ definitions:
             description: List of time zones to pin to the top of the time zone selector. Should be a list of IANA time zone identifiers.
             items:
               type: string
+          logs_view:
+            type: boolean
+            description: Enables the Logs web view, a raw-events tab next to Explore/Pivot that shows the underlying rows for the current filters and time range, newest first.
+          logs_view_columns:
+            type: array
+            items:
+              type: string
+            description: Columns to show in the Logs view. Defaults to all columns of the underlying table. Every column remains visible in a row's expanded detail.
           lock_time_zone:
             type: boolean
             description: When true, the explore view will be locked to the first time zone provided in the time_zones list. If no time_zones are provided, it will be locked to UTC.
