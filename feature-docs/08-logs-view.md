@@ -29,7 +29,11 @@ logs_view_columns: [Timestamp, ServiceName, SeverityText, Body]   # optional; de
   `sort` on raw-rows queries; that restriction is lifted (with `SELECT *`, any
   underlying column is in scope for ORDER BY)
 - UI: `web-common/src/features/dashboards/logs-view/LogsView.svelte` (monospace table,
-  sticky header, row click expands a detail grid of all fields incl. Map columns);
+  sticky header, row click expands a detail grid of all fields incl. Map columns).
+  Columns are **sortable** (click a header; defaults to time desc). Multiline values
+  such as stack traces show their first line with a `(+N lines)` hint in the row and
+  render with preserved newlines in the detail. Cells of columns backed by a dimension
+  with `links` get the same labeled link menu (all-features branch);
   `TabBar.svelte` gains the tab, `Dashboard.svelte` renders the view for
   `ActivePage.LOGS`
 

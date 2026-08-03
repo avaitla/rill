@@ -1,5 +1,13 @@
 <script lang="ts">
+  import { page } from "$app/stores";
+  import { get } from "svelte/store";
+  import * as DropdownMenu from "@rilldata/web-common/components/dropdown-menu";
   import ExternalLink from "@rilldata/web-common/components/icons/ExternalLink.svelte";
+  import {
+    gotoDrillThroughExplore,
+    openDimensionValueLink,
+    pickDrillThroughContext,
+  } from "@rilldata/web-common/features/dashboards/drill-through";
   import { mergeDimensionAndMeasureFilters } from "@rilldata/web-common/features/dashboards/filters/measure-filters/measure-filter-utils";
   import { resolveRowLink } from "@rilldata/web-common/features/dashboards/logs-view/row-links";
   import { getStateManagers } from "@rilldata/web-common/features/dashboards/state-managers/state-managers";
@@ -19,9 +27,48 @@
   $: exploreSpec = $validSpecStore.data?.explore ?? {};
   $: timeDimension = metricsViewSpec.timeDimension;
   $: rowLinks = metricsViewSpec.rowLinks ?? [];
+
+  // Dimension value links follow their columns into the Logs view: cells of a
+  // column backed by a dimension with `links` get the same labeled link menu.
+  $: dimensionLinksByColumn = new Map(
+    (metricsViewSpec.dimensions ?? [])
+      .filter((d) => d.links?.length && d.column)
+      .map((d) => [d.column as string, d]),
+  );
+
+  function onCellExploreLink(
+    targetExplore: string,
+    dimensionName: string,
+    value: unknown,
+  ) {
+    void gotoDrillThroughExplore(
+      runtimeClient,
+      targetExplore,
+      dimensionName,
+      String(value),
+      pickDrillThroughContext(get(dashboardStore)),
+      $page.params.organization,
+      $page.params.project,
+    ).catch((error) => console.warn("Explore link navigation error:", error));
+  }
   $: configuredColumns = exploreSpec.logsViewColumns ?? [];
 
   $: ({ timeStart, timeEnd, ready: timeControlsReady } = $timeControlsStore);
+
+  // Sorting: defaults to the time dimension, newest first. Clicking a column
+  // header sorts by it; clicking again flips the direction.
+  let sortCol: string | undefined = undefined;
+  let sortDesc = true;
+  $: effectiveSortCol = sortCol ?? timeDimension;
+
+  function toggleSort(col: string) {
+    if (effectiveSortCol === col) {
+      sortDesc = !sortDesc;
+    } else {
+      sortCol = col;
+      sortDesc = true;
+    }
+  }
 
   $: where = sanitiseExpression(
     mergeDimensionAndMeasureFilters(
@@ -38,7 +85,9 @@
       timeStart,
       timeEnd,
       where,
-      sort: timeDimension ? [{ name: timeDimension, ascending: false }] : [],
+      sort: effectiveSortCol
+        ? [{ name: effectiveSortCol, ascending: !sortDesc }]
+        : [],
       limit: LOGS_ROW_LIMIT,
     },
     {
@@ -62,6 +111,16 @@
     if (value === null || value === undefined) return "";
     if (typeof value === "object") return JSON.stringify(value);
     return String(value);
+  }
+
+  // Row cells show only the first line of multiline values (e.g. stack traces),
+  // with a line-count hint; the expanded detail shows the full text.
+  function formatCell(value: unknown): string {
+    const s = format(value);
+    const nl = s.indexOf("\n");
+    if (nl === -1) return s;
+    const lines = s.split("\n").length;
+    return `${s.slice(0, nl)}  (+${lines - 1} lines)`;
   }
 </script>
 
@@ -87,7 +146,21 @@
               <th class="w-8"></th>
             {/if}
             {#each columns as col (col)}
-              <th class:time-col={col === timeDimension}>{col}</th>
+              <th
+                class:time-col={col === timeDimension}
+                aria-sort={effectiveSortCol === col
+                  ? sortDesc
+                    ? "descending"
+                    : "ascending"
+                  : undefined}
+              >
+                <button type="button" onclick={() => toggleSort(col)}>
+                  {col}
+                  {#if effectiveSortCol === col}
+                    <span class="sort-arrow">{sortDesc ? "\u2193" : "\u2191"}</span>
+                  {/if}
+                </button>
+              </th>
             {/each}
           </tr>
         </thead>
@@ -114,8 +187,56 @@
                 </td>
               {/if}
               {#each columns as col (col)}
+                {@const dim = dimensionLinksByColumn.get(col)}
                 <td class:time-col={col === timeDimension}>
-                  {format(row[col])}
+                  {formatCell(row[col])}
+                  {#if dim && row[col] != null && row[col] !== ""}
+                    <DropdownMenu.Root>
+                      <DropdownMenu.Trigger>
+                        {#snippet child({ props })}
+                          <button
+                            {...props}
+                            type="button"
+                            class="dim-link"
+                            title={m.dashboard_dimension_links({
+                              value: String(row[col]),
+                            })}
+                            aria-label={m.dashboard_dimension_links({
+                              value: String(row[col]),
+                            })}
+                            onclick={(e) => {
+                              e.stopPropagation();
+                              props.onclick?.(e);
+                            }}
+                          >
+                            <ExternalLink
+                              size="11px"
+                              className="fill-primary-600"
+                            />
+                          </button>
+                        {/snippet}
+                      </DropdownMenu.Trigger>
+                      <DropdownMenu.Content align="start" class="w-44">
+                        {#each dim.links ?? [] as link (link.url ?? link.explore)}
+                          <DropdownMenu.Item
+                            onSelect={() => {
+                              if (link.explore) {
+                                onCellExploreLink(
+                                  link.explore,
+                                  dim.name ?? col,
+                                  row[col],
+                                );
+                              } else {
+                                openDimensionValueLink(link, row[col]);
+                              }
+                            }}
+                          >
+                            {link.label || link.url || link.explore}
+                          </DropdownMenu.Item>
+                        {/each}
+                      </DropdownMenu.Content>
+                    </DropdownMenu.Root>
+                  {/if}
                 </td>
               {/each}
             </tr>
@@ -163,8 +284,20 @@
   }
 
   thead th {
-    @apply sticky top-0 z-10 bg-surface-subtle text-left px-3 py-1.5;
+    @apply sticky top-0 z-10 bg-surface-subtle text-left p-0;
     @apply font-semibold text-fg-secondary border-b whitespace-nowrap;
+  }
+
+  thead th button {
+    @apply w-full text-left px-3 py-1.5 font-semibold cursor-pointer;
+  }
+
+  thead th button:hover {
+    @apply text-fg-primary;
+  }
+
+  .sort-arrow {
+    @apply text-theme-600;
   }
 
   tbody tr {
@@ -192,6 +325,17 @@
     @apply inline-flex align-middle opacity-60 hover:opacity-100 mr-1;
   }
 
+  .dim-link {
+    @apply inline-flex align-middle ml-1 opacity-0;
+  }
+  tbody tr:hover .dim-link,
+  .dim-link[data-state="open"] {
+    @apply opacity-60;
+  }
+  .dim-link:hover {
+    @apply !opacity-100;
+  }
+
   .detail-row {
     @apply cursor-default;
   }
@@ -209,6 +353,6 @@
     @apply text-fg-muted;
   }
   .detail-row dd {
-    @apply break-all;
+    @apply break-words whitespace-pre-wrap;
   }
 </style>

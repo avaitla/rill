@@ -21,3 +21,27 @@ SELECT
   ),
   map('k8s.namespace.name', ['prod','batch'][1 + rand() % 2])
 FROM numbers(20000);
+
+-- A handful of ERROR logs with a large multi-line stack trace, to exercise the
+-- Logs view's multiline rendering (first line in the row, full trace in detail).
+INSERT INTO otel_logs
+SELECT
+  now() - toIntervalMinute(number * 7),
+  'checkout',
+  'ERROR',
+  'java.lang.NullPointerException: Cannot invoke "com.shop.cart.CartService.getItems()" because "this.cartService" is null
+	at com.shop.checkout.CheckoutController.processOrder(CheckoutController.java:142)
+	at com.shop.checkout.CheckoutController.lambda$submit$3(CheckoutController.java:98)
+	at java.base/java.util.Optional.map(Optional.java:260)
+	at com.shop.checkout.CheckoutController.submit(CheckoutController.java:97)
+	at org.springframework.web.method.support.InvocableHandlerMethod.doInvoke(InvocableHandlerMethod.java:205)
+	at org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:1089)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:174)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1136)
+	at java.base/java.lang.Thread.run(Thread.java:840)
+Caused by: com.shop.common.BeanInitializationException: circular dependency detected in cart module
+	at com.shop.common.di.Injector.resolve(Injector.java:77)
+	... 19 more',
+  map('http.method', 'POST', 'http.status_code', '500', 'user.id', concat('u', toString(number % 5)), 'exception.type', 'NullPointerException'),
+  map('k8s.namespace.name', 'prod')
+FROM numbers(8);
