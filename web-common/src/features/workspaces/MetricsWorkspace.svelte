@@ -105,8 +105,13 @@
 
   // Fall back to the visual metrics editor if the inline explore is disabled while
   // the explore view is selected (e.g. the block was deleted, or stale localStorage).
+  // Coerce unknown values to "viz" so the workspace never renders an empty body.
   $: effectiveView =
-    $selectedView === "explore" && !exploreEnabled ? "viz" : $selectedView;
+    $selectedView === "explore" && !exploreEnabled
+      ? "viz"
+      : ["code", "viz", "explore"].includes($selectedView)
+        ? $selectedView
+        : "viz";
 
   // Parse error for the editor gutter and banner
   $: parseErrorQuery = fileArtifact.getParseError(queryClient);

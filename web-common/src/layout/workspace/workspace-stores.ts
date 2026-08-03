@@ -124,17 +124,24 @@ class Workspaces {
 
 export const workspaces = new Workspaces();
 
-// consumeViewSearchParam handles the `view` search param on file routes: links can
+// Views the workspace layer owns. Other values of the `view` search param (e.g.
+// "tdd"/"pivot", which belong to an embedded dashboard's own URL state) must be
+// left alone.
+const KNOWN_WORKSPACE_VIEWS = ["code", "split", "viz", "explore"];
+
+// applyViewSearchParam handles the `view` search param on file routes: links can
 // append `?view=<view>` to open a file's workspace on a specific view (e.g.
 // `?view=explore` for the explore editor of a metrics view file). It stores the view
-// for the file and returns the URL to redirect to with the param removed, or null if
-// the param is not present. Called from the files `+page.ts` load functions.
-export function consumeViewSearchParam(
-  url: URL,
-  filePath: string,
-): string | null {
+// for the file and returns the URL with the param removed, or null when there is
+// nothing to apply.
+//
+// IMPORTANT: call this from a component navigation hook (e.g. afterNavigate), never
+// from a `load` function. Load functions also run for hover-triggered preloads, and
+// mutating the workspace store during a preload corrupts the visible workspace
+// (a measure tile's `?view=tdd` link once blanked the whole editor pane on hover).
+export function applyViewSearchParam(url: URL, filePath: string): string | null {
   const view = url.searchParams.get("view");
-  if (!view) return null;
+  if (!view || !KNOWN_WORKSPACE_VIEWS.includes(view)) return null;
 
   workspaces.get<string>(filePath).view.set(view);
 

@@ -23,7 +23,7 @@ export function navigateToFile(
 }
 
 // The optional view selects the workspace view to open the file on;
-// it is consumed by the files route (see consumeViewSearchParam).
+// it is consumed by the files route (see applyViewSearchParam).
 export function getFileHref(filePath: string, view?: string): string {
   return withEditorPrefix(`/files${filePath}${view ? `?view=${view}` : ""}`);
 }

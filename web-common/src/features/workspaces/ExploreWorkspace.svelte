@@ -58,7 +58,9 @@
   $: workspace = workspaces.get(filePath);
   $: selectedViewStore = workspace.view;
 
-  $: selectedView = $selectedViewStore ?? "code";
+  // Coerce unknown values (e.g. a dashboard web-view name that leaked into the
+  // workspace store) to "viz" so the workspace never renders an empty body.
+  $: selectedView = $selectedViewStore === "code" ? "code" : "viz";
 
   $: metricsViewName = metricsViewResource?.meta?.name?.name;
 

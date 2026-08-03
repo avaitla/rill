@@ -169,6 +169,7 @@
 
   // Clear the active theme when this dashboard is destroyed
   onDestroy(() => activeDashboardTheme.set(undefined));
+
 </script>
 
 <ThemeProvider theme={$theme}>

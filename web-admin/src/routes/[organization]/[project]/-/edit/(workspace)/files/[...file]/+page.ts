@@ -1,16 +1,10 @@
 import { addLeadingSlash } from "@rilldata/web-common/features/entity-management/entity-mappers.js";
 import { fileArtifacts } from "@rilldata/web-common/features/entity-management/file-artifacts.js";
-import { consumeViewSearchParam } from "@rilldata/web-common/layout/workspace/workspace-stores";
-import { error, redirect } from "@sveltejs/kit";
+import { error } from "@sveltejs/kit";
 
-export const load = async ({ params: { file }, parent, url }) => {
+export const load = async ({ params: { file }, parent }) => {
   await parent();
   const path = addLeadingSlash(file);
-
-  const urlWithoutViewParam = consumeViewSearchParam(url, path);
-  if (urlWithoutViewParam) {
-    throw redirect(307, urlWithoutViewParam);
-  }
 
   const fileArtifact = fileArtifacts.getFileArtifact(path);
 
