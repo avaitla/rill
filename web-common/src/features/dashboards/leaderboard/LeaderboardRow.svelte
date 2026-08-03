@@ -10,6 +10,12 @@
   import { numberPartsToString } from "@rilldata/web-common/lib/number-formatting/utils/number-parts-utils";
   import { slide } from "svelte/transition";
   import { makeHref } from "@rilldata/web-common/features/dashboards/dashboard-utils";
+  import * as DropdownMenu from "@rilldata/web-common/components/dropdown-menu";
+  import {
+    openDimensionValueLink,
+    resolveDimensionValueLink,
+  } from "@rilldata/web-common/features/dashboards/drill-through";
+  import type { MetricsViewSpecDimensionValueLink } from "@rilldata/web-common/runtime-client";
   import { type LeaderboardItemData } from "./leaderboard-utils";
   import {
     COMPARISON_COLUMN_WIDTH,
@@ -53,6 +59,8 @@
   // Name of the explore to drill through to when the drill icon is clicked
   export let drillThrough: string | undefined = undefined;
   export let onDrillThrough: (dimensionValue: string) => void = () => {};
+  // External links configured on the dimension (`links` in the metrics view YAML)
+  export let valueLinks: MetricsViewSpecDimensionValueLink[] = [];
 
   function shouldShowContextColumns(measureName: string): boolean {
     return (
@@ -230,7 +238,10 @@
     {/if}
 
     {#if href}
-      <span class="external-link-wrapper" class:shifted={!!drillThrough}>
+      <span
+        class="external-link-wrapper"
+        style:right="{(drillThrough ? 20 : 0) + (valueLinks.length ? 20 : 0)}px"
+      >
         <a
           target="_blank"
           rel="noopener noreferrer"
@@ -243,6 +254,61 @@
         >
           <ExternalLink className="fill-primary-600" />
         </a>
+      </span>
+    {/if}
+
+    {#if valueLinks.length === 1 && valueLinks[0].url}
+      <span class="value-links-wrapper" style:right="{drillThrough ? 20 : 0}px">
+        <a
+          target="_blank"
+          rel="noopener noreferrer"
+          href={resolveDimensionValueLink(valueLinks[0].url, dimensionValue)}
+          title={valueLinks[0].label}
+          aria-label={m.dashboard_dimension_links({
+            value: String(dimensionValue),
+          })}
+          onclick={(e) => {
+            e.stopPropagation();
+          }}
+          class:hovered
+        >
+          <ExternalLink className="fill-primary-600" />
+        </a>
+      </span>
+    {:else if valueLinks.length > 1}
+      <span class="value-links-wrapper" style:right="{drillThrough ? 20 : 0}px">
+        <DropdownMenu.Root>
+          <DropdownMenu.Trigger>
+            {#snippet child({ props })}
+              <button
+                {...props}
+                type="button"
+                title={m.dashboard_dimension_links({
+                  value: String(dimensionValue),
+                })}
+                aria-label={m.dashboard_dimension_links({
+                  value: String(dimensionValue),
+                })}
+                onclick={(e) => {
+                  e.stopPropagation();
+                  props.onclick?.(e);
+                }}
+                class:hovered
+              >
+                <ExternalLink className="fill-primary-600" />
+              </button>
+            {/snippet}
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Content align="start" class="w-44">
+            {#each valueLinks as link (link.url)}
+              <DropdownMenu.Item
+                onSelect={() => openDimensionValueLink(link, dimensionValue)}
+              >
+                {link.label || link.url}
+              </DropdownMenu.Item>
+            {/each}
+          </DropdownMenu.Content>
+        </DropdownMenu.Root>
       </span>
     {/if}
 
@@ -408,9 +474,33 @@
     -webkit-backdrop-filter: blur(2px);
   }
 
-  /* When both a URI link and a drill-through icon are shown, shift the URI link left */
-  .external-link-wrapper.shifted a {
-    right: 20px;
+  /* The uri link, value links and drill-through icons stack from the right edge;
+     each wrapper's right offset is computed inline based on which icons are present. */
+  .external-link-wrapper,
+  .value-links-wrapper {
+    position: absolute;
+    top: 0;
+  }
+
+  .value-links-wrapper a,
+  .value-links-wrapper button {
+    opacity: 0;
+    height: 20px;
+    width: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .value-links-wrapper a.hovered,
+  .value-links-wrapper button.hovered {
+    opacity: 0.7;
+    pointer-events: auto;
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+  }
+  .value-links-wrapper a.hovered:hover,
+  .value-links-wrapper button.hovered:hover {
+    opacity: 1;
   }
 
   .drill-through-wrapper button {

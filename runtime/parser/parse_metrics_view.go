@@ -3,6 +3,7 @@ package parser
 import (
 	"errors"
 	"fmt"
+	"net/url"
 	"regexp"
 	"strings"
 	"time"
@@ -36,18 +37,22 @@ type MetricsViewYAML struct {
 	FirstMonthOfYear  uint32           `yaml:"first_month_of_year"`
 	MaxQueryTimeRange string           `yaml:"max_query_time_range"`
 	Dimensions        []*struct {
-		Name                    string
-		DisplayName             string `yaml:"display_name"`
-		Label                   string // Deprecated: use display_name
-		Description             string
-		Type                    string
-		Column                  string
-		Expression              string
-		Property                string // For backwards compatibility
-		Ignore                  bool   `yaml:"ignore"` // Deprecated
-		Unnest                  bool
-		URI                     string
-		DrillThrough            string `yaml:"drill_through"`
+		Name         string
+		DisplayName  string `yaml:"display_name"`
+		Label        string // Deprecated: use display_name
+		Description  string
+		Type         string
+		Column       string
+		Expression   string
+		Property     string // For backwards compatibility
+		Ignore       bool   `yaml:"ignore"` // Deprecated
+		Unnest       bool
+		URI          string
+		DrillThrough string `yaml:"drill_through"`
+		Links        []*struct {
+			Label string `yaml:"label"`
+			URL   string `yaml:"url"`
+		} `yaml:"links"`
 		LookupTable             string `yaml:"lookup_table"`
 		LookupKeyColumn         string `yaml:"lookup_key_column"`
 		LookupValueColumn       string `yaml:"lookup_value_column"`
@@ -445,6 +450,25 @@ func (p *Parser) parseMetricsView(node *Node) error {
 			SmallestTimeGrain:       smallestTimeGrain,
 			Tags:                    dim.Tags,
 		})
+		for _, link := range dim.Links {
+			if link == nil {
+				continue
+			}
+			if err := validateDimensionLink(link.URL); err != nil {
+				return fmt.Errorf(`invalid link for dimension %q: %w`, dim.Name, err)
+			}
+			label := link.Label
+			if label == "" {
+				if u, err := url.Parse(link.URL); err == nil {
+					label = u.Host
+				}
+			}
+			d := dimensions[len(dimensions)-1]
+			d.Links = append(d.Links, &runtimev1.MetricsViewSpec_Dimension_ValueLink{
+				Label: label,
+				Url:   link.URL,
+			})
+		}
 	}
 
 	for _, dimension := range tmp.DefaultDimensions {
@@ -1170,6 +1194,27 @@ func validateDataTimeRange(expr string) error {
 	}
 	return nil
 }
+
+// validateDimensionLink validates a dimension value link URL template.
+// The template may contain "{{ value }}" placeholders, which the UI replaces with the
+// URL-encoded dimension value; the URL must be absolute with an http or https scheme.
+func validateDimensionLink(rawURL string) error {
+	if rawURL == "" {
+		return errors.New(`"url" is required`)
+	}
+	// Substitute placeholders with a dummy value so templates parse as URLs.
+	probe := dimensionLinkPlaceholderRegex.ReplaceAllString(rawURL, "x")
+	u, err := url.Parse(probe)
+	if err != nil {
+		return fmt.Errorf("invalid url %q: %w", rawURL, err)
+	}
+	if u.Scheme != "http" && u.Scheme != "https" {
+		return fmt.Errorf("invalid url %q: must be an absolute http(s) URL", rawURL)
+	}
+	return nil
+}
+
+var dimensionLinkPlaceholderRegex = regexp.MustCompile(`\{\{\s*value\s*\}\}`)
 
 // validateQueryAttributes validates query attribute keys
 func validateQueryAttributes(attrs map[string]string) error {

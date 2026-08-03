@@ -1757,6 +1757,11 @@ export class MetricsViewSpec_Dimension extends Message<MetricsViewSpec_Dimension
   drillThrough = "";
 
   /**
+   * @generated from field: repeated rill.runtime.v1.MetricsViewSpec.Dimension.ValueLink links = 22;
+   */
+  links: MetricsViewSpec_Dimension_ValueLink[] = [];
+
+  /**
    * Lookup fields for the dimension
    *
    * @generated from field: string lookup_table = 8;
@@ -1810,6 +1815,7 @@ export class MetricsViewSpec_Dimension extends Message<MetricsViewSpec_Dimension
     { no: 5, name: "unnest", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
     { no: 7, name: "uri", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 17, name: "drill_through", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 22, name: "links", kind: "message", T: MetricsViewSpec_Dimension_ValueLink, repeated: true },
     { no: 8, name: "lookup_table", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 9, name: "lookup_key_column", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 10, name: "lookup_value_column", kind: "scalar", T: 9 /* ScalarType.STRING */ },
@@ -1832,6 +1838,53 @@ export class MetricsViewSpec_Dimension extends Message<MetricsViewSpec_Dimension
 
   static equals(a: MetricsViewSpec_Dimension | PlainMessage<MetricsViewSpec_Dimension> | undefined, b: MetricsViewSpec_Dimension | PlainMessage<MetricsViewSpec_Dimension> | undefined): boolean {
     return proto3.util.equals(MetricsViewSpec_Dimension, a, b);
+  }
+}
+
+/**
+ * External link shown on the dimension's values (e.g. a Datadog service page or a
+ * GitHub search). The url is a template where "{{ value }}" is replaced with the
+ * URL-encoded dimension value.
+ *
+ * @generated from message rill.runtime.v1.MetricsViewSpec.Dimension.ValueLink
+ */
+export class MetricsViewSpec_Dimension_ValueLink extends Message<MetricsViewSpec_Dimension_ValueLink> {
+  /**
+   * @generated from field: string label = 1;
+   */
+  label = "";
+
+  /**
+   * @generated from field: string url = 2;
+   */
+  url = "";
+
+  constructor(data?: PartialMessage<MetricsViewSpec_Dimension_ValueLink>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rill.runtime.v1.MetricsViewSpec.Dimension.ValueLink";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "label", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): MetricsViewSpec_Dimension_ValueLink {
+    return new MetricsViewSpec_Dimension_ValueLink().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): MetricsViewSpec_Dimension_ValueLink {
+    return new MetricsViewSpec_Dimension_ValueLink().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): MetricsViewSpec_Dimension_ValueLink {
+    return new MetricsViewSpec_Dimension_ValueLink().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: MetricsViewSpec_Dimension_ValueLink | PlainMessage<MetricsViewSpec_Dimension_ValueLink> | undefined, b: MetricsViewSpec_Dimension_ValueLink | PlainMessage<MetricsViewSpec_Dimension_ValueLink> | undefined): boolean {
+    return proto3.util.equals(MetricsViewSpec_Dimension_ValueLink, a, b);
   }
 }
 
