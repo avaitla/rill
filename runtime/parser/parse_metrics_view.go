@@ -51,7 +51,11 @@ type MetricsViewYAML struct {
 	SkipInvalidDimensions bool             `yaml:"skip_invalid_dimensions"`
 	SkipEmptyDimensions   bool             `yaml:"skip_empty_dimensions"`
 	TableOptions          []string         `yaml:"table_options"`
-	Dimensions            []*struct {
+	RowLinks              []*struct {
+		Label string `yaml:"label"`
+		URL   string `yaml:"url"`
+	} `yaml:"row_links"`
+	Dimensions []*struct {
 		Name        string
 		DisplayName string `yaml:"display_name"`
 		Label       string // Deprecated: use display_name
@@ -1079,6 +1083,25 @@ func (p *Parser) parseMetricsView(node *Node) error {
 	spec.CacheKeyTtlSeconds = int64(cacheTTLDuration.Seconds())
 	spec.QueryAttributes = tmp.QueryAttributes
 
+	for _, link := range tmp.RowLinks {
+		if link == nil {
+			continue
+		}
+		if err := validateRowLink(link.URL); err != nil {
+			return fmt.Errorf(`invalid row link: %w`, err)
+		}
+		label := link.Label
+		if label == "" {
+			if u, err := url.Parse(rowLinkPlaceholderRegex.ReplaceAllString(link.URL, "x")); err == nil {
+				label = u.Host
+			}
+		}
+		spec.RowLinks = append(spec.RowLinks, &runtimev1.MetricsViewSpec_RowLink{
+			Label: label,
+			Url:   link.URL,
+		})
+	}
+
 	// Populate the table option variants as copies of the now fully-built primary spec with a different table,
 	// and record the option-to-variant mapping on the primary spec for the frontend's table selector.
 	if len(tableOptionTables) > 0 {
@@ -1344,6 +1367,26 @@ func validateDimensionLink(rawURL string) error {
 }
 
 var dimensionLinkPlaceholderRegex = regexp.MustCompile(`\{\{\s*value\s*\}\}`)
+
+// validateRowLink validates a row link URL template.
+// The template may contain "{{ <column> }}" placeholders, which the UI replaces with the
+// URL-encoded value of that column in the clicked row.
+func validateRowLink(rawURL string) error {
+	if rawURL == "" {
+		return errors.New(`"url" is required`)
+	}
+	probe := rowLinkPlaceholderRegex.ReplaceAllString(rawURL, "x")
+	u, err := url.Parse(probe)
+	if err != nil {
+		return fmt.Errorf("invalid url %q: %w", rawURL, err)
+	}
+	if u.Scheme != "http" && u.Scheme != "https" {
+		return fmt.Errorf("invalid url %q: must be an absolute http(s) URL", rawURL)
+	}
+	return nil
+}
+
+var rowLinkPlaceholderRegex = regexp.MustCompile(`\{\{\s*[^}]+\s*\}\}`)
 
 // validateQueryAttributes validates query attribute keys
 func validateQueryAttributes(attrs map[string]string) error {

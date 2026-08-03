@@ -5,6 +5,7 @@
     extractErrorStatusCode,
     isNotFoundError,
   } from "@rilldata/web-common/lib/errors";
+  import LogsView from "@rilldata/web-common/features/dashboards/logs-view/LogsView.svelte";
   import PivotDisplay from "@rilldata/web-common/features/dashboards/pivot/PivotDisplay.svelte";
   import TabBar from "@rilldata/web-common/features/dashboards/tab-bar/TabBar.svelte";
   import { useExploreValidSpec } from "@rilldata/web-common/features/explores/selectors";
@@ -116,6 +117,8 @@
     $selectedMockUserStore && isNotFoundError(exploreError);
 
   $: hidePivot = isEmbedded && exploreSpec?.embedsHidePivot;
+  $: showLogs = activePage === DashboardState_ActivePage.LOGS;
+  $: showLogsTab = !!exploreSpec?.logsView;
 
   // NOTE: An explicit subscription is used (instead of `$timeControlsStore`) since the store
   // updates through the table-option chain, which the auto-subscription does not reliably pick up.
@@ -195,7 +198,13 @@
               {hasTimeSeries}
             />
             <div class="absolute bottom-0 flex flex-col right-0">
-              <TabBar {hidePivot} {exploreName} onPivot={$showPivot} />
+              <TabBar
+                {hidePivot}
+                {showLogsTab}
+                {exploreName}
+                onPivot={$showPivot}
+                onLogs={showLogs}
+              />
             </div>
           </section>
         {/key}
@@ -209,6 +218,8 @@
         header="This user can't access this dashboard"
         body="The security policy for this dashboard may make contents invisible to you. If you deploy this dashboard, {$selectedMockUserStore?.email} will see a 404."
       />
+    {:else if showLogs}
+      <LogsView />
     {:else if $showPivot}
       <PivotDisplay {isEmbedded} />
     {:else}

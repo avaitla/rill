@@ -2,3 +2,5 @@ type: explore
 display_name: Logs (ClickHouse)
 metrics_view: logs
 hide_empty_dimensions: true
+logs_view: true
+logs_view_columns: [Timestamp, ServiceName, SeverityText, Body]

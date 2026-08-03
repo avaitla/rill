@@ -135,6 +135,11 @@ export enum ExploreWebView {
    * @generated from enum value: EXPLORE_WEB_VIEW_CANVAS = 4;
    */
   CANVAS = 4,
+
+  /**
+   * @generated from enum value: EXPLORE_WEB_VIEW_LOGS = 5;
+   */
+  LOGS = 5,
 }
 // Retrieve enum metadata with: proto3.getEnumType(ExploreWebView)
 proto3.util.setEnumType(ExploreWebView, "rill.runtime.v1.ExploreWebView", [
@@ -143,6 +148,7 @@ proto3.util.setEnumType(ExploreWebView, "rill.runtime.v1.ExploreWebView", [
   { no: 2, name: "EXPLORE_WEB_VIEW_TIME_DIMENSION" },
   { no: 3, name: "EXPLORE_WEB_VIEW_PIVOT" },
   { no: 4, name: "EXPLORE_WEB_VIEW_CANVAS" },
+  { no: 5, name: "EXPLORE_WEB_VIEW_LOGS" },
 ]);
 
 /**
@@ -1610,6 +1616,11 @@ export class MetricsViewSpec extends Message<MetricsViewSpec> {
    */
   tableOptionOf = "";
 
+  /**
+   * @generated from field: repeated rill.runtime.v1.MetricsViewSpec.RowLink row_links = 42;
+   */
+  rowLinks: MetricsViewSpec_RowLink[] = [];
+
   constructor(data?: PartialMessage<MetricsViewSpec>) {
     super();
     proto3.util.initPartial(data, this);
@@ -1650,6 +1661,7 @@ export class MetricsViewSpec extends Message<MetricsViewSpec> {
     { no: 39, name: "skip_empty_dimensions", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
     { no: 40, name: "table_options", kind: "message", T: MetricsViewSpec_TableOption, repeated: true },
     { no: 41, name: "table_option_of", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 42, name: "row_links", kind: "message", T: MetricsViewSpec_RowLink, repeated: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): MetricsViewSpec {
@@ -2494,6 +2506,53 @@ export class MetricsViewSpec_TableOption extends Message<MetricsViewSpec_TableOp
 }
 
 /**
+ * Links attached to every raw row in the Logs view (e.g. a trace viewer).
+ * The url is a template where "{{ <column> }}" placeholders are replaced with the
+ * URL-encoded value of that column in the clicked row.
+ *
+ * @generated from message rill.runtime.v1.MetricsViewSpec.RowLink
+ */
+export class MetricsViewSpec_RowLink extends Message<MetricsViewSpec_RowLink> {
+  /**
+   * @generated from field: string label = 1;
+   */
+  label = "";
+
+  /**
+   * @generated from field: string url = 2;
+   */
+  url = "";
+
+  constructor(data?: PartialMessage<MetricsViewSpec_RowLink>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rill.runtime.v1.MetricsViewSpec.RowLink";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "label", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): MetricsViewSpec_RowLink {
+    return new MetricsViewSpec_RowLink().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): MetricsViewSpec_RowLink {
+    return new MetricsViewSpec_RowLink().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): MetricsViewSpec_RowLink {
+    return new MetricsViewSpec_RowLink().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: MetricsViewSpec_RowLink | PlainMessage<MetricsViewSpec_RowLink> | undefined, b: MetricsViewSpec_RowLink | PlainMessage<MetricsViewSpec_RowLink> | undefined): boolean {
+    return proto3.util.equals(MetricsViewSpec_RowLink, a, b);
+  }
+}
+
+/**
  * @generated from message rill.runtime.v1.SecurityRule
  */
 export class SecurityRule extends Message<SecurityRule> {
@@ -3075,6 +3134,22 @@ export class ExploreSpec extends Message<ExploreSpec> {
    */
   hideEmptyDimensions = false;
 
+  /**
+   * Enables the Logs web view: a raw-events tab that shows the underlying rows for the
+   * current filters and time range, newest first. Aimed at observability use cases where
+   * the drill path ends in reading the actual log lines.
+   *
+   * @generated from field: bool logs_view = 24;
+   */
+  logsView = false;
+
+  /**
+   * Columns to show in the Logs view; defaults to all columns of the underlying table.
+   *
+   * @generated from field: repeated string logs_view_columns = 25;
+   */
+  logsViewColumns: string[] = [];
+
   constructor(data?: PartialMessage<ExploreSpec>) {
     super();
     proto3.util.initPartial(data, this);
@@ -3103,6 +3178,8 @@ export class ExploreSpec extends Message<ExploreSpec> {
     { no: 20, name: "allow_custom_time_range", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
     { no: 21, name: "defined_in_metrics_view", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
     { no: 23, name: "hide_empty_dimensions", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 24, name: "logs_view", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 25, name: "logs_view_columns", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ExploreSpec {

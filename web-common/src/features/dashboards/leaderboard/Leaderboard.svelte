@@ -2,7 +2,10 @@
   import Tooltip from "@rilldata/web-common/components/tooltip/Tooltip.svelte";
   import TooltipContent from "@rilldata/web-common/components/tooltip/TooltipContent.svelte";
   import { m } from "@rilldata/web-common/lib/i18n/gen/messages";
-  import { DashboardState_LeaderboardSortType } from "@rilldata/web-common/proto/gen/rill/ui/v1/dashboard_pb";
+  import {
+    DashboardState_ActivePage,
+    DashboardState_LeaderboardSortType,
+  } from "@rilldata/web-common/proto/gen/rill/ui/v1/dashboard_pb";
   import type {
     MetricsViewSpecDimension,
     MetricsViewSpecMeasure,
@@ -22,10 +25,15 @@
     getComparisonRequestMeasures,
     getURIRequestMeasure,
   } from "../dashboard-utils";
-  import { gotoDrillThroughExplore } from "../drill-through";
+  import { get } from "svelte/store";
+  import {
+    gotoDrillThroughExplore,
+    pickDrillThroughContext,
+  } from "../drill-through";
   import { mergeDimensionAndMeasureFilters } from "../filters/measure-filters/measure-filter-utils";
   import { SortType } from "../proto-state/derived-types";
   import { getFiltersForOtherDimensions } from "../selectors";
+  import { getStateManagers } from "../state-managers/state-managers";
   import { getMeasuresForDimensionOrLeaderboardDisplay } from "../state-managers/selectors/dashboard-queries";
   import type { selectedDimensionValues } from "../state-managers/selectors/dimension-filters";
   import {
@@ -47,6 +55,11 @@
   import { COMPARISON_COLUMN_WIDTH, valueColumn } from "./leaderboard-widths";
 
   const runtimeClient = useRuntimeClient();
+  // Optional: absent when rendered outside the explore context (e.g. canvas).
+  const stateManagers = getStateManagers();
+  const dashboardStore = stateManagers?.dashboardStore;
+  const validSpecStore = stateManagers?.validSpecStore;
+  const currentExploreName = stateManagers?.exploreName;
   const gutterWidth = 24;
 
   export let dimension: MetricsViewSpecDimension;
@@ -134,12 +147,34 @@
     links: valueLinks = [],
   } = dimension);
 
+  // "View rows" jumps to this explore's Logs view with the clicked value filtered.
+  $: viewRowsEnabled =
+    !!(validSpecStore && $validSpecStore?.data?.explore?.logsView) &&
+    !!currentExploreName;
+
+  function onViewRows(dimensionValue: string) {
+    if (!currentExploreName) return;
+    void gotoDrillThroughExplore(
+      runtimeClient,
+      get(currentExploreName),
+      dimensionName,
+      dimensionValue,
+      {
+        ...(dashboardStore ? pickDrillThroughContext(get(dashboardStore)) : {}),
+        activePage: DashboardState_ActivePage.LOGS,
+      },
+      $page.params.organization,
+      $page.params.project,
+    ).catch((error) => console.warn("View rows navigation error:", error));
+  }
+
   function onExploreLink(targetExplore: string, dimensionValue: string) {
     void gotoDrillThroughExplore(
       runtimeClient,
       targetExplore,
       dimensionName,
       dimensionValue,
+      dashboardStore ? pickDrillThroughContext(get(dashboardStore)) : undefined,
       $page.params.organization,
       $page.params.project,
     ).catch((error) => console.warn("Explore link navigation error:", error));
@@ -440,6 +475,8 @@
             {lowerIsBetterMap}
             {valueLinks}
             {onExploreLink}
+            {viewRowsEnabled}
+            {onViewRows}
           />
         {/each}
       </DelayedLoadingRows>
@@ -466,6 +503,8 @@
           {lowerIsBetterMap}
           {valueLinks}
           {onExploreLink}
+          {viewRowsEnabled}
+          {onViewRows}
         />
       {/each}
     </tbody>

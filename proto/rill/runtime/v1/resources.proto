@@ -435,6 +435,14 @@ message MetricsViewSpec {
   // Only set on parser-generated variants; empty on primary metrics views.
   // The frontend uses it to keep variants from claiming a file's inspector or navigation.
   string table_option_of = 41;
+  // Links attached to every raw row in the Logs view (e.g. a trace viewer).
+  // The url is a template where "{{ <column> }}" placeholders are replaced with the
+  // URL-encoded value of that column in the clicked row.
+  message RowLink {
+    string label = 1;
+    string url = 2;
+  }
+  repeated RowLink row_links = 42;
 }
 
 message SecurityRule {
@@ -558,6 +566,12 @@ message ExploreSpec {
   // Useful for schemaless data where filtering by one field narrows the rows to a subset that does not carry other fields.
   // NOTE: 22 is reserved for a pending refresh_intervals field.
   bool hide_empty_dimensions = 23;
+  // Enables the Logs web view: a raw-events tab that shows the underlying rows for the
+  // current filters and time range, newest first. Aimed at observability use cases where
+  // the drill path ends in reading the actual log lines.
+  bool logs_view = 24;
+  // Columns to show in the Logs view; defaults to all columns of the underlying table.
+  repeated string logs_view_columns = 25;
 }
 
 message ExploreState {
@@ -669,6 +683,7 @@ enum ExploreWebView {
   EXPLORE_WEB_VIEW_TIME_DIMENSION = 2;
   EXPLORE_WEB_VIEW_PIVOT = 3;
   EXPLORE_WEB_VIEW_CANVAS = 4;
+  EXPLORE_WEB_VIEW_LOGS = 5;
 }
 
 enum ExploreSortType {

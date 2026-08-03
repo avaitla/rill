@@ -4,3 +4,5 @@ type: explore
 display_name: RED Service Detail
 metrics_view: red
 hide_empty_dimensions: true
+logs_view: true
+logs_view_columns: [ts, service, error, duration_ms, http_method, http_status, job_name]

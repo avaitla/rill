@@ -2100,6 +2100,21 @@ definitions:
           skip_empty_dimensions:
             type: boolean
             description: When true, dimensions whose values are NULL in every row of the underlying table are hidden from the dashboard with a warning. Useful for schemaless data sources where the table schema is a union of all fields ever ingested, so fields not present in the current data show up as all-NULL columns.
+          row_links:
+            type: array
+            description: Links attached to every raw row in the Logs view (e.g. a trace viewer). Each link's `url` is a template where `{{ <column> }}` placeholders are replaced with the URL-encoded value of that column in the clicked row.
+            items:
+              type: object
+              properties:
+                label:
+                  type: string
+                  description: Display name for the link. Defaults to the URL's hostname.
+                url:
+                  type: string
+                  description: Absolute http(s) URL template with `{{ <column> }}` placeholders.
+              required:
+                - url
+              additionalProperties: false
           table_options:
             type: array
             description: List of tables the end user can select to back this metrics view via a dropdown on the dashboard, e.g. different versions of the same table. The default `table` is always selectable. Combine with `skip_invalid_dimensions` so tables that lack some columns degrade gracefully.
@@ -2681,6 +2696,14 @@ definitions:
           lock_time_zone:
             type: boolean
             description: When true, the dashboard will be locked to the first time provided in the time_zones list. When no time_zones are provided, the dashboard will be locked to UTC
+          logs_view:
+            type: boolean
+            description: Enables the Logs web view, a raw-events tab next to Explore/Pivot that shows the underlying rows for the current filters and time range, newest first. Combine with `refresh_intervals` for a tailing log viewer.
+          logs_view_columns:
+            type: array
+            items:
+              type: string
+            description: Columns to show in the Logs view. Defaults to all columns of the underlying table. Every column remains visible in a row's expanded detail.
           hide_empty_dimensions:
             type: boolean
             description: When true, dimensions whose values are all NULL or empty under the dashboard's current filters hide themselves. Useful for schemaless data where filtering by one field narrows the rows to a subset that does not carry other fields.
@@ -4203,6 +4226,14 @@ definitions:
           lock_time_zone:
             type: boolean
             description: When true, the explore view will be locked to the first time zone provided in the time_zones list. If no time_zones are provided, it will be locked to UTC.
+          logs_view:
+            type: boolean
+            description: Enables the Logs web view, a raw-events tab next to Explore/Pivot that shows the underlying rows for the current filters and time range, newest first. Combine with `refresh_intervals` for a tailing log viewer.
+          logs_view_columns:
+            type: array
+            items:
+              type: string
+            description: Columns to show in the Logs view. Defaults to all columns of the underlying table. Every column remains visible in a row's expanded detail.
           hide_empty_dimensions:
             type: boolean
             description: When true, dimensions whose values are all NULL or empty under the dashboard's current filters hide themselves. Useful for schemaless data where filtering by one field narrows the rows to a subset that does not carry other fields.

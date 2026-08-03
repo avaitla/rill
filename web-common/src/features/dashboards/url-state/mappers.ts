@@ -13,12 +13,14 @@ export enum ExploreUrlWebView {
   Explore = "explore",
   Pivot = "pivot",
   TimeDimension = "tdd",
+  Logs = "logs",
 }
 export const FromURLParamViewMap: Record<ExploreUrlWebView, V1ExploreWebView> =
   {
     explore: V1ExploreWebView.EXPLORE_WEB_VIEW_EXPLORE,
     pivot: V1ExploreWebView.EXPLORE_WEB_VIEW_PIVOT,
     tdd: V1ExploreWebView.EXPLORE_WEB_VIEW_TIME_DIMENSION,
+    logs: V1ExploreWebView.EXPLORE_WEB_VIEW_LOGS,
   };
 export const ToURLParamViewMap = reverseMap(FromURLParamViewMap);
 
@@ -35,6 +37,7 @@ export const FromActivePageMap: Record<
     V1ExploreWebView.EXPLORE_WEB_VIEW_EXPLORE,
   [DashboardState_ActivePage.TIME_DIMENSIONAL_DETAIL]:
     V1ExploreWebView.EXPLORE_WEB_VIEW_TIME_DIMENSION,
+  [DashboardState_ActivePage.LOGS]: V1ExploreWebView.EXPLORE_WEB_VIEW_LOGS,
 };
 export const ToActivePageViewMap = reverseMap(FromActivePageMap);
 ToActivePageViewMap[V1ExploreWebView.EXPLORE_WEB_VIEW_EXPLORE] =

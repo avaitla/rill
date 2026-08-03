@@ -1029,6 +1029,11 @@ These are not currently parsed from YAML, but will be derived from the parent me
   definedInMetricsView?: boolean;
   /** When true, dimensions whose values are all NULL or empty under the dashboard's current filters hide themselves. */
   hideEmptyDimensions?: boolean;
+  /** Enables the Logs web view: a raw-events tab showing the underlying rows for the
+current filters and time range, newest first. */
+  logsView?: boolean;
+  /** Columns to show in the Logs view; defaults to all columns of the underlying table. */
+  logsViewColumns?: string[];
 }
 
 export interface V1ExploreState {
@@ -1053,6 +1058,7 @@ export const V1ExploreWebView = {
   EXPLORE_WEB_VIEW_TIME_DIMENSION: "EXPLORE_WEB_VIEW_TIME_DIMENSION",
   EXPLORE_WEB_VIEW_PIVOT: "EXPLORE_WEB_VIEW_PIVOT",
   EXPLORE_WEB_VIEW_CANVAS: "EXPLORE_WEB_VIEW_CANVAS",
+  EXPLORE_WEB_VIEW_LOGS: "EXPLORE_WEB_VIEW_LOGS",
 } as const;
 
 export type V1ExportFormat =
@@ -1779,6 +1785,15 @@ Only set on the primary metrics view, not on its variants. */
   /** Name of the primary metrics view this spec is a table-option variant of.
 Only set on parser-generated variants; empty on primary metrics views. */
   tableOptionOf?: string;
+  /** Links attached to every raw row in the Logs view. The url is a template where
+"{{ <column> }}" placeholders are replaced with the URL-encoded value of that column. */
+  rowLinks?: MetricsViewSpecRowLink[];
+}
+
+export interface MetricsViewSpecRowLink {
+  label?: string;
+  /** URL template; "{{ <column> }}" is replaced with the URL-encoded value of that column in the row. */
+  url?: string;
 }
 
 /**

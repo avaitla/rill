@@ -37,6 +37,8 @@ type ExploreDefinitionYAML struct {
 	RefreshIntervals     []string               `yaml:"refresh_intervals"`
 	LockTimeZone         bool                   `yaml:"lock_time_zone"`
 	HideEmptyDimensions  bool                   `yaml:"hide_empty_dimensions"`
+	LogsView             bool                   `yaml:"logs_view"`
+	LogsViewColumns      []string               `yaml:"logs_view_columns"`
 	AllowCustomTimeRange *bool                  `yaml:"allow_custom_time_range"`
 	Defaults             *ExploreDefaultsYAML   `yaml:"defaults"`
 	Embeds               struct {
@@ -369,6 +371,8 @@ func (d *exploreDefinition) applyToSpec(spec *runtimev1.ExploreSpec, tmp *Explor
 	spec.EmbedsHidePivot = tmp.Embeds.HidePivot
 	spec.LockTimeZone = tmp.LockTimeZone
 	spec.HideEmptyDimensions = tmp.HideEmptyDimensions
+	spec.LogsView = tmp.LogsView
+	spec.LogsViewColumns = tmp.LogsViewColumns
 	spec.AllowCustomTimeRange = d.allowCustomTimeRange
 }
 

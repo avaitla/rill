@@ -20,6 +20,9 @@ dimensions:
   - columns: '*'
     discover:
       pattern: '^(error|http_|payment_|cart_|query_|shard|job_|retry_)'
+row_links:
+  - label: Trace in Datadog
+    url: "https://app.datadoghq.com/apm/traces?query=service%3A{{ service }}"
 measures:
   - name: requests
     display_name: Requests

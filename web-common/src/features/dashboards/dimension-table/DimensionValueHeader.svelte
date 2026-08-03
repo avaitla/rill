@@ -14,7 +14,11 @@
   import type { VirtualItem } from "@tanstack/svelte-virtual";
   import { page } from "$app/stores";
   import { makeDimensionHref } from "@rilldata/web-common/features/dashboards/dashboard-utils";
-  import { gotoDrillThroughExplore } from "@rilldata/web-common/features/dashboards/drill-through";
+  import { get } from "svelte/store";
+  import {
+    gotoDrillThroughExplore,
+    pickDrillThroughContext,
+  } from "@rilldata/web-common/features/dashboards/drill-through";
   import type { DimensionTableRow } from "./dimension-table-types";
 
   const config: VirtualizedTableConfig = getContext("config");
@@ -47,6 +51,7 @@
     },
     runtimeClient,
     validSpecStore,
+    dashboardStore,
   } = getStateManagers();
 
   $: dimensionSpec = $validSpecStore.data?.metricsView?.dimensions?.find(
@@ -64,6 +69,7 @@
       targetExplore,
       column.name,
       dimensionValue,
+      pickDrillThroughContext(get(dashboardStore)),
       $page.params.organization,
       $page.params.project,
     ).catch((error) => console.warn("Explore link navigation error:", error));

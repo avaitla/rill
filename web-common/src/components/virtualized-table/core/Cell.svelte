@@ -227,32 +227,7 @@
               <ExternalLink className="fill-primary-600" />
             </a>
           {/if}
-          {#if valueLinks.length === 1 && valueLinks[0].explore}
-            <button
-              type="button"
-              class="external-link shrink-0"
-              title={valueLinks[0].label}
-              aria-label={m.dashboard_dimension_links({ value: String(value) })}
-              onclick={(e) => {
-                e.stopPropagation();
-                onExploreLink(valueLinks[0].explore ?? "", String(value));
-              }}
-            >
-              <ExploreIcon size="14px" className="fill-primary-600" />
-            </button>
-          {:else if valueLinks.length === 1 && valueLinks[0].url}
-            <a
-              class="external-link shrink-0"
-              target="_blank"
-              rel="noopener noreferrer"
-              href={resolveDimensionValueLink(valueLinks[0].url, value)}
-              title={valueLinks[0].label}
-              aria-label={m.dashboard_dimension_links({ value: String(value) })}
-              onclick={(e) => e.stopPropagation()}
-            >
-              <ExternalLink className="fill-primary-600" />
-            </a>
-          {:else if valueLinks.length > 1}
+          {#if valueLinks.length}
             <DropdownMenu.Root bind:open={linksMenuOpen}>
               <DropdownMenu.Trigger>
                 {#snippet child({ props })}

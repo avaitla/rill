@@ -5,3 +5,5 @@ display_name: RED Overview
 metrics_view: red
 dimensions: [service]
 measures: '*'
+logs_view: true
+logs_view_columns: [ts, service, error, duration_ms, http_method, http_status, job_name]

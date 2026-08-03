@@ -16,6 +16,9 @@ dimensions:
   - column: SeverityText
   - map_column: LogAttributes
   - map_column: ResourceAttributes
+row_links:
+  - label: Grafana
+    url: "https://play.grafana.org/explore?service={{ ServiceName }}&severity={{ SeverityText }}"
 measures:
   - name: events
     display_name: Log Events

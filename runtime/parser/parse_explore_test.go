@@ -222,3 +222,26 @@ refresh_intervals: ['off', '5m']
 	require.Len(t, p.Errors, 1)
 	require.Contains(t, p.Errors[0].Message, "always selectable")
 }
+
+func TestExploreLogsView(t *testing.T) {
+	files := map[string]string{
+		`rill.yaml`: ``,
+		`explores/e1.yaml`: `
+type: explore
+metrics_view: mv1
+logs_view: true
+logs_view_columns: ['ts', 'body']
+`,
+	}
+
+	ctx := context.Background()
+	repo := makeRepo(t, files)
+	p, err := Parse(ctx, repo, "", "", "duckdb", true)
+	require.NoError(t, err)
+	require.Empty(t, p.Errors)
+
+	e := p.Resources[ResourceName{Kind: ResourceKindExplore, Name: "e1"}.Normalized()]
+	require.NotNil(t, e)
+	require.True(t, e.ExploreSpec.LogsView)
+	require.Equal(t, []string{"ts", "body"}, e.ExploreSpec.LogsViewColumns)
+}
