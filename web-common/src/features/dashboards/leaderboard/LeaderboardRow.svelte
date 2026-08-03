@@ -70,6 +70,10 @@
   }
 
   let hovered = false;
+  // Keep hover affordances visible while the value-links menu is open: the menu is
+  // portaled outside the row, so mousing into it would otherwise clear the row hover.
+  let linksMenuOpen = false;
+  $: effectiveHovered = hovered || linksMenuOpen;
   let valueRect = new DOMRect(0, 0, DEFAULT_COLUMN_WIDTH);
   let deltaRect = new DOMRect(0, 0, COMPARISON_COLUMN_WIDTH);
   let parent: HTMLTableRowElement;
@@ -113,7 +117,7 @@
 
   $: barColor = excluded
     ? "var(--surface-active)"
-    : selected || hovered
+    : selected || effectiveHovered
       ? "var(--color-theme-200)"
       : "var(--color-theme-100)";
 
@@ -204,6 +208,7 @@
   class:border-b={borderBottom}
   class:border-t={borderTop}
   class="relative"
+  class:force-hover={linksMenuOpen}
   onpointerover={() => (hovered = true)}
   onpointerout={() => (hovered = false)}
   onclick={(e) => {
@@ -228,7 +233,7 @@
       <FormattedDataType value={dimensionValue} truncate />
     </span>
 
-    {#if previousValueString && hovered}
+    {#if previousValueString && effectiveHovered}
       <span
         class="opacity-50 whitespace-nowrap font-normal"
         transition:slide={{ axis: "x", duration: 200 }}
@@ -250,7 +255,7 @@
           onclick={(e) => {
             e.stopPropagation();
           }}
-          class:hovered
+          class:hovered={effectiveHovered}
         >
           <ExternalLink className="fill-primary-600" />
         </a>
@@ -270,14 +275,14 @@
           onclick={(e) => {
             e.stopPropagation();
           }}
-          class:hovered
+          class:hovered={effectiveHovered}
         >
           <ExternalLink className="fill-primary-600" />
         </a>
       </span>
     {:else if valueLinks.length > 1}
       <span class="value-links-wrapper" style:right="{drillThrough ? 20 : 0}px">
-        <DropdownMenu.Root>
+        <DropdownMenu.Root bind:open={linksMenuOpen}>
           <DropdownMenu.Trigger>
             {#snippet child({ props })}
               <button
@@ -293,7 +298,7 @@
                   e.stopPropagation();
                   props.onclick?.(e);
                 }}
-                class:hovered
+                class:hovered={effectiveHovered}
               >
                 <ExternalLink className="fill-primary-600" />
               </button>
@@ -322,7 +327,7 @@
             e.stopPropagation();
             onDrillThrough(dimensionValue);
           }}
-          class:hovered
+          class:hovered={effectiveHovered}
         >
           <ExploreIcon size="14px" className="fill-primary-600" />
         </button>
@@ -444,7 +449,8 @@
     max-height: 22px;
   }
 
-  tr:hover {
+  tr:hover,
+  tr.force-hover {
     @apply bg-popover-accent;
   }
 
@@ -452,7 +458,8 @@
     @apply bg-transparent px-1 truncate;
   }
 
-  tr:hover td[data-comparison-cell] {
+  tr:hover td[data-comparison-cell],
+  tr.force-hover td[data-comparison-cell] {
     @apply bg-popover-accent;
   }
 
