@@ -19,6 +19,10 @@ logs_view_columns: [Timestamp, ServiceName, SeverityText, Body]   # optional; de
 
 ![Logs view](screenshots/08-logs-view.png)
 
+![Expanded stack trace with copy buttons](screenshots/08-logs-stacktrace.png)
+*An expanded ERROR row: the stack trace renders with preserved newlines, Map columns
+pretty-print as JSON, and the detail offers "Copy log item" plus per-field copy.*
+
 ## How it works
 
 - Proto: `ExploreSpec.logs_view = 24`, `logs_view_columns = 25`,
