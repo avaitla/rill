@@ -28,6 +28,9 @@ for URL state). Variants are inserted alongside the primary (collision-prechecke
 errors are forbidden after the first `insertResource`), get the same refs, and reconcile
 **independently** — which is exactly where `skip_invalid_dimensions` prunes per table.
 All existing query APIs work against variants unchanged; zero query-path changes.
+Variants carry `MetricsViewSpec.table_option_of = <primary name>` (field 41) so the
+frontend can tell them apart from primaries — the file-to-resource mapping skips them,
+keeping the file's inspector/profile on the primary's table.
 
 **Frontend** — one substitution point: the state managers
 (`web-common/src/features/dashboards/state-managers/state-managers.ts`) expose the
