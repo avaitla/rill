@@ -1253,35 +1253,6 @@ explore:
 	require.Equal(t, &runtimev1.FieldSelector{Selector: &runtimev1.FieldSelector_Regex{Regex: "count.*"}}, e3.MeasuresSelector)
 }
 
-func TestMetricsViewDimensionDrillThrough(t *testing.T) {
-	files := map[string]string{
-		`rill.yaml`: ``,
-		`metrics/mv1.yaml`: `
-version: 1
-type: metrics_view
-table: t1
-dimensions:
-- column: country
-  drill_through: orders_detail
-- column: category
-measures:
-- name: count
-  expression: count(*)
-`,
-	}
-
-	ctx := context.Background()
-	repo := makeRepo(t, files)
-	p, err := Parse(ctx, repo, "", "", "duckdb", true)
-	require.NoError(t, err)
-	require.Empty(t, p.Errors)
-
-	mv := p.Resources[ResourceName{Kind: ResourceKindMetricsView, Name: "mv1"}.Normalized()]
-	require.NotNil(t, mv)
-	require.Equal(t, "orders_detail", mv.MetricsViewSpec.Dimensions[0].DrillThrough)
-	require.Empty(t, mv.MetricsViewSpec.Dimensions[1].DrillThrough)
-}
-
 func TestMetricsViewDimensionValueLinks(t *testing.T) {
 	files := map[string]string{
 		`rill.yaml`: ``,
@@ -1295,6 +1266,7 @@ dimensions:
   - label: Datadog
     url: "https://app.datadoghq.com/apm/services/{{ value }}"
   - url: "https://github.com/search?q={{value}}&type=code"
+  - explore: orders_detail
 - column: category
 measures:
 - name: count
@@ -1311,11 +1283,15 @@ measures:
 	mv := p.Resources[ResourceName{Kind: ResourceKindMetricsView, Name: "mv1"}.Normalized()]
 	require.NotNil(t, mv)
 	links := mv.MetricsViewSpec.Dimensions[0].Links
-	require.Len(t, links, 2)
+	require.Len(t, links, 3)
 	require.Equal(t, "Datadog", links[0].Label)
 	require.Equal(t, "https://app.datadoghq.com/apm/services/{{ value }}", links[0].Url)
 	// Label defaults to the URL's hostname
 	require.Equal(t, "github.com", links[1].Label)
+	// Explore link (drill-through): label defaults to the explore name
+	require.Equal(t, "orders_detail", links[2].Explore)
+	require.Equal(t, "orders_detail", links[2].Label)
+	require.Empty(t, links[2].Url)
 	require.Empty(t, mv.MetricsViewSpec.Dimensions[1].Links)
 
 	// Invalid: relative URL
@@ -1338,4 +1314,26 @@ measures:
 	require.NoError(t, err)
 	require.Len(t, p.Errors, 1)
 	require.Contains(t, p.Errors[0].Message, "must be an absolute http(s) URL")
+
+	// Invalid: both url and explore set
+	repo = makeRepo(t, map[string]string{
+		`rill.yaml`: ``,
+		`metrics/mv1.yaml`: `
+version: 1
+type: metrics_view
+table: t1
+dimensions:
+- column: service
+  links:
+  - url: "https://example.com/{{ value }}"
+    explore: orders_detail
+measures:
+- name: count
+  expression: count(*)
+`,
+	})
+	p, err = Parse(ctx, repo, "", "", "duckdb", true)
+	require.NoError(t, err)
+	require.Len(t, p.Errors, 1)
+	require.Contains(t, p.Errors[0].Message, `exactly one of "url" and "explore"`)
 }

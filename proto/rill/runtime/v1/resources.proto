@@ -216,18 +216,18 @@ message MetricsViewSpec {
     string expression = 6;
     bool unnest = 5;
     string uri = 7;
-    // Name of another explore dashboard to open when a value of this dimension is clicked,
-    // with the clicked value applied as a filter. Used for drilling down from a high-level
-    // dashboard into a more detailed one.
-    string drill_through = 17;
-    // External link shown on the dimension's values (e.g. a Datadog service page or a
-    // GitHub search). The url is a template where "{{ value }}" is replaced with the
-    // URL-encoded dimension value.
+    // Link shown on the dimension's values. Exactly one of url and explore is set:
+    // url is an external link template where "{{ value }}" is replaced with the
+    // URL-encoded dimension value (e.g. a Datadog service page or a GitHub search);
+    // explore names another explore dashboard to open with the clicked value applied
+    // as a filter (drill-through).
     message ValueLink {
       string label = 1;
       string url = 2;
+      string explore = 3;
     }
     repeated ValueLink links = 22;
+    reserved 17; // Was drill_through, unified into links.
     // Lookup fields for the dimension
     string lookup_table = 8;
     string lookup_key_column = 9;

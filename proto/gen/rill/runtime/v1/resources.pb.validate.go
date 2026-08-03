@@ -13043,8 +13043,6 @@ func (m *MetricsViewSpec_Dimension) validate(all bool) error {
 
 	// no validation rules for Uri
 
-	// no validation rules for DrillThrough
-
 	for idx, item := range m.GetLinks() {
 		_, _ = idx, item
 
@@ -14074,6 +14072,8 @@ func (m *MetricsViewSpec_Dimension_ValueLink) validate(all bool) error {
 	// no validation rules for Label
 
 	// no validation rules for Url
+
+	// no validation rules for Explore
 
 	if len(errors) > 0 {
 		return MetricsViewSpec_Dimension_ValueLinkMultiError(errors)
