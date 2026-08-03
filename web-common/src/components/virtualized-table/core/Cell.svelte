@@ -65,6 +65,8 @@
   const isDimensionTable = config.table === "DimensionTable";
 
   let cellActive = false;
+  // Keep the link icon visible while its (portaled) menu is open.
+  let linksMenuOpen = false;
   $: isTextColumn = type === "VARCHAR" || type === "CODE_STRING";
 
   function onFocus() {
@@ -236,13 +238,14 @@
               <ExternalLink className="fill-primary-600" />
             </a>
           {:else if valueLinks.length > 1}
-            <DropdownMenu.Root>
+            <DropdownMenu.Root bind:open={linksMenuOpen}>
               <DropdownMenu.Trigger>
                 {#snippet child({ props })}
                   <button
                     {...props}
                     type="button"
                     class="external-link shrink-0"
+                    class:menu-open={linksMenuOpen}
                     title={m.dashboard_dimension_links({
                       value: String(value),
                     })}
@@ -334,7 +337,8 @@
     opacity: 0;
   }
 
-  .table-cell-content:hover .external-link {
+  .table-cell-content:hover .external-link,
+  .external-link.menu-open {
     opacity: 0.7;
   }
 </style>
