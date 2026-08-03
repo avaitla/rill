@@ -54,12 +54,14 @@
   export let onkeydown: ((e: KeyboardEvent) => void) | undefined = undefined;
   // When set, renders a hover-revealed external link icon for URI dimensions.
   export let href: string | undefined = undefined;
-  // When set, renders a hover-revealed drill-through icon that invokes the callback.
-  export let onDrill: (() => void) | undefined = undefined;
-  export let drillThroughName: string | undefined = undefined;
-  // External links configured on the dimension (`links` in the metrics view YAML),
-  // rendered as hover-revealed icons resolving "{{ value }}" against this cell's value.
+  // Links configured on the dimension (`links` in the metrics view YAML), rendered as
+  // hover-revealed icons: url links resolve "{{ value }}" against this cell's value,
+  // explore links invoke the callback to drill into another explore.
   export let valueLinks: MetricsViewSpecDimensionValueLink[] = [];
+  export let onExploreLink: (
+    targetExplore: string,
+    dimensionValue: string,
+  ) => void = () => {};
 
   const config: VirtualizedTableConfig = getContext("config");
   const isDimensionTable = config.table === "DimensionTable";
@@ -187,7 +189,7 @@
       value={barValue}
       compact
     >
-      {#if href || onDrill || valueLinks.length}
+      {#if href || valueLinks.length}
         <!-- URI dimension: lay the value button and external-link icon side by
         side. This wrapper only exists when there is a link, so non-URI cells
         keep the exact DOM (and text content) the table's matchers expect. -->
@@ -225,7 +227,20 @@
               <ExternalLink className="fill-primary-600" />
             </a>
           {/if}
-          {#if valueLinks.length === 1 && valueLinks[0].url}
+          {#if valueLinks.length === 1 && valueLinks[0].explore}
+            <button
+              type="button"
+              class="external-link shrink-0"
+              title={valueLinks[0].label}
+              aria-label={m.dashboard_dimension_links({ value: String(value) })}
+              onclick={(e) => {
+                e.stopPropagation();
+                onExploreLink(valueLinks[0].explore ?? "", String(value));
+              }}
+            >
+              <ExploreIcon size="14px" className="fill-primary-600" />
+            </button>
+          {:else if valueLinks.length === 1 && valueLinks[0].url}
             <a
               class="external-link shrink-0"
               target="_blank"
@@ -262,33 +277,21 @@
                 {/snippet}
               </DropdownMenu.Trigger>
               <DropdownMenu.Content align="start" class="w-44">
-                {#each valueLinks as link (link.url)}
+                {#each valueLinks as link (link.url ?? link.explore)}
                   <DropdownMenu.Item
-                    onSelect={() => openDimensionValueLink(link, value)}
+                    onSelect={() => {
+                      if (link.explore) {
+                        onExploreLink(link.explore, String(value));
+                      } else {
+                        openDimensionValueLink(link, value);
+                      }
+                    }}
                   >
-                    {link.label || link.url}
+                    {link.label || link.url || link.explore}
                   </DropdownMenu.Item>
                 {/each}
               </DropdownMenu.Content>
             </DropdownMenu.Root>
-          {/if}
-          {#if onDrill}
-            <button
-              type="button"
-              class="external-link shrink-0"
-              title={m.dashboard_drill_through({
-                name: drillThroughName ?? "",
-              })}
-              aria-label={m.dashboard_drill_through({
-                name: drillThroughName ?? "",
-              })}
-              onclick={(e) => {
-                e.stopPropagation();
-                onDrill?.();
-              }}
-            >
-              <ExploreIcon size="14px" className="fill-primary-600" />
-            </button>
           {/if}
         </div>
       {:else}

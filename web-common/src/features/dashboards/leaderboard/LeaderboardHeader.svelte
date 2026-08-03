@@ -1,6 +1,8 @@
 <script lang="ts">
   import { m } from "@rilldata/web-common/lib/i18n/gen/messages";
   import ArrowDown from "@rilldata/web-common/components/icons/ArrowDown.svelte";
+  import ExternalLink from "@rilldata/web-common/components/icons/ExternalLink.svelte";
+  import type { MetricsViewSpecDimensionValueLink } from "@rilldata/web-common/runtime-client";
   import Spacer from "@rilldata/web-common/components/icons/Spacer.svelte";
   import Tooltip from "@rilldata/web-common/components/tooltip/Tooltip.svelte";
   import TooltipContent from "@rilldata/web-common/components/tooltip/TooltipContent.svelte";
@@ -26,6 +28,8 @@
   export let sortedAscending: boolean;
   export let displayName: string;
   export let dimensionDescription: string;
+  // Links configured on the dimension; shows an indicator icon in the header when present.
+  export let valueLinks: MetricsViewSpecDimensionValueLink[] = [];
   export let hovered: boolean;
   export let sortType: SortType;
   export let allowDimensionComparison: boolean;
@@ -44,6 +48,11 @@
   // Height of the whole leaderboard table, so the resize handle can span all
   // rows instead of just the header cell.
   export let tableHeight = 0;
+
+  $: linkTargets = valueLinks
+    .map((l) => l.label || l.url || l.explore || "")
+    .filter(Boolean)
+    .join(", ");
 
   function shouldShowContextColumns(measureName: string): boolean {
     return (
@@ -82,7 +91,22 @@
           aria-label={m.dashboard_open_dimension_details_aria()}
           onclick={() => setPrimaryDimension(dimensionName)}
         >
-          <span class="line-clamp-2">{displayName}</span>
+          <span class="inline-flex items-center gap-x-1">
+            <span class="line-clamp-2">{displayName}</span>
+            {#if valueLinks.length}
+              <span
+                class="inline-flex flex-none opacity-60"
+                title={m.dashboard_dimension_has_links({
+                  targets: linkTargets,
+                })}
+                aria-label={m.dashboard_dimension_has_links({
+                  targets: linkTargets,
+                })}
+              >
+                <ExternalLink size="11px" className="fill-current" />
+              </span>
+            {/if}
+          </span>
         </button>
         <TooltipContent slot="tooltip-content" maxWidth="280px">
           <div

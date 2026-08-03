@@ -52,25 +52,25 @@ type MetricsViewYAML struct {
 	SkipEmptyDimensions   bool             `yaml:"skip_empty_dimensions"`
 	TableOptions          []string         `yaml:"table_options"`
 	Dimensions            []*struct {
-		Name         string
-		DisplayName  string `yaml:"display_name"`
-		Label        string // Deprecated: use display_name
-		Description  string
-		Type         string
-		Column       string
-		Expression   string
-		Property     string // For backwards compatibility
-		Ignore       bool   `yaml:"ignore"` // Deprecated
-		Unnest       bool
-		URI          string
-		DrillThrough string `yaml:"drill_through"`
-		Links        []*struct {
-			Label string `yaml:"label"`
-			URL   string `yaml:"url"`
+		Name        string
+		DisplayName string `yaml:"display_name"`
+		Label       string // Deprecated: use display_name
+		Description string
+		Type        string
+		Column      string
+		Expression  string
+		Property    string // For backwards compatibility
+		Ignore      bool   `yaml:"ignore"` // Deprecated
+		Unnest      bool
+		URI         string
+		Links       []*struct {
+			Label   string `yaml:"label"`
+			URL     string `yaml:"url"`
+			Explore string `yaml:"explore"`
 		} `yaml:"links"`
 		MapColumn string `yaml:"map_column"`
-		Columns      string `yaml:"columns"`
-		Discover     *struct {
+		Columns   string `yaml:"columns"`
+		Discover  *struct {
 			Limit   uint32 `yaml:"limit"`
 			Pattern string `yaml:"pattern"`
 		} `yaml:"discover"`
@@ -502,7 +502,6 @@ func (p *Parser) parseMetricsView(node *Node) error {
 			Type:                    typ,
 			Unnest:                  dim.Unnest,
 			Uri:                     dim.URI,
-			DrillThrough:            dim.DrillThrough,
 			MapColumn:               dim.MapColumn,
 			AllColumns:              dim.Columns == "*",
 			LookupTable:             dim.LookupTable,
@@ -520,18 +519,26 @@ func (p *Parser) parseMetricsView(node *Node) error {
 			if link == nil {
 				continue
 			}
-			if err := validateDimensionLink(link.URL); err != nil {
-				return fmt.Errorf(`invalid link for dimension %q: %w`, dim.Name, err)
+			if (link.URL == "") == (link.Explore == "") {
+				return fmt.Errorf(`invalid link for dimension %q: exactly one of "url" and "explore" must be set`, dim.Name)
 			}
 			label := link.Label
-			if label == "" {
-				if u, err := url.Parse(link.URL); err == nil {
-					label = u.Host
+			if link.URL != "" {
+				if err := validateDimensionLink(link.URL); err != nil {
+					return fmt.Errorf(`invalid link for dimension %q: %w`, dim.Name, err)
 				}
+				if label == "" {
+					if u, err := url.Parse(link.URL); err == nil {
+						label = u.Host
+					}
+				}
+			} else if label == "" {
+				label = link.Explore
 			}
 			d.Links = append(d.Links, &runtimev1.MetricsViewSpec_Dimension_ValueLink{
-				Label: label,
-				Url:   link.URL,
+				Label:   label,
+				Url:     link.URL,
+				Explore: link.Explore,
 			})
 		}
 		dimensions = append(dimensions, d)

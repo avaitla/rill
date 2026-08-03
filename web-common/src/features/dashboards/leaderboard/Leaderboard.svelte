@@ -131,20 +131,18 @@
     description = "",
     displayName = "",
     uri,
-    drillThrough,
     links: valueLinks = [],
   } = dimension);
 
-  function onDrillThrough(dimensionValue: string) {
-    if (!drillThrough) return;
+  function onExploreLink(targetExplore: string, dimensionValue: string) {
     void gotoDrillThroughExplore(
       runtimeClient,
-      drillThrough,
+      targetExplore,
       dimensionName,
       dimensionValue,
       $page.params.organization,
       $page.params.project,
-    ).catch((error) => console.warn("Drill-through navigation error:", error));
+    ).catch((error) => console.warn("Explore link navigation error:", error));
   }
 
   $: leaderboardMeasureNames = leaderboardMeasures.map(
@@ -394,6 +392,7 @@
       {hovered}
       displayName={displayName || dimensionName}
       dimensionDescription={description}
+      {valueLinks}
       {dimensionName}
       {isBeingCompared}
       isFetching={isLoading}
@@ -439,9 +438,8 @@
             {dimensionColumnWidth}
             {maxValues}
             {lowerIsBetterMap}
-            {drillThrough}
-            {onDrillThrough}
             {valueLinks}
+            {onExploreLink}
           />
         {/each}
       </DelayedLoadingRows>
@@ -466,9 +464,8 @@
           {dimensionColumnWidth}
           {maxValues}
           {lowerIsBetterMap}
-          {drillThrough}
-          {onDrillThrough}
           {valueLinks}
+          {onExploreLink}
         />
       {/each}
     </tbody>

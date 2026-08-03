@@ -38,12 +38,13 @@ RawDuck-style schemaless store).
     touch `metrics/logs.yaml` to see a new leaderboard appear.
   - *skip_empty / hide_empty dimensions* on a real log schema.
 - **RED Overview → RED Service Detail** — `/explore/red_overview_explore`
-  - *Dimension drill-through*: hover a service in the leaderboard and click the drill
-    icon → lands on the detail explore with that service filtered.
-  - *Dimension value links*: the service dimension also carries external links (Datadog
-    APM, GitHub search) — the hover link icon opens a menu; `{{ value }}` in each URL
-    template resolves to the clicked service. The logs dashboard's ServiceName has a
-    single Grafana link (direct icon, no menu).
+  - *Dimension value links*: the service dimension carries three links — "Service
+    detail" (an `explore` link that drills into the detail explore with the clicked
+    service filtered) plus Datadog APM and GitHub search (external `url` templates
+    where `{{ value }}` resolves to the clicked service). Hover a service row and
+    click the link icon to open the menu; the dimension header shows a small link
+    indicator. The logs dashboard's ServiceName has a single Grafana link (direct
+    icon, no menu).
   - *`columns: '*'` wildcard dimensions*: the detail explore's ~10 attribute
     leaderboards come from one wildcard dimension over the wide table.
   - *hide_empty_dimensions*: on the detail explore, filtering to `worker` hides the

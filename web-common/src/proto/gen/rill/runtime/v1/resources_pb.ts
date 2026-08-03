@@ -1811,15 +1811,6 @@ export class MetricsViewSpec_Dimension extends Message<MetricsViewSpec_Dimension
   discoverPattern = "";
 
   /**
-   * Name of another explore dashboard to open when a value of this dimension is clicked,
-   * with the clicked value applied as a filter. Used for drilling down from a high-level
-   * dashboard into a more detailed one.
-   *
-   * @generated from field: string drill_through = 17;
-   */
-  drillThrough = "";
-
-  /**
    * @generated from field: repeated rill.runtime.v1.MetricsViewSpec.Dimension.ValueLink links = 22;
    */
   links: MetricsViewSpec_Dimension_ValueLink[] = [];
@@ -1881,7 +1872,6 @@ export class MetricsViewSpec_Dimension extends Message<MetricsViewSpec_Dimension
     { no: 21, name: "all_columns", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
     { no: 19, name: "discover_limit", kind: "scalar", T: 13 /* ScalarType.UINT32 */ },
     { no: 20, name: "discover_pattern", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 17, name: "drill_through", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 22, name: "links", kind: "message", T: MetricsViewSpec_Dimension_ValueLink, repeated: true },
     { no: 8, name: "lookup_table", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 9, name: "lookup_key_column", kind: "scalar", T: 9 /* ScalarType.STRING */ },
@@ -1909,9 +1899,11 @@ export class MetricsViewSpec_Dimension extends Message<MetricsViewSpec_Dimension
 }
 
 /**
- * External link shown on the dimension's values (e.g. a Datadog service page or a
- * GitHub search). The url is a template where "{{ value }}" is replaced with the
- * URL-encoded dimension value.
+ * Link shown on the dimension's values. Exactly one of url and explore is set:
+ * url is an external link template where "{{ value }}" is replaced with the
+ * URL-encoded dimension value (e.g. a Datadog service page or a GitHub search);
+ * explore names another explore dashboard to open with the clicked value applied
+ * as a filter (drill-through).
  *
  * @generated from message rill.runtime.v1.MetricsViewSpec.Dimension.ValueLink
  */
@@ -1926,6 +1918,11 @@ export class MetricsViewSpec_Dimension_ValueLink extends Message<MetricsViewSpec
    */
   url = "";
 
+  /**
+   * @generated from field: string explore = 3;
+   */
+  explore = "";
+
   constructor(data?: PartialMessage<MetricsViewSpec_Dimension_ValueLink>) {
     super();
     proto3.util.initPartial(data, this);
@@ -1936,6 +1933,7 @@ export class MetricsViewSpec_Dimension_ValueLink extends Message<MetricsViewSpec
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "label", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "explore", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): MetricsViewSpec_Dimension_ValueLink {

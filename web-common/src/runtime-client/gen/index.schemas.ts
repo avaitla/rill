@@ -75,11 +75,9 @@ concrete dimensions in the valid spec (one per key). Mutually exclusive with col
   discoverLimit?: number;
   /** Optional regex; only map keys matching the pattern are expanded. */
   discoverPattern?: string;
-  /** Name of another explore dashboard to open when a value of this dimension is clicked,
-with the clicked value applied as a filter. */
-  drillThrough?: string;
-  /** External links shown on the dimension's values. The url is a template where
-"{{ value }}" is replaced with the URL-encoded dimension value. */
+  /** Links shown on the dimension's values. Each link is either an external url
+template ("{{ value }}" is replaced with the URL-encoded dimension value) or the
+name of another explore to open with the clicked value applied as a filter. */
   links?: MetricsViewSpecDimensionValueLink[];
   lookupTable?: string;
   lookupKeyColumn?: string;
@@ -93,6 +91,8 @@ export interface MetricsViewSpecDimensionValueLink {
   label?: string;
   /** URL template; "{{ value }}" is replaced with the URL-encoded dimension value. */
   url?: string;
+  /** Name of another explore dashboard to open with the clicked value applied as a filter. */
+  explore?: string;
 }
 
 export interface MetricsViewSpecDimensionSelector {

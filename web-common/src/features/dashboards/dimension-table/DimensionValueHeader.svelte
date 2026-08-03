@@ -8,6 +8,7 @@
     VirtualizedTableConfig,
   } from "../../../components/virtualized-table/types";
   import ArrowDown from "@rilldata/web-common/components/icons/ArrowDown.svelte";
+  import ExternalLink from "@rilldata/web-common/components/icons/ExternalLink.svelte";
   import { fly } from "svelte/transition";
   import { getStateManagers } from "../state-managers/state-managers";
   import type { VirtualItem } from "@tanstack/svelte-virtual";
@@ -51,19 +52,21 @@
   $: dimensionSpec = $validSpecStore.data?.metricsView?.dimensions?.find(
     (d) => d.name === column.name,
   );
-  $: drillThrough = dimensionSpec?.drillThrough;
   $: valueLinks = dimensionSpec?.links ?? [];
+  $: linkTargets = valueLinks
+    .map((l) => l.label || l.url || l.explore || "")
+    .filter(Boolean)
+    .join(", ");
 
-  function onDrillValue(dimensionValue: string) {
-    if (!drillThrough) return;
+  function onExploreLink(targetExplore: string, dimensionValue: string) {
     void gotoDrillThroughExplore(
       runtimeClient,
-      drillThrough,
+      targetExplore,
       column.name,
       dimensionValue,
       $page.params.organization,
       $page.params.project,
-    ).catch((error) => console.warn("Drill-through navigation error:", error));
+    ).catch((error) => console.warn("Explore link navigation error:", error));
   }
 
   $: atLeastOneSelected = !!selectedIndex?.length;
@@ -81,9 +84,8 @@
       barValue: 0,
       rowSelected: selectedIndex.findIndex((tgt) => row?.index === tgt) >= 0,
       href: makeDimensionHref(rows[row.index], column.name, value as string),
-      onDrill: drillThrough ? () => onDrillValue(value as string) : undefined,
-      drillThroughName: drillThrough,
       valueLinks,
+      onExploreLink,
     };
   };
 </script>
@@ -102,10 +104,19 @@
     onClick={sortByDimensionValue}
     onResize={onResizeColumn}
   >
-    <div class="flex items-center">
+    <div class="flex items-center gap-x-1">
       <span class:font-bold={"px-1 " + $sortedByDimensionValue}
         >{column?.label || column?.name}</span
       >
+      {#if valueLinks.length}
+        <span
+          class="inline-flex flex-none text-fg-muted opacity-60"
+          title={m.dashboard_dimension_has_links({ targets: linkTargets })}
+          aria-label={m.dashboard_dimension_has_links({ targets: linkTargets })}
+        >
+          <ExternalLink size="11px" className="fill-current" />
+        </span>
+      {/if}
       {#if $sortedByDimensionValue}
         <div class="text-fg-secondary">
           {#if $sortedAscending}

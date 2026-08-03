@@ -10,8 +10,9 @@ skip_invalid_dimensions: true
 skip_empty_dimensions: true
 dimensions:
   - column: service
-    drill_through: red_detail_explore
     links:
+      - label: Service detail
+        explore: red_detail_explore
       - label: Datadog APM
         url: "https://app.datadoghq.com/apm/services/{{ value }}"
       - label: GitHub search

@@ -2159,23 +2159,21 @@ definitions:
                     - string
                     - boolean
                   description: Enable if your dimension is a clickable URL to enable single-click navigation (boolean or valid SQL expression).
-                drill_through:
-                  type: string
-                  description: Name of another explore dashboard to open when a value of this dimension is clicked, with the clicked value applied as a filter. Used for drilling down from a high-level dashboard into a more detailed one.
                 links:
                   type: array
-                  description: External links shown on the dimension's values (e.g. a Datadog service page or a GitHub search). Each link's `url` is a template where `{{ value }}` is replaced with the URL-encoded dimension value; multiple links render as a menu.
+                  description: Links shown on the dimension's values. Each link is either an external `url` template (`{{ value }}` is replaced with the URL-encoded dimension value, e.g. a Datadog service page) or the name of another `explore` to open with the clicked value applied as a filter (drill-through). Multiple links render as a menu.
                   items:
                     type: object
                     properties:
                       label:
                         type: string
-                        description: Display name for the link. Defaults to the URL's hostname.
+                        description: Display name for the link. Defaults to the URL's hostname or the explore name.
                       url:
                         type: string
-                        description: Absolute http(s) URL template; `{{ value }}` is replaced with the URL-encoded dimension value.
-                    required:
-                      - url
+                        description: Absolute http(s) URL template; `{{ value }}` is replaced with the URL-encoded dimension value. Mutually exclusive with `explore`.
+                      explore:
+                        type: string
+                        description: Name of another explore dashboard to open with the clicked value applied as a filter. Mutually exclusive with `url`.
                     additionalProperties: false
                 lookup_table:
                   type: string

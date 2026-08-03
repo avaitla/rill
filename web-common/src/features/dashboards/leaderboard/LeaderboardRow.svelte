@@ -56,11 +56,13 @@
     (value: number | string | null | undefined) => string | null | undefined
   >;
   export let lowerIsBetterMap: Record<string, boolean> = {};
-  // Name of the explore to drill through to when the drill icon is clicked
-  export let drillThrough: string | undefined = undefined;
-  export let onDrillThrough: (dimensionValue: string) => void = () => {};
-  // External links configured on the dimension (`links` in the metrics view YAML)
+  // Links configured on the dimension (`links` in the metrics view YAML):
+  // external url templates or explore drill-throughs.
   export let valueLinks: MetricsViewSpecDimensionValueLink[] = [];
+  export let onExploreLink: (
+    targetExplore: string,
+    dimensionValue: string,
+  ) => void = () => {};
 
   function shouldShowContextColumns(measureName: string): boolean {
     return (
@@ -245,7 +247,7 @@
     {#if href}
       <span
         class="external-link-wrapper"
-        style:right="{(drillThrough ? 20 : 0) + (valueLinks.length ? 20 : 0)}px"
+        style:right="{valueLinks.length ? 20 : 0}px"
       >
         <a
           target="_blank"
@@ -263,7 +265,7 @@
     {/if}
 
     {#if valueLinks.length === 1 && valueLinks[0].url}
-      <span class="value-links-wrapper" style:right="{drillThrough ? 20 : 0}px">
+      <span class="value-links-wrapper" style:right="0px">
         <a
           target="_blank"
           rel="noopener noreferrer"
@@ -280,8 +282,25 @@
           <ExternalLink className="fill-primary-600" />
         </a>
       </span>
+    {:else if valueLinks.length === 1 && valueLinks[0].explore}
+      <span class="value-links-wrapper" style:right="0px">
+        <button
+          type="button"
+          title={valueLinks[0].label}
+          aria-label={m.dashboard_dimension_links({
+            value: String(dimensionValue),
+          })}
+          onclick={(e) => {
+            e.stopPropagation();
+            onExploreLink(valueLinks[0].explore ?? "", dimensionValue);
+          }}
+          class:hovered={effectiveHovered}
+        >
+          <ExploreIcon size="14px" className="fill-primary-600" />
+        </button>
+      </span>
     {:else if valueLinks.length > 1}
-      <span class="value-links-wrapper" style:right="{drillThrough ? 20 : 0}px">
+      <span class="value-links-wrapper" style:right="0px">
         <DropdownMenu.Root bind:open={linksMenuOpen}>
           <DropdownMenu.Trigger>
             {#snippet child({ props })}
@@ -305,11 +324,17 @@
             {/snippet}
           </DropdownMenu.Trigger>
           <DropdownMenu.Content align="start" class="w-44">
-            {#each valueLinks as link (link.url)}
+            {#each valueLinks as link (link.url ?? link.explore)}
               <DropdownMenu.Item
-                onSelect={() => openDimensionValueLink(link, dimensionValue)}
+                onSelect={() => {
+                  if (link.explore) {
+                    onExploreLink(link.explore, dimensionValue);
+                  } else {
+                    openDimensionValueLink(link, dimensionValue);
+                  }
+                }}
               >
-                {link.label || link.url}
+                {link.label || link.url || link.explore}
               </DropdownMenu.Item>
             {/each}
           </DropdownMenu.Content>
@@ -317,22 +342,6 @@
       </span>
     {/if}
 
-    {#if drillThrough}
-      <span class="drill-through-wrapper">
-        <button
-          type="button"
-          title={m.dashboard_drill_through({ name: drillThrough })}
-          aria-label={m.dashboard_drill_through({ name: drillThrough })}
-          onclick={(e) => {
-            e.stopPropagation();
-            onDrillThrough(dimensionValue);
-          }}
-          class:hovered={effectiveHovered}
-        >
-          <ExploreIcon size="14px" className="fill-primary-600" />
-        </button>
-      </span>
-    {/if}
   </LeaderboardCell>
 
   {#each leaderboardMeasureNames as measureName, i (i)}
@@ -481,7 +490,7 @@
     -webkit-backdrop-filter: blur(2px);
   }
 
-  /* The uri link, value links and drill-through icons stack from the right edge;
+  /* The uri link and value-links icons stack from the right edge;
      each wrapper's right offset is computed inline based on which icons are present. */
   .external-link-wrapper,
   .value-links-wrapper {
@@ -510,24 +519,4 @@
     opacity: 1;
   }
 
-  .drill-through-wrapper button {
-    opacity: 0;
-    position: absolute;
-    right: 0;
-    top: 0;
-    height: 20px;
-    width: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .drill-through-wrapper button.hovered {
-    opacity: 0.7;
-    pointer-events: auto;
-    backdrop-filter: blur(2px);
-    -webkit-backdrop-filter: blur(2px);
-  }
-  .drill-through-wrapper button.hovered:hover {
-    opacity: 1;
-  }
 </style>

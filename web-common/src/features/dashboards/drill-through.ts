@@ -37,7 +37,7 @@ export function openDimensionValueLink(
 }
 
 /**
- * Navigates to a dimension's `drill_through` explore dashboard,
+ * Navigates to the explore dashboard named by an explore-type dimension link,
  * with the clicked dimension value applied as a filter.
  */
 export async function gotoDrillThroughExplore(
