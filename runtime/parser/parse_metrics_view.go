@@ -1009,6 +1009,7 @@ func (p *Parser) parseMetricsView(node *Node) error {
 			vspec := proto.Clone(spec).(*runtimev1.MetricsViewSpec)
 			vspec.Table = t
 			vspec.TableOptions = nil
+			vspec.TableOptionOf = node.Name
 			tableOptionResources[t].MetricsViewSpec = vspec
 			spec.TableOptions = append(spec.TableOptions, &runtimev1.MetricsViewSpec_TableOption{Table: t, MetricsView: tableOptionNames[t]})
 		}

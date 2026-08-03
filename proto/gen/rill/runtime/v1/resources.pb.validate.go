@@ -3479,6 +3479,8 @@ func (m *MetricsViewSpec) validate(all bool) error {
 
 	}
 
+	// no validation rules for TableOptionOf
+
 	if m.CacheEnabled != nil {
 		// no validation rules for CacheEnabled
 	}

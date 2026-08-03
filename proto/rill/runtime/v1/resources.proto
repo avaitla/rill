@@ -404,6 +404,10 @@ message MetricsViewSpec {
   // skip_invalid_dimensions so tables that lack some columns degrade gracefully.
   // NOTE: 39 is reserved for a pending skip_empty_dimensions field.
   repeated TableOption table_options = 40;
+  // Name of the primary metrics view this spec is a table-option variant of.
+  // Only set on parser-generated variants; empty on primary metrics views.
+  // The frontend uses it to keep variants from claiming a file's inspector or navigation.
+  string table_option_of = 41;
 }
 
 message SecurityRule {

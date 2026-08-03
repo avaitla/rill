@@ -1593,6 +1593,15 @@ export class MetricsViewSpec extends Message<MetricsViewSpec> {
    */
   tableOptions: MetricsViewSpec_TableOption[] = [];
 
+  /**
+   * Name of the primary metrics view this spec is a table-option variant of.
+   * Only set on parser-generated variants; empty on primary metrics views.
+   * The frontend uses it to keep variants from claiming a file's inspector or navigation.
+   *
+   * @generated from field: string table_option_of = 41;
+   */
+  tableOptionOf = "";
+
   constructor(data?: PartialMessage<MetricsViewSpec>) {
     super();
     proto3.util.initPartial(data, this);
@@ -1631,6 +1640,7 @@ export class MetricsViewSpec extends Message<MetricsViewSpec> {
     { no: 36, name: "max_query_time_range", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 38, name: "skip_invalid_dimensions", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
     { no: 40, name: "table_options", kind: "message", T: MetricsViewSpec_TableOption, repeated: true },
+    { no: 41, name: "table_option_of", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): MetricsViewSpec {
