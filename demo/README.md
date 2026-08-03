@@ -32,12 +32,18 @@ RawDuck-style schemaless store).
   - *Refresh intervals*: header dropdown (defaults to `30s`), `refresh` URL param,
     "Last refreshed" caption. Try `?refresh=5m`.
 - **Logs (ClickHouse)** — `/explore/logs_explore`
+  - *Logs view*: the "Logs" tab shows the raw log lines for the current filters and
+    time range, newest first, with expandable row detail; each row links to Grafana
+    via a `row_links` template. "View rows" in a leaderboard value's menu jumps here
+    filtered to that value.
   - *Dynamic map dimensions*: leaderboards for `http.method`, `http.status_code`,
     `user.id`, `k8s.namespace.name` are discovered from the `Map` columns at reconcile
     time — none are declared in the YAML. Insert a log with a new attribute key and
     touch `metrics/logs.yaml` to see a new leaderboard appear.
   - *skip_empty / hide_empty dimensions* on a real log schema.
 - **RED Overview → RED Service Detail** — `/explore/red_overview_explore`
+  - *Logs view + View rows*: both RED explores have a Logs tab over the raw request
+    rows; leaderboard value menus include "View rows".
   - *Dimension value links*: the service dimension carries three links — "Service
     detail" (an `explore` link that drills into the detail explore with the clicked
     service filtered) plus Datadog APM and GitHub search (external `url` templates

@@ -1,6 +1,6 @@
 # Rill Feature Branches — Demo Documentation
 
-Six feature branches on `github.com:avaitla/rill.git`, each with one logical feature.
+Nine feature branches on `github.com:avaitla/rill.git`, each with one logical feature.
 Every doc in this directory describes the feature, its YAML surface, and a self-contained
 demo runbook that can be executed from scratch in a fresh session.
 
@@ -12,6 +12,9 @@ demo runbook that can be executed from scratch in a fresh session.
 | 4 | [`avaitla/dimension-drill-through`](04-dimension-drill-through.md) | Dimension value links: external URLs + explore drill-through | `main` |
 | 5 | [`avaitla/dynamic-map-dimensions`](05-dynamic-map-dimensions.md) | Schemaless dimensions: map keys, column wildcards, empty-hiding | `avaitla/skip-invalid-dimensions` |
 | 6 | [`avaitla/metrics-view-table-options`](06-metrics-view-table-options.md) | Multiple selectable tables behind one metrics view | `avaitla/skip-invalid-dimensions` |
+| 7 | [`avaitla/drill-through-context`](07-drill-through-context.md) | Drill-through carries filters, time range and grain | `avaitla/dimension-drill-through` |
+| 8 | [`avaitla/logs-view`](08-logs-view.md) | Logs tab: live raw-events tail per filters/time range | `main` |
+| 9 | [`avaitla/row-links`](09-row-links.md) | Row links (`{{ column }}` templates) + "View rows" | `avaitla/logs-view` |
 
 Each doc includes a screenshot of the feature captured from the live all-features demo
 (`feature-docs/screenshots/`).
