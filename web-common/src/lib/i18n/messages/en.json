@@ -841,6 +841,8 @@
   "dashboard_logs_showing": "{count} rows",
   "dashboard_logs_showing_latest": "Latest {count} rows",
   "dashboard_logs_empty": "No rows match the current filters and time range.",
+  "dashboard_logs_copy_row": "Copy log item",
+  "dashboard_logs_copy_field": "Copy {field}",
   "dashboard_pivot_add_measure": "Add a measure to complete your table.",
   "dashboard_pivot_building_table": "Hang tight! We're building your table...",
   "dashboard_pivot_give_data": "Give it some data to keep it company.",

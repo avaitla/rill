@@ -841,6 +841,8 @@
   "dashboard_logs_showing": "{count} filas",
   "dashboard_logs_showing_latest": "Últimas {count} filas",
   "dashboard_logs_empty": "Ninguna fila coincide con los filtros y el rango de tiempo actuales.",
+  "dashboard_logs_copy_row": "Copiar registro",
+  "dashboard_logs_copy_field": "Copiar {field}",
   "dashboard_pivot_add_measure": "Agrega una medida para completar tu tabla.",
   "dashboard_pivot_building_table": "¡Un momento! Estamos construyendo tu tabla...",
   "dashboard_pivot_give_data": "Dale algunos datos para hacerle compañía.",
