@@ -1,0 +1,23 @@
+# The binlog-pipeline dashboard: Logs tab (raw recent events, newest first, with
+# per-row links from row_links), Grafana-style auto-refresh, and hide_empty_dimensions.
+type: explore
+display_name: "8 · Binlog pipeline (logs view + freshness)"
+metrics_view: pipeline
+
+logs_view: true
+logs_view_columns:
+  - archived_at
+  - log_name
+  - size_mb
+  - processed_at
+  - lag_min
+  - status
+
+refresh_intervals:
+  - 30s
+  - 1m
+  - 5m
+
+defaults:
+  time_range: PT24H
+  refresh_interval: 1m

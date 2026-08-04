@@ -1,0 +1,8 @@
+# Drill-through target: dimension links on the fleet's Database dimension navigate here
+# with the clicked value filtered and the source dashboard's time range/grain carried
+# along (drill-through context).
+type: explore
+display_name: "5b · Database inspect (drill-through target)"
+metrics_view: database_metrics
+defaults:
+  time_range: PT6H

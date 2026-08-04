@@ -7,14 +7,31 @@ version: 1
 type: metrics_view
 
 display_name: Database fleet
-model: database_metrics
+table: database_metrics
 timeseries: time
 smallest_time_grain: minute
+
+# table_options: same schema, different table — a selector in the dashboard (and a
+# `table=` URL param) switches the whole metrics view between prod and staging fleets.
+table_options:
+  - database_metrics_staging
+
+# annotations: deploy markers rendered on every measure chart (upstream feature, declared
+# once at the semantic layer). The latest deploy lands right before the connection storm.
+annotations:
+  - model: deploy_events
 
 dimensions:
   - name: database
     display_name: Database
     column: database
+    # Dimension value links: an external URL template and a drill-through explore.
+    # Drill-through carries the current filters, time range, and grain along.
+    links:
+      - label: Runbook
+        url: "https://runbooks.example.com/db/{{ value }}"
+      - label: Inspect database
+        explore: db_inspect
   - name: engine
     display_name: Engine
     column: engine

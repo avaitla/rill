@@ -1,0 +1,63 @@
+# The binlog-pipeline metrics view (case study 2): freshness measures with thresholds,
+# row_links for the Logs view, and skip_empty_dimensions pruning the all-NULL
+# error_reason dimension with a reconcile warning.
+version: 1
+type: metrics_view
+
+display_name: Binlog pipeline
+model: pipeline_events
+timeseries: archived_at
+smallest_time_grain: minute
+skip_empty_dimensions: true
+
+row_links:
+  - label: S3 object
+    url: "https://s3.console.aws.amazon.com/s3/object/binlog-archive/{{ log_name }}"
+  - label: Processing job
+    url: "https://pipeline.example.com/jobs?file={{ log_name }}"
+
+dimensions:
+  - name: status
+    display_name: Status
+    column: status
+  - name: log_name
+    display_name: Log file
+    column: log_name
+  - name: error_reason
+    display_name: Error reason
+    column: error_reason
+
+measures:
+  - name: archived_count
+    display_name: Archived
+    expression: count(*)
+    format_preset: none
+  - name: gb_archived
+    display_name: GB archived
+    expression: sum(size_mb) / 1024.0
+    format_d3: ".1f"
+  - name: pending
+    display_name: Pending binlogs
+    expression: sum(CASE WHEN status = 'pending' THEN 1 ELSE 0 END)
+    format_preset: none
+    lower_is_better: true
+    thresholds:
+      - warn: 2
+      - critical: 5
+  - name: minutes_since_last_archive
+    display_name: Minutes since last archive
+    expression: date_diff('minute', max(archived_at), now())
+    format_preset: none
+    lower_is_better: true
+    thresholds:
+      - warn: 15
+      - critical: 60
+  - name: avg_lag_min
+    display_name: Processing lag (avg min)
+    kind: gauge
+    expression: avg(lag_min)
+    format_d3: ".1f"
+    lower_is_better: true
+    thresholds:
+      - warn: 3
+      - critical: 10

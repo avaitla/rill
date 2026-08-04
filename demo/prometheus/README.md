@@ -25,6 +25,21 @@ RDS-fleet Grafana dashboard, to demonstrate two ideas from
 | 3 | Instance resources | Thresholds in both directions: CPU (bad high) vs unused memory (bad low, `below: true`). CPU+memory share grain and labels, so they're **one wide table and one metrics view** — no union gymnastics. |
 | 5 | Database fleet | RDS-style: 8 databases × cpu/memory/network/disk/connections/replica lag. Free storage shows **orange** (179 GB < 250 warn), connections **red** (storm ≥ 1000). |
 | 4, 6 | Canvases | Grouped sections (markdown headers = Grafana rows) composing MULTIPLE metrics views from different tables — the answer to "cpu and disk come from different CloudWatch tables". |
+| 5b | Database inspect | Drill-through target: click a Database value's "Inspect database" link on dashboard 5 — the value arrives filtered with time range and grain carried along. |
+| 8 | Binlog pipeline | Logs tab (raw events newest-first with per-row `row_links`), freshness measures (`minutes_since_last_archive` with thresholds), auto-refresh default 1m, and `skip_empty_dimensions` pruning the all-NULL `error_reason`. |
+
+## All-features branch features exercised here
+
+Dashboard 5 additionally demonstrates (all declared in `metrics/database_metrics.yaml`):
+
+- **`annotations:`** — deploy markers from `models/deploy_events.sql` on every measure chart;
+  the latest deploy lands right before prod-db-01's connection storm.
+- **`table_options:`** — the header's Table selector switches the whole metrics view to the
+  staging fleet (`models/database_metrics_staging.sql`, same schema), with a `table=` URL param.
+- **Dimension `links:`** — the Database dimension carries a Runbook URL template
+  (`{{ value }}`) and an "Inspect database" drill-through to dashboard 5b.
+- **`map_column` discovery** — dashboard 7's labels (DBInstanceIdentifier/env/region) are
+  discovered from the CloudWatch `dimensions` map, not declared.
 
 ## Threshold YAML shapes
 
