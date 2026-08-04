@@ -13772,6 +13772,8 @@ func (m *MetricsViewSpec_Measure) validate(all bool) error {
 		}
 	}
 
+	// no validation rules for Unit
+
 	if len(errors) > 0 {
 		return MetricsViewSpec_MeasureMultiError(errors)
 	}

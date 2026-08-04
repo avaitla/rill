@@ -1446,14 +1446,26 @@ func (a *AST) sqlForTimeRange(timeDimExpr string, typeCode runtimev1.Type_Code, 
 // sqlForMeasure builds a SQL expression for a measure, including its window if present.
 // It uses the provided n to resolve dimensions expressions for window partitions.
 func (a *AST) sqlForMeasure(m *runtimev1.MetricsViewSpec_Measure, n *SelectNode) (string, error) {
+	// For rate measures, normalize the aggregated value by the duration it covers:
+	// the time bucket when the query has a time grain, else the whole queried time range.
+	// Doing this in the compiled SQL keeps every consumer (dashboards, exports, alerts) consistent.
+	expression := m.Expression
+	if m.Unit == "per_second" {
+		divisor, err := a.perSecondDivisor()
+		if err != nil {
+			return "", fmt.Errorf("measure %q: %w", m.Name, err)
+		}
+		expression = fmt.Sprintf("(%s)/(%s)", expression, divisor)
+	}
+
 	// If not applying a window, just return the measure expression.
 	if m.Window == nil {
-		return m.Expression, nil
+		return expression, nil
 	}
 
 	// If partitioning is not enabled, ordering and framing doesn't matter
 	if !m.Window.Partition {
-		return fmt.Sprintf("%s OVER ()", m.Expression), nil
+		return fmt.Sprintf("%s OVER ()", expression), nil
 	}
 
 	// If partitioning is enabled, we partition by all dimensions that we don't order by.
@@ -1488,7 +1500,7 @@ func (a *AST) sqlForMeasure(m *runtimev1.MetricsViewSpec_Measure, n *SelectNode)
 
 	// Build the window expression
 	b := &strings.Builder{}
-	b.WriteString(m.Expression)
+	b.WriteString(expression)
 	b.WriteString(" OVER (")
 	if len(partitionFields) > 0 {
 		b.WriteString("PARTITION BY ")
@@ -1523,6 +1535,71 @@ func (a *AST) sqlForMeasure(m *runtimev1.MetricsViewSpec_Measure, n *SelectNode)
 	b.WriteString(")")
 
 	return b.String(), nil
+}
+
+// perSecondDivisor returns a SQL expression for the number of seconds covered by each output row,
+// used to normalize measures with unit "per_second".
+// If the query groups by a time grain, it is the grain's duration (calendar grains use their mean length);
+// otherwise it is the duration of the queried time range.
+func (a *AST) perSecondDivisor() (string, error) {
+	// Find the finest time grain the query groups by.
+	timeDim := a.MetricsView.TimeDimension
+	if a.Query.TimeRange != nil && a.Query.TimeRange.TimeDimension != "" {
+		timeDim = a.Query.TimeRange.TimeDimension
+	}
+	finest := TimeGrainUnspecified
+	for _, qd := range a.Query.Dimensions {
+		if qd.Compute == nil || qd.Compute.TimeFloor == nil {
+			continue
+		}
+		if !strings.EqualFold(qd.Compute.TimeFloor.Dimension, timeDim) {
+			continue
+		}
+		g := qd.Compute.TimeFloor.Grain
+		if finest == TimeGrainUnspecified || timeGrainSeconds(g) < timeGrainSeconds(finest) {
+			finest = g
+		}
+	}
+	if finest != TimeGrainUnspecified {
+		return fmt.Sprintf("%f", timeGrainSeconds(finest)), nil
+	}
+
+	// No time grain: normalize by the duration of the queried time range.
+	if a.Query.TimeRange != nil && !a.Query.TimeRange.Start.IsZero() && !a.Query.TimeRange.End.IsZero() {
+		secs := a.Query.TimeRange.End.Sub(a.Query.TimeRange.Start).Seconds()
+		if secs > 0 {
+			return fmt.Sprintf("%f", secs), nil
+		}
+	}
+
+	return "", errors.New(`measures with unit "per_second" require a time grain or a bounded time range`)
+}
+
+// timeGrainSeconds returns the duration of a time grain in seconds.
+// Calendar grains use their mean length (Gregorian): month 30.436875d, quarter 3 months, year 365.2425d.
+func timeGrainSeconds(g TimeGrain) float64 {
+	switch g {
+	case TimeGrainMillisecond:
+		return 0.001
+	case TimeGrainSecond:
+		return 1
+	case TimeGrainMinute:
+		return 60
+	case TimeGrainHour:
+		return 3600
+	case TimeGrainDay:
+		return 86400
+	case TimeGrainWeek:
+		return 604800
+	case TimeGrainMonth:
+		return 2629746
+	case TimeGrainQuarter:
+		return 7889238
+	case TimeGrainYear:
+		return 31556952
+	default:
+		return 0
+	}
 }
 
 // sqlForExpression returns the provided time expression adjusted by the fixed time offset between the current query's base and comparison time ranges.

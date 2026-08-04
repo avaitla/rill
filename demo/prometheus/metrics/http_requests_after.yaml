@@ -33,6 +33,12 @@ measures:
     expression: sum(increase)
     description: Correct request count for any slice — the counter delta happened upstream.
     format_preset: humanize
+  - name: qps
+    display_name: Requests/sec
+    expression: sum(increase)
+    description: True rate — the runtime divides by the time bucket duration, so this reads the same at every grain.
+    unit: per_second
+    format_d3: ".2f"
   - name: error_rate
     display_name: 5xx error rate
     expression: sum(CASE WHEN status = '500' THEN increase ELSE 0 END) / NULLIF(sum(increase), 0)

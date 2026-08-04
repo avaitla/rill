@@ -301,6 +301,8 @@ message MetricsViewSpec {
     bool lower_is_better = 17;
     // Severity thresholds for the measure's value. UI surfaces that render measure values (big numbers, KPIs, leaderboards, pivot cells) color the value by the highest step it crosses.
     MeasureThresholds thresholds = 18;
+    // Unit of the measure. The value "per_second" makes the runtime divide the aggregated value by the duration of the time bucket (or of the whole queried time range when there is no time dimension), so the number reads the same at every time grain.
+    string unit = 19;
   }
   // Severity thresholds for a measure.
   message MeasureThresholds {

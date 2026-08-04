@@ -133,6 +133,8 @@ export interface MetricsViewSpecMeasure {
   dataType?: Runtimev1Type;
   lowerIsBetter?: boolean;
   thresholds?: MetricsViewSpecMeasureThresholds;
+  /** "per_second" makes the runtime normalize the value by bucket/range duration. */
+  unit?: string;
 }
 
 export interface MetricsViewSpecMeasureThresholdsStep {

@@ -2189,6 +2189,13 @@ export class MetricsViewSpec_Measure extends Message<MetricsViewSpec_Measure> {
    */
   thresholds?: MetricsViewSpec_MeasureThresholds;
 
+  /**
+   * Unit of the measure. The value "per_second" makes the runtime divide the aggregated value by the duration of the time bucket (or of the whole queried time range when there is no time dimension), so the number reads the same at every time grain.
+   *
+   * @generated from field: string unit = 19;
+   */
+  unit = "";
+
   constructor(data?: PartialMessage<MetricsViewSpec_Measure>) {
     super();
     proto3.util.initPartial(data, this);
@@ -2215,6 +2222,7 @@ export class MetricsViewSpec_Measure extends Message<MetricsViewSpec_Measure> {
     { no: 15, name: "data_type", kind: "message", T: Type },
     { no: 17, name: "lower_is_better", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
     { no: 18, name: "thresholds", kind: "message", T: MetricsViewSpec_MeasureThresholds },
+    { no: 19, name: "unit", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): MetricsViewSpec_Measure {

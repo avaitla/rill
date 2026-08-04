@@ -103,6 +103,7 @@ type MetricsViewYAML struct {
 		TreatNullsAs        string         `yaml:"treat_nulls_as"`
 		LowerIsBetter       bool           `yaml:"lower_is_better"`
 		Thresholds          *MetricsViewMeasureThresholds
+		Unit                string
 		Tags                []string
 	}
 	ParentDimensions *FieldSelectorYAML `yaml:"parent_dimensions"` // used when Parent is set
@@ -778,6 +779,10 @@ func (p *Parser) parseMetricsView(node *Node) error {
 			return fmt.Errorf(`invalid measure type %q (allowed values: simple, derived, time_comparison)`, measure.Type)
 		}
 
+		if measure.Unit != "" && measure.Unit != "per_second" {
+			return fmt.Errorf(`measure %q: invalid unit %q (allowed values: per_second)`, measure.Name, measure.Unit)
+		}
+
 		var thresholds *runtimev1.MetricsViewSpec_MeasureThresholds
 		if measure.Thresholds != nil {
 			if len(measure.Thresholds.Steps) == 0 {
@@ -822,6 +827,7 @@ func (p *Parser) parseMetricsView(node *Node) error {
 			TreatNullsAs:        measure.TreatNullsAs,
 			LowerIsBetter:       measure.LowerIsBetter,
 			Thresholds:          thresholds,
+			Unit:                measure.Unit,
 			Tags:                measure.Tags,
 		})
 	}
