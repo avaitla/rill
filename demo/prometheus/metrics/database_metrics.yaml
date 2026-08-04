@@ -15,6 +15,15 @@ dimensions:
   - name: database
     display_name: Database
     column: database
+  - name: engine
+    display_name: Engine
+    column: engine
+  - name: region
+    display_name: Region
+    column: region
+  - name: workload
+    display_name: Workload
+    column: workload
 
 measures:
   - name: cpu_pct

@@ -10,6 +10,7 @@
     PivotChipType,
     type PivotChipData,
   } from "@rilldata/web-common/features/dashboards/pivot/types";
+  import { COMPARISON_COLORS } from "@rilldata/web-common/features/dashboards/config";
   import { getStateManagers } from "@rilldata/web-common/features/dashboards/state-managers/state-managers";
   import {
     metricsExplorerStore,
@@ -493,6 +494,26 @@
       {/if}
     {/if}
   </div>
+
+  {#if splitAsLines && splitValues.length}
+    <div class="flex flex-wrap gap-x-3 gap-y-1 px-2.5 py-1.5 items-center">
+      {#each splitValues as value, i (value)}
+        <div
+          class="flex items-center gap-x-1.5 text-xs text-fg-secondary min-w-0"
+        >
+          <span
+            class="size-2 rounded-full shrink-0"
+            style:background-color={COMPARISON_COLORS[
+              i % COMPARISON_COLORS.length
+            ]}
+          ></span>
+          <span class="truncate max-w-40" title={value ?? "null"}>
+            {value ?? "null"}
+          </span>
+        </div>
+      {/each}
+    </div>
+  {/if}
 
   {#if renderedMeasures && showSplitBy && splitDimension && splitLayout === "grid"}
     <div class="overflow-y-scroll h-full max-h-fit pb-4">

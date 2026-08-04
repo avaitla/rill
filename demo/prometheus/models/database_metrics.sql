@@ -13,17 +13,17 @@ WITH ticks AS (
   FROM generate_series(now() - INTERVAL 24 HOUR, now(), INTERVAL 1 MINUTE) AS g(ts)
 ),
 dbs AS (
-  SELECT db, base_free_gb, base_conn
+  SELECT db, base_free_gb, base_conn, engine, region, workload
   FROM (VALUES
-    ('prod-db',            242, 40),
-    ('prod-db-01',         235, 65),
-    ('prod-db-cronjobs',   181, 9),
-    ('prod-db-fivetran',   250, 3),
-    ('prod-db-metabase',   452, 4),
-    ('prod-db-offline-02', 795, 6),
-    ('ext-prod-db',        608, 4),
-    ('prod-reports-v3',    435, 3)
-  ) t(db, base_free_gb, base_conn)
+    ('prod-db',            242, 40, 'aurora-postgresql', 'us-east-1', 'oltp'),
+    ('prod-db-01',         235, 65, 'aurora-postgresql', 'us-east-1', 'oltp'),
+    ('prod-db-cronjobs',   181, 9,  'aurora-postgresql', 'us-east-1', 'batch'),
+    ('prod-db-fivetran',   250, 3,  'postgres',          'us-east-1', 'batch'),
+    ('prod-db-metabase',   452, 4,  'postgres',          'us-east-1', 'analytics'),
+    ('prod-db-offline-02', 795, 6,  'postgres',          'us-east-2', 'analytics'),
+    ('ext-prod-db',        608, 4,  'postgres',          'us-west-2', 'external'),
+    ('prod-reports-v3',    435, 3,  'postgres',          'us-east-2', 'analytics')
+  ) t(db, base_free_gb, base_conn, engine, region, workload)
 ),
 base AS (
   SELECT
@@ -31,6 +31,9 @@ base AS (
     db,
     base_free_gb,
     base_conn,
+    engine,
+    region,
+    workload,
     greatest(0, 1 - date_diff('minute', ts, now()) / 1440.0) AS ramp,
     (hash(concat(ts::VARCHAR, db)) % 100) / 100.0 AS jitter,
     (hash(db) % 628) / 100.0 AS phase
@@ -40,6 +43,9 @@ base AS (
 SELECT
   ts AS time,
   db AS database,
+  engine,
+  region,
+  workload,
   -- CPU %: diurnal wave; cronjobs is bursty and runs warm at the end of the window
   round(
     CASE WHEN db = 'prod-db-cronjobs'
