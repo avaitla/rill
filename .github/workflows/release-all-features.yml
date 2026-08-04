@@ -10,8 +10,10 @@ on:
   push:
     branches:
       - avaitla/all-features
+      - avaitla/all-features-experimental
     tags:
       - "all-features-v*"
+      - "all-features-experimental-v*"
   workflow_dispatch:
 
 permissions:
@@ -105,7 +107,16 @@ jobs:
 
       - name: Create and push multi-arch manifest
         run: |
-          TAGS=("all-features" "sha-${GITHUB_SHA::7}")
+          # Derive the moving image tag from the branch name (strip the "avaitla/" prefix):
+          # avaitla/all-features -> all-features, avaitla/all-features-experimental -> all-features-experimental.
+          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            BASE_TAG="all-features"
+            [[ "${GITHUB_REF_NAME}" == all-features-experimental-* ]] && BASE_TAG="all-features-experimental"
+          else
+            BASE_TAG="${GITHUB_REF_NAME##*/}"
+          fi
+
+          TAGS=("${BASE_TAG}" "sha-${GITHUB_SHA::7}")
           if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
             TAGS+=("${GITHUB_REF_NAME}")
           fi
