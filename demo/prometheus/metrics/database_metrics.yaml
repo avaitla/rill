@@ -28,7 +28,8 @@ dimensions:
 measures:
   - name: cpu_pct
     display_name: CPU %
-    expression: avg(cpu_pct)
+    kind: gauge
+    column: cpu_pct
     format_d3: ".1f"
     lower_is_better: true
     thresholds:
@@ -36,7 +37,8 @@ measures:
       - critical: 85
   - name: memory_used_pct
     display_name: Memory used %
-    expression: avg(memory_used_pct)
+    kind: gauge
+    column: memory_used_pct
     format_d3: ".1f"
     lower_is_better: true
     thresholds:
@@ -44,10 +46,12 @@ measures:
       - critical: 92
   - name: network_mbps
     display_name: Network MB/s
-    expression: avg(network_mbps)
+    kind: gauge
+    column: network_mbps
     format_d3: ".1f"
   - name: free_storage_gb
     display_name: Free storage (GB)
+    kind: gauge
     expression: min(free_storage_gb)
     format_d3: ",.0f"
     thresholds:
@@ -57,6 +61,7 @@ measures:
         - critical: 150
   - name: connections
     display_name: Connections
+    kind: gauge
     expression: max(connections)
     format_preset: humanize
     lower_is_better: true
@@ -65,6 +70,7 @@ measures:
       - critical: 1000
   - name: replica_lag_s
     display_name: Replica lag (s)
+    kind: gauge
     expression: max(replica_lag_s)
     format_d3: ",.0f"
     lower_is_better: true
