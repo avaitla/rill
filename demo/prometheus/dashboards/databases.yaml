@@ -3,3 +3,4 @@ display_name: "5 · Database fleet (RDS-style, thresholds everywhere)"
 metrics_view: database_metrics
 defaults:
   time_range: PT24H
+  split_by: database

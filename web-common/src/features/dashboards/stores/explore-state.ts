@@ -131,6 +131,11 @@ export interface ExploreState {
   selectedTableOption?: string;
 
   /**
+   * dimension the measure charts are split by (small-multiples grid); empty means no split
+   */
+  splitByDimension?: string;
+
+  /**
    * user selected auto-refresh interval: a duration like "5m", or "off"
    */
   selectedRefreshInterval?: string;

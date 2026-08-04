@@ -242,6 +242,11 @@ export function convertURLToExplorePreset(
       searchParams.get(ExploreStateURLParams.TableOption) ?? "";
   }
 
+  if (searchParams.has(ExploreStateURLParams.SplitByDimension)) {
+    preset.splitByDimension =
+      searchParams.get(ExploreStateURLParams.SplitByDimension) ?? "";
+  }
+
   if (searchParams.has(ExploreStateURLParams.RefreshInterval)) {
     const raw = searchParams.get(ExploreStateURLParams.RefreshInterval) ?? "";
     if (isValidRefreshInterval(raw)) {

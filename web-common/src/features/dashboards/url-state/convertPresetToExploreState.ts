@@ -112,6 +112,10 @@ export function convertPresetToExploreState(
     partialExploreState.selectedTableOption = preset.tableOption;
   }
 
+  if (preset.splitByDimension !== undefined) {
+    partialExploreState.splitByDimension = preset.splitByDimension;
+  }
+
   if (preset.refreshInterval) {
     partialExploreState.selectedRefreshInterval = preset.refreshInterval;
   }

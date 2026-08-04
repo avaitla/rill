@@ -5697,6 +5697,10 @@ func (m *ExplorePreset) validate(all bool) error {
 		// no validation rules for TableOption
 	}
 
+	if m.SplitByDimension != nil {
+		// no validation rules for SplitByDimension
+	}
+
 	if len(errors) > 0 {
 		return ExplorePresetMultiError(errors)
 	}

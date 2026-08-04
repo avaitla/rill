@@ -42,6 +42,10 @@ export function getExploreStateFromYAMLConfig(
       ? { selectedRefreshInterval: exploreSpec.defaultPreset.refreshInterval }
       : {}),
 
+    ...(exploreSpec.defaultPreset?.splitByDimension
+      ? { splitByDimension: exploreSpec.defaultPreset.splitByDimension }
+      : {}),
+
     ...getExploreTimeStateFromYAMLConfig(
       exploreSpec,
       timeRangeSummary,

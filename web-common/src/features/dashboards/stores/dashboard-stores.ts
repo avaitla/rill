@@ -503,6 +503,12 @@ const metricsViewReducers = {
     });
   },
 
+  setSplitByDimension(name: string, dimension: string) {
+    updateMetricsExplorerByName(name, (exploreState) => {
+      exploreState.splitByDimension = dimension;
+    });
+  },
+
   setRefreshInterval(name: string, interval: string) {
     updateMetricsExplorerByName(name, (exploreState) => {
       exploreState.selectedRefreshInterval = interval;

@@ -10,6 +10,7 @@ export enum ExploreStateURLParams {
   ComparisonTimeRange = "compare_tr",
   TimeGrain = "grain",
   ComparisonDimension = "compare_dim",
+  SplitByDimension = "split_by",
   HighlightedTimeRange = "highlighted_tr",
   TableOption = "table",
   RefreshInterval = "refresh",
@@ -54,6 +55,7 @@ export const ExploreStateKeyToURLParamMap: Partial<
   selectedTimezone: ExploreStateURLParams.TimeZone,
   selectedComparisonDimension: ExploreStateURLParams.ComparisonDimension,
   selectedTableOption: ExploreStateURLParams.TableOption,
+  splitByDimension: ExploreStateURLParams.SplitByDimension,
   selectedRefreshInterval: ExploreStateURLParams.RefreshInterval,
 
   selectedDimensionName: ExploreStateURLParams.ExpandedDimension,

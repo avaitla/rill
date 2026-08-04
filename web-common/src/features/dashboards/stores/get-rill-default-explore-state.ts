@@ -52,6 +52,7 @@ export function getRillDefaultExploreState(
     temporaryFilterName: null,
 
     selectedTableOption: "",
+    splitByDimension: "",
     selectedRefreshInterval: REFRESH_INTERVAL_OFF,
 
     ...getRillDefaultExploreTimeState(

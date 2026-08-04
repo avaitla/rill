@@ -3668,6 +3668,13 @@ export class ExplorePreset extends Message<ExplorePreset> {
    */
   tableOption?: string;
 
+  /**
+   * Dimension to split the explore's measure charts by (small-multiples grid, one panel per top dimension value).
+   *
+   * @generated from field: optional string split_by_dimension = 42;
+   */
+  splitByDimension?: string;
+
   constructor(data?: PartialMessage<ExplorePreset>) {
     super();
     proto3.util.initPartial(data, this);
@@ -3713,6 +3720,7 @@ export class ExplorePreset extends Message<ExplorePreset> {
     { no: 39, name: "pivot_formatting", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
     { no: 35, name: "chart_dynamic_y_axis", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
     { no: 41, name: "table_option", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 42, name: "split_by_dimension", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ExplorePreset {

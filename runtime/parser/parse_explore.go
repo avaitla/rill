@@ -54,6 +54,7 @@ type ExploreDefaultsYAML struct {
 	ComparisonMode      string             `yaml:"comparison_mode"`
 	ComparisonDimension string             `yaml:"comparison_dimension"`
 	RefreshInterval     string             `yaml:"refresh_interval"`
+	SplitBy             string             `yaml:"split_by"`
 }
 
 // ExploreTimeRangeYAML represents a time range in an ExploreYAML.
@@ -331,6 +332,10 @@ func (p *Parser) parseExploreDefinition(tmp *ExploreDefinitionYAML) (*exploreDef
 		if tmp.Defaults.RefreshInterval != "" {
 			refreshInterval = &tmp.Defaults.RefreshInterval
 		}
+		var splitBy *string
+		if tmp.Defaults.SplitBy != "" {
+			splitBy = &tmp.Defaults.SplitBy
+		}
 		def.defaultPreset = &runtimev1.ExplorePreset{
 			Dimensions:          presetDimensions,
 			DimensionsSelector:  presetDimensionsSelector,
@@ -340,6 +345,7 @@ func (p *Parser) parseExploreDefinition(tmp *ExploreDefinitionYAML) (*exploreDef
 			ComparisonMode:      mode,
 			ComparisonDimension: compareDim,
 			RefreshInterval:     refreshInterval,
+			SplitByDimension:    splitBy,
 		}
 	}
 

@@ -43,6 +43,7 @@
   import MeasureBigNumber from "../big-number/MeasureBigNumber.svelte";
   import ChartInteractions from "./ChartInteractions.svelte";
   import MeasureChart from "./measure-chart/MeasureChart.svelte";
+  import SplitByGrid from "./SplitByGrid.svelte";
   import MeasureChartXAxis from "./measure-chart/MeasureChartXAxis.svelte";
   import { ScrubController } from "./measure-chart/ScrubController";
   import ThreeDot from "@rilldata/web-common/components/icons/ThreeDot.svelte";
@@ -66,6 +67,7 @@
     dashboardStore,
     selectors: {
       measures: { allMeasures, visibleMeasures, getMeasureByName },
+      dimensions: { allDimensions },
       dimensionFilters: { includedDimensionValues },
       charts: { canPanLeft, canPanRight, getNewPanRange },
       tags: { measureTagIndex },
@@ -78,6 +80,7 @@
   const timeControlsStore = useTimeControlStore(StateManagers);
 
   let grainDropdownOpen = false;
+  let splitDropdownOpen = false;
   let connectNulls = true;
 
   const client = useRuntimeClient();
@@ -131,6 +134,11 @@
   $: expandedMeasureName = $exploreState?.tdd?.expandedMeasureName;
 
   $: comparisonDimension = $exploreState?.selectedComparisonDimension;
+  $: splitByDimensionName = $exploreState?.splitByDimension ?? "";
+  $: splitDimension = splitByDimensionName
+    ? $allDimensions.find((d) => d.name === splitByDimensionName)
+    : undefined;
+  $: showSplitBy = Boolean(splitDimension) && !showTimeDimensionDetail;
   $: showComparison = Boolean(showTimeComparison);
   $: tddChartType = $exploreState?.tdd?.chartType;
   $: dynamicYAxisScale = $exploreState?.dynamicYAxisScale ?? false;
@@ -342,6 +350,61 @@
         </DropdownMenu.Root>
       {/if}
 
+      {#if $allDimensions.length}
+        <DropdownMenu.Root bind:open={splitDropdownOpen}>
+          <DropdownMenu.Trigger>
+            {#snippet child({ props })}
+              <button
+                {...props}
+                aria-label="Split charts by dimension"
+                class="flex gap-x-1 items-center text-fg-muted hover:text-fg-accent"
+              >
+                split by
+                <b>
+                  {splitDimension?.displayName ||
+                    splitDimension?.name ||
+                    "none"}
+                </b>
+                <span
+                  class:-rotate-90={splitDropdownOpen}
+                  class="transition-transform"
+                >
+                  <CaretDownIcon />
+                </span>
+              </button>
+            {/snippet}
+          </DropdownMenu.Trigger>
+
+          <DropdownMenu.Content align="start" class="w-48">
+            <DropdownMenu.CheckboxItem
+              checkRight
+              checked={!splitByDimensionName}
+              class="text-xs cursor-pointer"
+              onclick={() => {
+                metricsExplorerStore.setSplitByDimension(exploreName, "");
+              }}
+            >
+              none
+            </DropdownMenu.CheckboxItem>
+            {#each $allDimensions as dim (dim.name)}
+              <DropdownMenu.CheckboxItem
+                checkRight
+                checked={splitByDimensionName === dim.name}
+                class="text-xs cursor-pointer"
+                onclick={() => {
+                  metricsExplorerStore.setSplitByDimension(
+                    exploreName,
+                    dim.name ?? "",
+                  );
+                }}
+              >
+                {dim.displayName || dim.name}
+              </DropdownMenu.CheckboxItem>
+            {/each}
+          </DropdownMenu.Content>
+        </DropdownMenu.Root>
+      {/if}
+
       <ChartSettingsMenu
         bind:connectNulls
         {dynamicYAxisScale}
@@ -369,7 +432,24 @@
     {/if}
   </div>
 
-  {#if renderedMeasures}
+  {#if renderedMeasures && showSplitBy && splitDimension}
+    <div class="overflow-y-scroll h-full max-h-fit pb-4">
+      <SplitByGrid
+        metricsViewName={chartMetricsViewName}
+        dimension={splitDimension}
+        measures={renderedMeasures}
+        where={chartWhere}
+        {timeDimension}
+        {timeStart}
+        {timeEnd}
+        interval={chartInterval}
+        timeGranularity={activeTimeGrain}
+        timeZone={selectedTimezone}
+        ready={chartReady}
+        {connectNulls}
+      />
+    </div>
+  {:else if renderedMeasures}
     <div
       class:pb-4={!showTimeDimensionDetail}
       class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 overflow-y-scroll h-full max-h-fit"

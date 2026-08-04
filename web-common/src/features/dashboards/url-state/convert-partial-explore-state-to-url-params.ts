@@ -101,6 +101,7 @@ export function convertPartialExploreStateToUrlParams(
   );
 
   maybeSetParam(searchParams, partialExploreState, "selectedTableOption");
+  maybeSetParam(searchParams, partialExploreState, "splitByDimension");
   maybeSetParam(searchParams, partialExploreState, "selectedRefreshInterval");
 
   // timeControlsState will be undefined for dashboards without timeseries

@@ -682,6 +682,8 @@ message ExplorePreset {
   // It corresponds to the `table` values of the metrics view's `table_options`.
   // NOTE: 40 is reserved for a pending refresh_interval field.
   optional string table_option = 41;
+  // Dimension to split the explore's measure charts by (small-multiples grid, one panel per top dimension value).
+  optional string split_by_dimension = 42;
   reserved 36; // was chart_force_line; replaced by chart_type URL param
 }
 
