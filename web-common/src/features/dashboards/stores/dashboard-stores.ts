@@ -455,6 +455,10 @@ const metricsViewReducers = {
   setComparisonDimension(name: string, dimensionName: string) {
     updateMetricsExplorerByName(name, (exploreState) => {
       exploreState.selectedComparisonDimension = dimensionName;
+      // Dimension comparison and split-by both overlay per-value series on the charts; keep only one active.
+      if (dimensionName) {
+        exploreState.splitByDimension = "";
+      }
       exploreState.tdd.pinIndex = getPinIndexForDimension(
         exploreState,
         dimensionName,
@@ -506,6 +510,10 @@ const metricsViewReducers = {
   setSplitByDimension(name: string, dimension: string) {
     updateMetricsExplorerByName(name, (exploreState) => {
       exploreState.splitByDimension = dimension;
+      // Dimension comparison and split-by both overlay per-value series on the charts; keep only one active.
+      if (dimension) {
+        exploreState.selectedComparisonDimension = undefined;
+      }
     });
   },
 
