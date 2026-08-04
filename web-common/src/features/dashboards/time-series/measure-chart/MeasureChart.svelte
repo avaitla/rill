@@ -67,6 +67,8 @@
   // Chart height when expanded in the Time Dimension Detail view. Driven by the
   // resizable divider between the timeseries and the detail table.
   export let tddChartHeight: number = 245;
+  // Overrides the default chart height (used for compact contexts like the split-by facet grid).
+  export let chartHeight: number | undefined = undefined;
 
   const client = useRuntimeClient();
   const { visible, observe } = createVisibilityObserver(VISIBILITY_ROOT_MARGIN);
@@ -83,7 +85,7 @@
   });
 
   $: measureName = measure.name ?? "";
-  $: height = showTimeDimensionDetail ? tddChartHeight : 145;
+  $: height = chartHeight ?? (showTimeDimensionDetail ? tddChartHeight : 145);
 
   $: effectiveChartType = resolveEffectiveChartType(
     tddChartType,

@@ -85,13 +85,13 @@
   </div>
 {:else}
   <div
-    class="grid gap-x-4 gap-y-4 px-2.5 pt-2"
-    style:grid-template-columns="repeat(auto-fill, minmax(420px, 1fr))"
+    class="grid gap-x-3 gap-y-3 px-2.5 pt-2"
+    style:grid-template-columns="repeat(auto-fill, minmax(340px, 1fr))"
   >
     {#each facetValues as facetValue (facetValue)}
       {@const whereForFacet = facetWhere(facetValue)}
       <div
-        class="border border-gray-200 rounded-sm p-3 flex flex-col gap-y-2 min-w-0"
+        class="border border-gray-200 rounded-sm p-2 flex flex-col gap-y-1 min-w-0"
       >
         <h3
           class="text-sm font-semibold text-fg-primary truncate"
@@ -102,7 +102,7 @@
         {#each measures as measure (measure.name)}
           <div
             class="grid items-center gap-x-2"
-            style:grid-template-columns="140px minmax(0, 1fr)"
+            style:grid-template-columns="110px minmax(0, 1fr)"
           >
             <MeasureBigNumber
               {measure}
@@ -126,6 +126,7 @@
                 {timeGranularity}
                 {timeZone}
                 {ready}
+                chartHeight={56}
               />
             {/if}
           </div>

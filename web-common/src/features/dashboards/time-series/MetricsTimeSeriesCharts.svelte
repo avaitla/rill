@@ -32,6 +32,7 @@
     type DashboardTimeControls,
   } from "@rilldata/web-common/lib/time/types";
   import { type MetricsViewSpecMeasure } from "@rilldata/web-common/runtime-client/gen/index.schemas";
+  import { createQueryServiceMetricsViewAggregation } from "@rilldata/web-common/runtime-client";
   import { useRuntimeClient } from "@rilldata/web-common/runtime-client/v2";
   import { DateTime, Interval } from "luxon";
   import { Button } from "../../../components/button";
@@ -139,6 +140,44 @@
     ? $allDimensions.find((d) => d.name === splitByDimensionName)
     : undefined;
   $: showSplitBy = Boolean(splitDimension) && !showTimeDimensionDetail;
+
+  // Layout for split-by: "lines" overlays one line per dimension value on each measure chart
+  // (the Grafana idiom); "grid" renders one facet card per value.
+  let splitLayout: "lines" | "grid" = "lines";
+
+  // Top dimension values for the split, ranked by the first visible measure.
+  $: splitValuesQuery = createQueryServiceMetricsViewAggregation(
+    client,
+    {
+      metricsView: chartMetricsViewName,
+      dimensions: [{ name: splitByDimensionName }],
+      measures: visibleMeasureNames[0]
+        ? [{ name: visibleMeasureNames[0] }]
+        : [],
+      sort: visibleMeasureNames[0]
+        ? [{ name: visibleMeasureNames[0], desc: true }]
+        : [],
+      where: chartWhere,
+      timeRange: {
+        start: timeStart as any,
+        end: timeEnd as any,
+        timeDimension,
+      },
+      limit: "8",
+      offset: "0",
+    },
+    {
+      query: {
+        enabled: chartReady && showSplitBy && !!splitByDimensionName,
+      },
+    },
+  );
+  $: splitValues = showSplitBy
+    ? (($splitValuesQuery.data?.data ?? []).map(
+        (row) => row[splitByDimensionName],
+      ) as (string | null)[])
+    : [];
+  $: splitAsLines = showSplitBy && splitLayout === "lines";
   $: showComparison = Boolean(showTimeComparison);
   $: tddChartType = $exploreState?.tdd?.chartType;
   $: dynamicYAxisScale = $exploreState?.dynamicYAxisScale ?? false;
@@ -401,6 +440,29 @@
                 {dim.displayName || dim.name}
               </DropdownMenu.CheckboxItem>
             {/each}
+            {#if splitByDimensionName}
+              <DropdownMenu.Separator />
+              <DropdownMenu.CheckboxItem
+                checkRight
+                checked={splitLayout === "lines"}
+                class="text-xs cursor-pointer"
+                onclick={() => {
+                  splitLayout = "lines";
+                }}
+              >
+                as lines
+              </DropdownMenu.CheckboxItem>
+              <DropdownMenu.CheckboxItem
+                checkRight
+                checked={splitLayout === "grid"}
+                class="text-xs cursor-pointer"
+                onclick={() => {
+                  splitLayout = "grid";
+                }}
+              >
+                as grid
+              </DropdownMenu.CheckboxItem>
+            {/if}
           </DropdownMenu.Content>
         </DropdownMenu.Root>
       {/if}
@@ -432,7 +494,7 @@
     {/if}
   </div>
 
-  {#if renderedMeasures && showSplitBy && splitDimension}
+  {#if renderedMeasures && showSplitBy && splitDimension && splitLayout === "grid"}
     <div class="overflow-y-scroll h-full max-h-fit pb-4">
       <SplitByGrid
         metricsViewName={chartMetricsViewName}
@@ -494,7 +556,9 @@
               {measure}
               {scrubController}
               {connectNulls}
-              tddChartType={tddChartType ?? TDDChart.DEFAULT}
+              tddChartType={splitAsLines
+                ? TDDChart.LINE
+                : (tddChartType ?? TDDChart.DEFAULT)}
               metricsViewName={chartMetricsViewName}
               where={chartWhere}
               {timeDimension}
@@ -504,8 +568,12 @@
               timeZone={selectedTimezone}
               ready={chartReady}
               {chartScrubInterval}
-              {comparisonDimension}
-              dimensionValues={chartDimensionValues}
+              comparisonDimension={splitAsLines
+                ? splitByDimensionName
+                : comparisonDimension}
+              dimensionValues={splitAsLines
+                ? splitValues
+                : chartDimensionValues}
               dimensionWhere={whereFilter}
               {annotationsEnabled}
               canPanLeft={$canPanLeft}
