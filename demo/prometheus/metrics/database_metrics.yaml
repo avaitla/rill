@@ -15,6 +15,7 @@ smallest_time_grain: minute
 # `table=` URL param) switches the whole metrics view between prod and staging fleets.
 table_options:
   - database_metrics_staging
+  - database_metrics_dr
 
 # annotations: deploy markers rendered on every measure chart (upstream feature, declared
 # once at the semantic layer). The latest deploy lands right before the connection storm.

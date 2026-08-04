@@ -27,6 +27,7 @@ RDS-fleet Grafana dashboard, to demonstrate two ideas from
 | 4, 6 | Canvases | Grouped sections (markdown headers = Grafana rows) composing MULTIPLE metrics views from different tables — the answer to "cpu and disk come from different CloudWatch tables". |
 | 5b | Database inspect | Drill-through target: click a Database value's "Inspect database" link on dashboard 5 — the value arrives filtered with time range and grain carried along. |
 | 8 | Binlog pipeline | Logs tab (raw events newest-first with per-row `row_links`), freshness measures (`minutes_since_last_archive` with thresholds), auto-refresh default 1m, and `skip_empty_dimensions` pruning the all-NULL `error_reason`. |
+| 9 | App logs | Logs view rendering features: multiline Java stack traces (first line in the row, full pre-wrapped trace in the expanded detail), JSON payloads pretty-printed in the detail, per-field copy buttons, "View trace" row links. |
 
 ## All-features branch features exercised here
 
@@ -34,8 +35,9 @@ Dashboard 5 additionally demonstrates (all declared in `metrics/database_metrics
 
 - **`annotations:`** — deploy markers from `models/deploy_events.sql` on every measure chart;
   the latest deploy lands right before prod-db-01's connection storm.
-- **`table_options:`** — the header's Table selector switches the whole metrics view to the
-  staging fleet (`models/database_metrics_staging.sql`, same schema), with a `table=` URL param.
+- **`table_options:`** — the header's Table selector switches the whole metrics view between
+  three same-schema fleets: prod, staging (`database_metrics_staging.sql`), and the us-west-2
+  DR replicas (`database_metrics_dr.sql`), with a `table=` URL param.
 - **Dimension `links:`** — the Database dimension carries a Runbook URL template
   (`{{ value }}`) and an "Inspect database" drill-through to dashboard 5b.
 - **`map_column` discovery** — dashboard 7's labels (DBInstanceIdentifier/env/region) are

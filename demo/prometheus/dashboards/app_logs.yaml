@@ -1,0 +1,24 @@
+# Logs view with the rendering features: multiline stack traces collapse to the first
+# line + "(+N lines)" in rows and render pre-wrapped in the expanded detail; JSON payload
+# strings pretty-print in the detail; per-field copy buttons; sortable columns; and
+# per-row "View trace" links.
+type: explore
+display_name: "9 · App logs (stack traces + JSON payloads)"
+metrics_view: app_logs
+
+logs_view: true
+logs_view_columns:
+  - time
+  - severity
+  - service
+  - message
+  - payload
+  - trace_id
+
+refresh_intervals:
+  - 30s
+  - 1m
+  - 5m
+
+defaults:
+  time_range: PT6H

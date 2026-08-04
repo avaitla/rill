@@ -1,0 +1,43 @@
+# Metrics view over application logs: error-rate thresholds on top, and the raw rows
+# (stack traces, JSON payloads) surfaced through the Logs view of its explore.
+version: 1
+type: metrics_view
+
+display_name: App logs
+model: app_logs
+timeseries: time
+smallest_time_grain: minute
+
+row_links:
+  - label: View trace
+    url: "https://traces.example.com/{{ trace_id }}"
+
+dimensions:
+  - name: severity
+    display_name: Severity
+    column: severity
+  - name: service
+    display_name: Service
+    column: service
+
+measures:
+  - name: log_count
+    display_name: Log lines
+    expression: count(*)
+    format_preset: humanize
+  - name: error_count
+    display_name: Errors
+    expression: sum(CASE WHEN severity = 'ERROR' THEN 1 ELSE 0 END)
+    format_preset: none
+    lower_is_better: true
+    thresholds:
+      - warn: 20
+      - critical: 50
+  - name: error_rate
+    display_name: Error rate
+    expression: sum(CASE WHEN severity = 'ERROR' THEN 1 ELSE 0 END) / NULLIF(count(*), 0)
+    format_preset: percentage
+    lower_is_better: true
+    thresholds:
+      - warn: 0.05
+      - critical: 0.10
