@@ -1,0 +1,49 @@
+# Gauge metrics from the PromQL examples page, as one metrics view:
+#   `(instance_memory_limit_bytes - instance_memory_usage_bytes) / 1024 / 1024`  -> unused_memory_mib
+#   `sum by (app, proc) (...)`                                                    -> group by the app/proc dimensions
+#   `count by (app) (instance_cpu_time_ns)`                                       -> running_instances
+#   `topk(3, ...)`                                                                -> leaderboards, sorted
+# CPU and memory share the same grain and labels, so they live in ONE wide table
+# (joined at the model layer) and one metrics view — no separate dashboards needed.
+# Note the two threshold directions: CPU is bad HIGH, unused memory is bad LOW (below: true).
+version: 1
+type: metrics_view
+
+display_name: Instance resources
+model: instance_resources
+timeseries: time
+smallest_time_grain: minute
+
+dimensions:
+  - name: app
+    display_name: App
+    column: app
+  - name: proc
+    display_name: Process
+    column: proc
+  - name: instance
+    display_name: Instance
+    column: instance
+
+measures:
+  - name: cpu_pct
+    display_name: CPU %
+    expression: avg(cpu_pct)
+    format_d3: ".1f"
+    lower_is_better: true
+    thresholds:
+      - warn: 70
+      - critical: 90
+  - name: unused_memory_mib
+    display_name: Unused memory (MiB)
+    expression: avg((memory_limit_bytes - memory_usage_bytes) / 1048576.0)
+    format_d3: ",.0f"
+    thresholds:
+      below: true
+      steps:
+        - warn: 512
+        - critical: 256
+  - name: running_instances
+    display_name: Running instances
+    expression: count(distinct instance)
+    format_preset: none

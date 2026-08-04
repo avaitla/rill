@@ -5,6 +5,7 @@
   import type { ChartDataPoint } from "@rilldata/web-common/components/time-series-chart/types";
   import * as Tooltip from "@rilldata/web-common/components/tooltip-v2";
   import BigNumberTooltipContent from "@rilldata/web-common/features/dashboards/big-number/BigNumberTooltipContent.svelte";
+  import { measureThresholdTextClass } from "@rilldata/web-common/features/dashboards/measure-thresholds";
   import { cellInspectorStore } from "@rilldata/web-common/features/dashboards/stores/cell-inspector-store";
   import RangeDisplay from "@rilldata/web-common/features/dashboards/time-controls/super-pill/components/RangeDisplay.svelte";
   import { copyToClipboard } from "@rilldata/web-common/lib/actions/copy-to-clipboard";
@@ -235,7 +236,13 @@
             {:else if primaryTotalResult.isLoading}
               <div class="loading h-6 w-16"></div>
             {:else if primaryTotalResult.data}
-              <span class:opacity-50={primaryTotalResult.isFetching}>
+              <span
+                class={measureThresholdTextClass(
+                  measure,
+                  computedValues.primary,
+                )}
+                class:opacity-50={primaryTotalResult.isFetching}
+              >
                 {measureValueFormatter(computedValues.primary)}
               </span>
             {/if}

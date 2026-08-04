@@ -1,0 +1,7 @@
+compiler: rillv1
+display_name: Prometheus examples — before/after
+description: >
+  Synthetic monitoring data mirroring the metrics on
+  https://prometheus.io/docs/prometheus/latest/querying/examples/ —
+  demonstrates counter normalization at the model layer and measure thresholds,
+  with "before" (naive) and "after" (normalized + thresholds) metrics views.

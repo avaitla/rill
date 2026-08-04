@@ -2182,6 +2182,13 @@ export class MetricsViewSpec_Measure extends Message<MetricsViewSpec_Measure> {
    */
   lowerIsBetter = false;
 
+  /**
+   * Severity thresholds for the measure's value. UI surfaces that render measure values (big numbers, KPIs, leaderboards, pivot cells) color the value by the highest step it crosses.
+   *
+   * @generated from field: rill.runtime.v1.MetricsViewSpec.MeasureThresholds thresholds = 18;
+   */
+  thresholds?: MetricsViewSpec_MeasureThresholds;
+
   constructor(data?: PartialMessage<MetricsViewSpec_Measure>) {
     super();
     proto3.util.initPartial(data, this);
@@ -2207,6 +2214,7 @@ export class MetricsViewSpec_Measure extends Message<MetricsViewSpec_Measure> {
     { no: 14, name: "treat_nulls_as", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 15, name: "data_type", kind: "message", T: Type },
     { no: 17, name: "lower_is_better", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 18, name: "thresholds", kind: "message", T: MetricsViewSpec_MeasureThresholds },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): MetricsViewSpec_Measure {
@@ -2223,6 +2231,102 @@ export class MetricsViewSpec_Measure extends Message<MetricsViewSpec_Measure> {
 
   static equals(a: MetricsViewSpec_Measure | PlainMessage<MetricsViewSpec_Measure> | undefined, b: MetricsViewSpec_Measure | PlainMessage<MetricsViewSpec_Measure> | undefined): boolean {
     return proto3.util.equals(MetricsViewSpec_Measure, a, b);
+  }
+}
+
+/**
+ * Severity thresholds for a measure.
+ *
+ * @generated from message rill.runtime.v1.MetricsViewSpec.MeasureThresholds
+ */
+export class MetricsViewSpec_MeasureThresholds extends Message<MetricsViewSpec_MeasureThresholds> {
+  /**
+   * Direction of comparison: when true, a step is crossed when the measure is at or below its value (e.g. free disk space); when false (default), at or above (e.g. CPU utilization).
+   *
+   * @generated from field: bool below = 1;
+   */
+  below = false;
+
+  /**
+   * Steps ordered by increasing severity.
+   *
+   * @generated from field: repeated rill.runtime.v1.MetricsViewSpec.MeasureThresholds.Step steps = 2;
+   */
+  steps: MetricsViewSpec_MeasureThresholds_Step[] = [];
+
+  constructor(data?: PartialMessage<MetricsViewSpec_MeasureThresholds>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rill.runtime.v1.MetricsViewSpec.MeasureThresholds";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "below", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 2, name: "steps", kind: "message", T: MetricsViewSpec_MeasureThresholds_Step, repeated: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): MetricsViewSpec_MeasureThresholds {
+    return new MetricsViewSpec_MeasureThresholds().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): MetricsViewSpec_MeasureThresholds {
+    return new MetricsViewSpec_MeasureThresholds().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): MetricsViewSpec_MeasureThresholds {
+    return new MetricsViewSpec_MeasureThresholds().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: MetricsViewSpec_MeasureThresholds | PlainMessage<MetricsViewSpec_MeasureThresholds> | undefined, b: MetricsViewSpec_MeasureThresholds | PlainMessage<MetricsViewSpec_MeasureThresholds> | undefined): boolean {
+    return proto3.util.equals(MetricsViewSpec_MeasureThresholds, a, b);
+  }
+}
+
+/**
+ * @generated from message rill.runtime.v1.MetricsViewSpec.MeasureThresholds.Step
+ */
+export class MetricsViewSpec_MeasureThresholds_Step extends Message<MetricsViewSpec_MeasureThresholds_Step> {
+  /**
+   * Boundary value for the step.
+   *
+   * @generated from field: double value = 1;
+   */
+  value = 0;
+
+  /**
+   * Severity level entered when the boundary is crossed: "warn" or "critical".
+   *
+   * @generated from field: string level = 2;
+   */
+  level = "";
+
+  constructor(data?: PartialMessage<MetricsViewSpec_MeasureThresholds_Step>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rill.runtime.v1.MetricsViewSpec.MeasureThresholds.Step";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "value", kind: "scalar", T: 1 /* ScalarType.DOUBLE */ },
+    { no: 2, name: "level", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): MetricsViewSpec_MeasureThresholds_Step {
+    return new MetricsViewSpec_MeasureThresholds_Step().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): MetricsViewSpec_MeasureThresholds_Step {
+    return new MetricsViewSpec_MeasureThresholds_Step().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): MetricsViewSpec_MeasureThresholds_Step {
+    return new MetricsViewSpec_MeasureThresholds_Step().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: MetricsViewSpec_MeasureThresholds_Step | PlainMessage<MetricsViewSpec_MeasureThresholds_Step> | undefined, b: MetricsViewSpec_MeasureThresholds_Step | PlainMessage<MetricsViewSpec_MeasureThresholds_Step> | undefined): boolean {
+    return proto3.util.equals(MetricsViewSpec_MeasureThresholds_Step, a, b);
   }
 }
 

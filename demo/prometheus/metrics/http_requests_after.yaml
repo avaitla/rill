@@ -1,0 +1,51 @@
+# AFTER: the same data, with the two draft ideas applied.
+#   1. Counter semantics solved once at the model layer (`http_requests` computes the
+#      per-series, reset-safe increase) — so sum(increase) is correct under every slice.
+#      This replaces `sum by (job) (rate(http_requests_total[5m]))` from the PromQL
+#      examples page with a plain SUM the parser/reconciler can guarantee is right.
+#   2. Thresholds declared ONCE on the measure — every surface (explore big number,
+#      leaderboards, canvas KPIs) colors itself from the same declaration.
+version: 1
+type: metrics_view
+
+display_name: HTTP — AFTER (normalized + thresholds)
+model: http_requests
+timeseries: time
+smallest_time_grain: minute
+
+dimensions:
+  - name: job
+    display_name: Job
+    column: job
+  - name: instance
+    display_name: Instance
+    column: instance
+  - name: handler
+    display_name: Handler
+    column: handler
+  - name: status
+    display_name: Status
+    column: status
+
+measures:
+  - name: requests
+    display_name: Requests
+    expression: sum(increase)
+    description: Correct request count for any slice — the counter delta happened upstream.
+    format_preset: humanize
+  - name: error_rate
+    display_name: 5xx error rate
+    expression: sum(CASE WHEN status = '500' THEN increase ELSE 0 END) / NULLIF(sum(increase), 0)
+    format_preset: percentage
+    lower_is_better: true
+    thresholds:
+      - warn: 0.02
+      - critical: 0.05
+  - name: not_found_rate
+    display_name: 404 rate
+    expression: sum(CASE WHEN status = '404' THEN increase ELSE 0 END) / NULLIF(sum(increase), 0)
+    format_preset: percentage
+    lower_is_better: true
+    thresholds:
+      - warn: 0.05
+      - critical: 0.10

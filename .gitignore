@@ -109,3 +109,4 @@ vite.config.ts.timestamp-*
 
 # inlang manages this file itself (^2.5); keep it untracked to avoid churn
 **/*.inlang/.gitignore
+demo/prometheus/tmp/

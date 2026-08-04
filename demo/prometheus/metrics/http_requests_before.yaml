@@ -1,0 +1,43 @@
+# BEFORE: a metrics view pointed straight at the raw cumulative counter table.
+# This is what a Grafana user's first attempt at porting `http_requests_total` looks like.
+# Everything here is subtly or catastrophically wrong:
+#   - "Total requests" sums cumulative counters, so it's a meaningless huge number whose
+#     magnitude depends on scrape frequency and zoom level.
+#   - The number DROPS 6 hours ago when apiserver-02's counter resets — reading it as a
+#     traffic dip would be wrong.
+#   - "Error rate" divides cumulative 500s by cumulative totals, so the ongoing incident
+#     in the last 45 minutes barely moves it.
+#   - No thresholds: nothing on the dashboard signals that anything is on fire.
+version: 1
+type: metrics_view
+
+display_name: HTTP — BEFORE (naive over raw counters)
+model: http_requests_raw
+timeseries: time
+smallest_time_grain: minute
+
+dimensions:
+  - name: job
+    display_name: Job
+    column: job
+  - name: instance
+    display_name: Instance
+    column: instance
+  - name: handler
+    display_name: Handler
+    column: handler
+  - name: status
+    display_name: Status
+    column: status
+
+measures:
+  - name: total_requests
+    display_name: Total requests (naive)
+    expression: sum(value)
+    description: Sum of a cumulative counter — this number is meaningless.
+    format_preset: humanize
+  - name: error_rate
+    display_name: Error rate (naive)
+    expression: sum(CASE WHEN status = '500' THEN value ELSE 0 END) / NULLIF(sum(value), 0)
+    description: Cumulative 500s over cumulative total — an ongoing incident barely moves this.
+    format_preset: percentage

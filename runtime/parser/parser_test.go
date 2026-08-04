@@ -1577,6 +1577,91 @@ annotations:
 	requireResourcesAndErrors(t, p, resources, nil)
 }
 
+func TestMetricsViewMeasureThresholds(t *testing.T) {
+	ctx := context.Background()
+	repo := makeRepo(t, map[string]string{
+		`rill.yaml`: ``,
+		`metrics/mv1.yaml`: `
+version: 1
+type: metrics_view
+table: t1
+timeseries: time
+dimensions:
+  - name: instance
+    column: instance
+measures:
+  - name: cpu_pct
+    expression: avg(cpu)
+    thresholds:
+      - warn: 70
+      - critical: 90
+  - name: free_gb
+    expression: min(free_gb)
+    thresholds:
+      below: true
+      steps:
+        - warn: 300
+        - critical: 200
+  - name: connections
+    expression: avg(connections)
+    thresholds:
+      - value: 500
+        level: critical
+`,
+		// Invalid: unknown level
+		`metrics/mv2.yaml`: `
+version: 1
+type: metrics_view
+table: t2
+measures:
+  - name: m
+    expression: count(*)
+    thresholds:
+      - bad_level: 10
+`,
+		// Invalid: steps not escalating
+		`metrics/mv3.yaml`: `
+version: 1
+type: metrics_view
+table: t3
+measures:
+  - name: m
+    expression: count(*)
+    thresholds:
+      - warn: 90
+      - critical: 70
+`,
+	})
+
+	p, err := Parse(ctx, repo, "", "", "duckdb", true)
+	require.NoError(t, err)
+
+	require.Len(t, p.Errors, 2)
+	require.Equal(t, "/metrics/mv2.yaml", p.Errors[0].FilePath)
+	require.Contains(t, p.Errors[0].Message, "invalid threshold level")
+	require.Equal(t, "/metrics/mv3.yaml", p.Errors[1].FilePath)
+	require.Contains(t, p.Errors[1].Message, "must be increasing")
+
+	mv := p.Resources[ResourceName{Kind: ResourceKindMetricsView, Name: "mv1"}.Normalized()]
+	require.NotNil(t, mv)
+	ms := mv.MetricsViewSpec.Measures
+
+	require.Equal(t, false, ms[0].Thresholds.Below)
+	require.Len(t, ms[0].Thresholds.Steps, 2)
+	require.Equal(t, "warn", ms[0].Thresholds.Steps[0].Level)
+	require.Equal(t, 70.0, ms[0].Thresholds.Steps[0].Value)
+	require.Equal(t, "critical", ms[0].Thresholds.Steps[1].Level)
+	require.Equal(t, 90.0, ms[0].Thresholds.Steps[1].Value)
+
+	require.Equal(t, true, ms[1].Thresholds.Below)
+	require.Equal(t, 300.0, ms[1].Thresholds.Steps[0].Value)
+	require.Equal(t, 200.0, ms[1].Thresholds.Steps[1].Value)
+
+	require.Len(t, ms[2].Thresholds.Steps, 1)
+	require.Equal(t, "critical", ms[2].Thresholds.Steps[0].Level)
+	require.Equal(t, 500.0, ms[2].Thresholds.Steps[0].Value)
+}
+
 func TestMetricsViewAvoidSelfCyclicRef(t *testing.T) {
 	ctx := context.Background()
 	repo := makeRepo(t, map[string]string{

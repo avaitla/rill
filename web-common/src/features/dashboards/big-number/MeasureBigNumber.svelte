@@ -26,6 +26,7 @@
     type CrossfadeParams,
     type FlyParams,
   } from "svelte/transition";
+  import { measureThresholdTextClass } from "../measure-thresholds";
   import { cellInspectorStore } from "../stores/cell-inspector-store";
   import BigNumberTooltipContent from "./BigNumberTooltipContent.svelte";
 
@@ -241,7 +242,8 @@
     </h2>
     <div
       role="button"
-      class="text-fg-secondary relative w-full h-full overflow-hidden text-ellipsis"
+      class="{measureThresholdTextClass(measure, value) ||
+        'text-fg-secondary'} relative w-full h-full overflow-hidden text-ellipsis"
       style:font-size={withTimeseries ? "1.6rem" : "1.8rem"}
       style:font-weight="light"
       onmouseover={handleMouseOver}

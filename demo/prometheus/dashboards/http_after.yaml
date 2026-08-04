@@ -1,0 +1,5 @@
+type: explore
+display_name: "2 · HTTP — AFTER (normalized + thresholds)"
+metrics_view: http_requests_after
+defaults:
+  time_range: PT24H

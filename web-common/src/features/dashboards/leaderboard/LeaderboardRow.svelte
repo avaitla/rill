@@ -15,7 +15,11 @@
     openDimensionValueLink,
     resolveDimensionValueLink,
   } from "@rilldata/web-common/features/dashboards/drill-through";
-  import type { MetricsViewSpecDimensionValueLink } from "@rilldata/web-common/runtime-client";
+  import type {
+    MetricsViewSpecDimensionValueLink,
+    MetricsViewSpecMeasure,
+  } from "@rilldata/web-common/runtime-client";
+  import { measureThresholdTextClass } from "../measure-thresholds";
   import { type LeaderboardItemData } from "./leaderboard-utils";
   import {
     COMPARISON_COLUMN_WIDTH,
@@ -56,6 +60,7 @@
     (value: number | string | null | undefined) => string | null | undefined
   >;
   export let lowerIsBetterMap: Record<string, boolean> = {};
+  export let measureSpecMap: Record<string, MetricsViewSpecMeasure> = {};
   // Links configured on the dimension (`links` in the metrics view YAML):
   // external url templates or explore drill-throughs.
   export let valueLinks: MetricsViewSpecDimensionValueLink[] = [];
@@ -314,7 +319,6 @@
         </DropdownMenu.Root>
       </span>
     {/if}
-
   </LeaderboardCell>
 
   {#each leaderboardMeasureNames as measureName, i (i)}
@@ -333,6 +337,10 @@
       <div class="w-fit ml-auto bg-transparent" bind:contentRect={valueRect}>
         <FormattedDataType
           type="INTEGER"
+          customStyle={measureThresholdTextClass(
+            measureSpecMap[measureName],
+            values[measureName],
+          )}
           value={values[measureName]
             ? formatters[measureName]?.(values[measureName])
             : null}
@@ -491,5 +499,4 @@
   .value-links-wrapper button.hovered:hover {
     opacity: 1;
   }
-
 </style>

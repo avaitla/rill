@@ -1,0 +1,108 @@
+# RDS-style fleet canvas: cpu / memory / network / disk / replication as grouped
+# sections (markdown headers = Grafana rows), all from the database_metrics view.
+type: canvas
+display_name: "6 · Database fleet canvas (grouped sections)"
+defaults:
+  time_range: PT24H
+
+rows:
+  - items:
+      - markdown:
+          content: "## Compute"
+        width: 12
+    height: 50px
+  - items:
+      - kpi_grid:
+          metrics_view: database_metrics
+          measures:
+            - cpu_pct
+            - memory_used_pct
+            - network_mbps
+        width: 12
+    height: 200px
+  - items:
+      - line_chart:
+          metrics_view: database_metrics
+          x:
+            field: time
+            type: temporal
+          y:
+            field: cpu_pct
+            type: quantitative
+          color:
+            field: database
+            type: nominal
+        width: 6
+      - line_chart:
+          metrics_view: database_metrics
+          x:
+            field: time
+            type: temporal
+          y:
+            field: network_mbps
+            type: quantitative
+          color:
+            field: database
+            type: nominal
+        width: 6
+    height: 300px
+  - items:
+      - markdown:
+          content: "## Storage"
+        width: 12
+    height: 50px
+  - items:
+      - kpi_grid:
+          metrics_view: database_metrics
+          measures:
+            - free_storage_gb
+        width: 4
+      - leaderboard:
+          metrics_view: database_metrics
+          measures:
+            - free_storage_gb
+            - cpu_pct
+          dimensions:
+            - database
+          num_rows: 8
+        width: 8
+    height: 360px
+  - items:
+      - markdown:
+          content: "## Connections & replication"
+        width: 12
+    height: 50px
+  - items:
+      - kpi_grid:
+          metrics_view: database_metrics
+          measures:
+            - connections
+            - replica_lag_s
+        width: 12
+    height: 200px
+  - items:
+      - line_chart:
+          metrics_view: database_metrics
+          x:
+            field: time
+            type: temporal
+          y:
+            field: connections
+            type: quantitative
+          color:
+            field: database
+            type: nominal
+        width: 6
+      - line_chart:
+          metrics_view: database_metrics
+          x:
+            field: time
+            type: temporal
+          y:
+            field: replica_lag_s
+            type: quantitative
+          color:
+            field: database
+            type: nominal
+        width: 6
+    height: 300px

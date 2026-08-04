@@ -1,0 +1,64 @@
+# The RDS-fleet metrics view: cpu / memory / network / disk / connections / replica lag,
+# one wide gauge table, one metrics view. Note the threshold directions:
+# free storage is bad LOW (below: true), everything else is bad HIGH.
+# Every color on every dashboard over this view derives from these declarations —
+# the tile, the leaderboard, and (eventually) the alert can never disagree.
+version: 1
+type: metrics_view
+
+display_name: Database fleet
+model: database_metrics
+timeseries: time
+smallest_time_grain: minute
+
+dimensions:
+  - name: database
+    display_name: Database
+    column: database
+
+measures:
+  - name: cpu_pct
+    display_name: CPU %
+    expression: avg(cpu_pct)
+    format_d3: ".1f"
+    lower_is_better: true
+    thresholds:
+      - warn: 60
+      - critical: 85
+  - name: memory_used_pct
+    display_name: Memory used %
+    expression: avg(memory_used_pct)
+    format_d3: ".1f"
+    lower_is_better: true
+    thresholds:
+      - warn: 80
+      - critical: 92
+  - name: network_mbps
+    display_name: Network MB/s
+    expression: avg(network_mbps)
+    format_d3: ".1f"
+  - name: free_storage_gb
+    display_name: Free storage (GB)
+    expression: min(free_storage_gb)
+    format_d3: ",.0f"
+    thresholds:
+      below: true
+      steps:
+        - warn: 250
+        - critical: 150
+  - name: connections
+    display_name: Connections
+    expression: max(connections)
+    format_preset: humanize
+    lower_is_better: true
+    thresholds:
+      - warn: 500
+      - critical: 1000
+  - name: replica_lag_s
+    display_name: Replica lag (s)
+    expression: max(replica_lag_s)
+    format_d3: ",.0f"
+    lower_is_better: true
+    thresholds:
+      - warn: 30
+      - critical: 120

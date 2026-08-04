@@ -187,6 +187,10 @@
     leaderboardMeasures.map((m) => [m.name!, m.lowerIsBetter ?? false]),
   );
 
+  $: measureSpecMap = Object.fromEntries(
+    leaderboardMeasures.map((m) => [m.name!, m]),
+  );
+
   $: atLeastOneActive = Boolean($selectedValues.data?.length);
 
   $: isComplexFilter = isExpressionUnsupported(whereFilter);
@@ -473,6 +477,7 @@
             {dimensionColumnWidth}
             {maxValues}
             {lowerIsBetterMap}
+            {measureSpecMap}
             {valueLinks}
             {onExploreLink}
             {viewRowsEnabled}
@@ -501,6 +506,7 @@
           {dimensionColumnWidth}
           {maxValues}
           {lowerIsBetterMap}
+          {measureSpecMap}
           {valueLinks}
           {onExploreLink}
           {viewRowsEnabled}

@@ -299,6 +299,21 @@ message MetricsViewSpec {
     Type data_type = 15;
     // When true, decreases in this measure are favorable (e.g. bounce rate, latency, error count). UI surfaces that render comparison deltas (KPIs, big numbers, leaderboards, pivot tables, time-series tooltips) swap their positive/negative coloring accordingly.
     bool lower_is_better = 17;
+    // Severity thresholds for the measure's value. UI surfaces that render measure values (big numbers, KPIs, leaderboards, pivot cells) color the value by the highest step it crosses.
+    MeasureThresholds thresholds = 18;
+  }
+  // Severity thresholds for a measure.
+  message MeasureThresholds {
+    message Step {
+      // Boundary value for the step.
+      double value = 1;
+      // Severity level entered when the boundary is crossed: "warn" or "critical".
+      string level = 2;
+    }
+    // Direction of comparison: when true, a step is crossed when the measure is at or below its value (e.g. free disk space); when false (default), at or above (e.g. CPU utilization).
+    bool below = 1;
+    // Steps ordered by increasing severity.
+    repeated Step steps = 2;
   }
   // name of parent metrics view, if this is a derived metrics view. If this is set then certain fields like table, connector, database*, model, dimensions, and measures will only be set in `state.valid_spec`.
   string parent = 30;

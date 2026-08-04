@@ -102,6 +102,7 @@ type MetricsViewYAML struct {
 		ValidPercentOfTotal bool           `yaml:"valid_percent_of_total"`
 		TreatNullsAs        string         `yaml:"treat_nulls_as"`
 		LowerIsBetter       bool           `yaml:"lower_is_better"`
+		Thresholds          *MetricsViewMeasureThresholds
 		Tags                []string
 	}
 	ParentDimensions *FieldSelectorYAML `yaml:"parent_dimensions"` // used when Parent is set
@@ -275,6 +276,90 @@ func (f *MetricsViewMeasureWindow) UnmarshalYAML(v *yaml.Node) error {
 
 	return nil
 }
+
+// MetricsViewMeasureThresholds is the raw YAML structure of severity thresholds on a measure.
+// It accepts either a plain list of steps (compared as "at or above"),
+// or an object with "below: true" and "steps" for measures where low values are bad (e.g. free disk space).
+type MetricsViewMeasureThresholds struct {
+	Below bool
+	Steps []MetricsViewMeasureThresholdStep
+}
+
+func (f *MetricsViewMeasureThresholds) UnmarshalYAML(v *yaml.Node) error {
+	if v == nil {
+		return nil
+	}
+
+	switch v.Kind {
+	case yaml.SequenceNode:
+		return v.Decode(&f.Steps)
+	case yaml.MappingNode:
+		// Avoid infinite loop by using a separate struct
+		tmp := &struct {
+			Below bool
+			Steps []MetricsViewMeasureThresholdStep
+		}{}
+		err := v.Decode(tmp)
+		if err != nil {
+			return err
+		}
+		f.Below = tmp.Below
+		f.Steps = tmp.Steps
+	default:
+		return fmt.Errorf("measure thresholds should be either a list of steps or an object with \"below\" and \"steps\"")
+	}
+
+	return nil
+}
+
+// MetricsViewMeasureThresholdStep is one step in a measure's thresholds.
+// It accepts the compact form `warn: 10` / `critical: 60`, or the explicit form `{value: 10, level: warn}`.
+type MetricsViewMeasureThresholdStep struct {
+	Value float64
+	Level string
+}
+
+func (f *MetricsViewMeasureThresholdStep) UnmarshalYAML(v *yaml.Node) error {
+	if v == nil {
+		return nil
+	}
+	if v.Kind != yaml.MappingNode {
+		return fmt.Errorf("threshold step should be an object")
+	}
+
+	tmp := map[string]yaml.Node{}
+	err := v.Decode(&tmp)
+	if err != nil {
+		return err
+	}
+
+	// Explicit form: {value: ..., level: ...}
+	if levelNode, ok := tmp["level"]; ok {
+		valueNode, ok := tmp["value"]
+		if !ok {
+			return fmt.Errorf(`threshold step with "level" must also set "value"`)
+		}
+		if err := levelNode.Decode(&f.Level); err != nil {
+			return err
+		}
+		return valueNode.Decode(&f.Value)
+	}
+
+	// Compact form: {warn: ...} or {critical: ...}
+	if len(tmp) != 1 {
+		return fmt.Errorf(`threshold step should be a single "<level>: <value>" pair or an object with "value" and "level"`)
+	}
+	for level, valueNode := range tmp {
+		f.Level = level
+		if err := valueNode.Decode(&f.Value); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+var validThresholdLevels = map[string]bool{"warn": true, "critical": true}
 
 var comparisonModesMap = map[string]runtimev1.ExploreComparisonMode{
 	"":          runtimev1.ExploreComparisonMode_EXPLORE_COMPARISON_MODE_UNSPECIFIED,
@@ -693,6 +778,33 @@ func (p *Parser) parseMetricsView(node *Node) error {
 			return fmt.Errorf(`invalid measure type %q (allowed values: simple, derived, time_comparison)`, measure.Type)
 		}
 
+		var thresholds *runtimev1.MetricsViewSpec_MeasureThresholds
+		if measure.Thresholds != nil {
+			if len(measure.Thresholds.Steps) == 0 {
+				return fmt.Errorf(`measure %q: "thresholds" must have at least one step`, measure.Name)
+			}
+			thresholds = &runtimev1.MetricsViewSpec_MeasureThresholds{Below: measure.Thresholds.Below}
+			for i, step := range measure.Thresholds.Steps {
+				if !validThresholdLevels[step.Level] {
+					return fmt.Errorf(`measure %q: invalid threshold level %q (allowed values: warn, critical)`, measure.Name, step.Level)
+				}
+				// Steps must escalate: each step's value must be further in the comparison direction than the previous one.
+				if i > 0 {
+					prev := measure.Thresholds.Steps[i-1].Value
+					if measure.Thresholds.Below && step.Value >= prev {
+						return fmt.Errorf(`measure %q: threshold step values must be decreasing when "below" is set`, measure.Name)
+					}
+					if !measure.Thresholds.Below && step.Value <= prev {
+						return fmt.Errorf(`measure %q: threshold step values must be increasing`, measure.Name)
+					}
+				}
+				thresholds.Steps = append(thresholds.Steps, &runtimev1.MetricsViewSpec_MeasureThresholds_Step{
+					Value: step.Value,
+					Level: step.Level,
+				})
+			}
+		}
+
 		measures = append(measures, &runtimev1.MetricsViewSpec_Measure{
 			Name:                measure.Name,
 			DisplayName:         measure.DisplayName,
@@ -709,6 +821,7 @@ func (p *Parser) parseMetricsView(node *Node) error {
 			ValidPercentOfTotal: measure.ValidPercentOfTotal,
 			TreatNullsAs:        measure.TreatNullsAs,
 			LowerIsBetter:       measure.LowerIsBetter,
+			Thresholds:          thresholds,
 			Tags:                measure.Tags,
 		})
 	}

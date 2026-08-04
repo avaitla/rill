@@ -1,0 +1,5 @@
+type: explore
+display_name: "3 · Instance resources (thresholds, both directions)"
+metrics_view: instance_resources
+defaults:
+  time_range: PT6H

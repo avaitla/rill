@@ -132,6 +132,20 @@ export interface MetricsViewSpecMeasure {
   treatNullsAs?: string;
   dataType?: Runtimev1Type;
   lowerIsBetter?: boolean;
+  thresholds?: MetricsViewSpecMeasureThresholds;
+}
+
+export interface MetricsViewSpecMeasureThresholdsStep {
+  value?: number;
+  /** Severity level entered when the boundary is crossed: "warn" or "critical". */
+  level?: string;
+}
+
+export interface MetricsViewSpecMeasureThresholds {
+  /** When true, a step is crossed when the measure is at or below its value (e.g. free disk space); when false, at or above (e.g. CPU utilization). */
+  below?: boolean;
+  /** Steps ordered by increasing severity. */
+  steps?: MetricsViewSpecMeasureThresholdsStep[];
 }
 
 export type MetricsViewSpecMeasureType =
