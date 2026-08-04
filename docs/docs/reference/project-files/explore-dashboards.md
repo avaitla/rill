@@ -172,9 +172,25 @@ _[array of oneOf]_ - Overrides the list of default time range selections availab
 
 _[array of string]_ - Refers to the time zones that should be pinned to the top of the time zone selector. It should be a list of [IANA time zone identifiers](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)
 
+### `refresh_intervals`
+
+_[array of string]_ - Overrides the list of auto-refresh intervals available in the refresh dropdown, e.g. `['30s', '5m', '1h']`. The special value `off` is always selectable and should not be included.
+
 ### `lock_time_zone`
 
 _[boolean]_ - When true, the dashboard will be locked to the first time provided in the time_zones list. When no time_zones are provided, the dashboard will be locked to UTC
+
+### `logs_view`
+
+_[boolean]_ - Enables the Logs web view, a raw-events tab next to Explore/Pivot that shows the underlying rows for the current filters and time range, newest first. Combine with `refresh_intervals` for a tailing log viewer.
+
+### `logs_view_columns`
+
+_[array of string]_ - Columns to show in the Logs view. Defaults to all columns of the underlying table. Every column remains visible in a row's expanded detail.
+
+### `hide_empty_dimensions`
+
+_[boolean]_ - When true, dimensions whose values are all NULL or empty under the dashboard's current filters hide themselves. Useful for schemaless data where filtering by one field narrows the rows to a subset that does not carry other fields.
 
 ### `allow_custom_time_range`
 
@@ -230,6 +246,10 @@ _[object]_ - Defines the defaults YAML struct.
   - **`comparison_mode`** - _[string]_ - Controls how to compare current data with historical or categorical baselines. Options: `none` (no comparison), `time` (compares with past based on default_time_range), `dimension` (compares based on comparison_dimension values)
 
   - **`comparison_dimension`** - _[string]_ - For dimension mode, specify the comparison dimension by name.
+
+  - **`refresh_interval`** - _[string]_ - Refers to the default auto-refresh interval selected when a user initially loads the dashboard. The value must be a duration such as `30s`, `5m` or `1h`, or the special value `off` (the default).
+
+  - **`split_by`** - _[string]_ - Dimension to split the measure charts by when the dashboard loads. Charts overlay one line per top dimension value (a small-multiples grid is available as an alternative layout).
 
 ### `embeds`
 

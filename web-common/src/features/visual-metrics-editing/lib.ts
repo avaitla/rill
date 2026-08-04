@@ -72,6 +72,8 @@ export class YAMLDimension {
 
 export class YAMLMeasure {
   expression: string;
+  kind: string;
+  column: string;
   name: string;
   display_name: string;
   description: string;
@@ -84,6 +86,8 @@ export class YAMLMeasure {
 
   constructor(item?: YAMLMap<string, string>) {
     this.expression = item?.get("expression") ?? "";
+    this.kind = item?.get("kind") ?? "";
+    this.column = item?.get("column") ?? "";
     this.name = item?.get("name") ?? "";
     this.display_name = item?.get("display_name") ?? item?.get("label") ?? "";
     this.description = item?.get("description") ?? "";

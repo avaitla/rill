@@ -80,6 +80,26 @@ _[integer]_ - Refers to the first month of the year for time grain aggregation. 
 
 _[string]_ - The maximum time span any single query against this metrics view may cover, expressed as an ISO 8601 duration with day-or-larger granularity (e.g. `P90D`, `P3M`, `P1Y`). Sub-day durations such as `PT12H` are not supported. Applies independently to the primary and comparison time ranges. If unset, no limit is enforced.
 
+### `skip_invalid_dimensions`
+
+_[boolean]_ - When true, dimensions that fail validation (e.g. reference a column not present in the underlying table) are excluded from the dashboard with a warning instead of failing the whole metrics view. Useful for schema-on-read data sources such as structured logs, where fields vary between rows.
+
+### `skip_empty_dimensions`
+
+_[boolean]_ - When true, dimensions whose values are NULL in every row of the underlying table are hidden from the dashboard with a warning. Useful for schemaless data sources where the table schema is a union of all fields ever ingested, so fields not present in the current data show up as all-NULL columns.
+
+### `row_links`
+
+_[array of object]_ - Links attached to every raw row in the Logs view (e.g. a trace viewer). Each link's `url` is a template where `{{ <column> }}` placeholders are replaced with the URL-encoded value of that column in the clicked row.
+
+  - **`label`** - _[string]_ - Display name for the link. Defaults to the URL's hostname.
+
+  - **`url`** - _[string]_ - Absolute http(s) URL template with `{{ <column> }}` placeholders. _(required)_
+
+### `table_options`
+
+_[array of string]_ - List of tables the end user can select to back this metrics view via a dropdown on the dashboard, e.g. different versions of the same table. The default `table` is always selectable. Combine with `skip_invalid_dimensions` so tables that lack some columns degrade gracefully.
+
 ### `dimensions`
 
 _[array of object]_ - Relates to exploring segments or dimensions of your data and filtering the dashboard
@@ -100,7 +120,25 @@ _[array of object]_ - Relates to exploring segments or dimensions of your data a
 
   - **`unnest`** - _[boolean]_ - If true, allows multi-valued dimensions to be unnested (such as lists), and filters will automatically switch to "contains" instead of exact match.
 
+  - **`map_column`** - _[string]_ - Name of a map-typed column (e.g. a ClickHouse `Map` column holding structured log attributes) whose keys are dynamically discovered and expanded into one dimension per key. Mutually exclusive with `column` and `expression`. Supported for ClickHouse and DuckDB.
+
+  - **`columns`** - _[string]_ - Set to `'*'` to expand into one dimension per column of the underlying table. Useful for schemaless data sources where the table schema is a union of all fields ever ingested and changes as data arrives. Explicitly declared dimensions and measures take precedence, and non-groupable columns (arrays, maps, structs, JSON, bytes) are skipped. Combine with `skip_empty_dimensions` to hide all-NULL columns. Mutually exclusive with `column`, `expression` and `map_column`.
+
+  - **`discover`** - _[object]_ - Controls discovery for a `map_column` or `columns` dimension.
+
+    - **`limit`** - _[integer]_ - Maximum number of keys to discover, most frequent first. Defaults to 50, capped at 500.
+
+    - **`pattern`** - _[string]_ - Optional regex; only map keys matching the pattern are expanded into dimensions.
+
   - **`uri`** - _[string, boolean]_ - Enable if your dimension is a clickable URL to enable single-click navigation (boolean or valid SQL expression).
+
+  - **`links`** - _[array of object]_ - Links shown on the dimension's values. Each link is either an external `url` template (`{{ value }}` is replaced with the URL-encoded dimension value, e.g. a Datadog service page) or the name of another `explore` to open with the clicked value applied as a filter (drill-through). Multiple links render as a menu.
+
+    - **`label`** - _[string]_ - Display name for the link. Defaults to the URL's hostname or the explore name.
+
+    - **`url`** - _[string]_ - Absolute http(s) URL template; `{{ value }}` is replaced with the URL-encoded dimension value. Mutually exclusive with `explore`.
+
+    - **`explore`** - _[string]_ - Name of another explore dashboard to open with the clicked value applied as a filter. Mutually exclusive with `url`.
 
   - **`lookup_table`** - _[string]_ - The name of a ClickHouse dictionary to use for query-time lookups. Use `database.dictionary_name` for dictionaries in a non-default database. All three `lookup_*` fields (`lookup_table`, `lookup_key_column`, `lookup_value_column`) must be specified together. See [Query-Time Joins](/developers/build/metrics-view/dimensions/lookup) for details.
 
@@ -211,6 +249,24 @@ _[array of object]_ - Used to define the numeric aggregates of columns from your
   - **`treat_nulls_as`** - _[string]_ - Configures the value to fill in for missing time buckets. This also works generally as COALESCE over non-empty time buckets.
 
   - **`lower_is_better`** - _[boolean]_ - When true, decreases in this measure are favorable (e.g. bounce rate, latency, error count). UI surfaces that render comparison deltas (KPIs, big numbers, leaderboards, pivot tables, time-series tooltips) swap their positive/negative coloring accordingly.
+
+  - **`kind`** - _[string]_ - Semantic kind of the underlying metric. `gauge` measures default to `avg(column)`. `counter` measures default to `sum(column)`; with cumulative temporality, Rill generates a reset-safe per-series delta model upstream of the metrics view, so the sum is correct under every slice.
+
+  - **`temporality`** - _[string]_ - For `kind: counter`: `delta` when each sample is already an increment, `cumulative` (the default) for Prometheus-style running totals that require normalization.
+
+  - **`column`** - _[string]_ - For kind-based measures: the source column holding the metric value. Used to derive the default expression and, for cumulative counters, the column to normalize.
+
+  - **`unit`** - _[string]_ - `per_second` divides the aggregated value by the duration of the time bucket (or of the whole queried time range when there is no time dimension), so the number reads the same at every time grain.
+
+  - **`thresholds`** - _[anyOf]_ - Severity thresholds for the measure's value. UI surfaces that render measure values color the value by the highest step it crosses. Either a list of steps (e.g. `- warn: 10`) compared as at-or-above, or an object with `below: true` and `steps` for measures where low values are bad (e.g. free disk space).
+
+    - **option 1** - _[array of object]_ - (no description)
+
+    - **option 2** - _[object]_ - (no description)
+
+      - **`below`** - _[boolean]_ - When true, a step is crossed when the measure is at or below its value.
+
+      - **`steps`** - _[array of object]_ - (no description)
 
 ### `parent_dimensions`
 
@@ -477,7 +533,15 @@ _[object]_ - Defines an optional inline explore view for the metrics view. If no
 
   - **`time_zones`** - _[array of string]_ - List of time zones to pin to the top of the time zone selector. Should be a list of IANA time zone identifiers.
 
+  - **`refresh_intervals`** - _[array of string]_ - Overrides the list of auto-refresh intervals available in the refresh dropdown, e.g. `['30s', '5m', '1h']`. The special value `off` is always selectable and should not be included.
+
   - **`lock_time_zone`** - _[boolean]_ - When true, the explore view will be locked to the first time zone provided in the time_zones list. If no time_zones are provided, it will be locked to UTC.
+
+  - **`logs_view`** - _[boolean]_ - Enables the Logs web view, a raw-events tab next to Explore/Pivot that shows the underlying rows for the current filters and time range, newest first. Combine with `refresh_intervals` for a tailing log viewer.
+
+  - **`logs_view_columns`** - _[array of string]_ - Columns to show in the Logs view. Defaults to all columns of the underlying table. Every column remains visible in a row's expanded detail.
+
+  - **`hide_empty_dimensions`** - _[boolean]_ - When true, dimensions whose values are all NULL or empty under the dashboard's current filters hide themselves. Useful for schemaless data where filtering by one field narrows the rows to a subset that does not carry other fields.
 
   - **`allow_custom_time_range`** - _[boolean]_ - Defaults to true. When set to false, hides the ability to set a custom time range for the user.
 
@@ -516,6 +580,8 @@ _[object]_ - Defines an optional inline explore view for the metrics view. If no
     - **`comparison_mode`** - _[string]_ - Default comparison mode for metrics (none, time, or dimension).
 
     - **`comparison_dimension`** - _[string]_ - Default dimension to use for comparison when comparison_mode is 'dimension'.
+
+    - **`refresh_interval`** - _[string]_ - Default auto-refresh interval selected when the explore view loads. A duration such as `30s`, `5m` or `1h`, or the special value `off` (the default).
 
   - **`embeds`** - _[object]_ - Configuration options for embedded explore views.
 

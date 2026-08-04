@@ -643,6 +643,10 @@
             "comparison_dimension": {
               "type": "string",
               "description": "Default dimension to use for comparison when comparison_mode is 'dimension'."
+            },
+            "split_by": {
+              "type": "string",
+              "description": "Dimension to split the measure charts by when the dashboard loads."
             }
           },
           "additionalProperties": false

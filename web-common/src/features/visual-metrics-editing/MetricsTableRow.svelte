@@ -117,7 +117,14 @@
     aria-label="SQL expression"
     style:max-width="{expressionWidth}px"
   >
-    <span>{expression || (item instanceof YAMLDimension && item?.column)}</span>
+    <span>
+      {expression ||
+        (item instanceof YAMLMeasure && item.kind && item.column
+          ? `${item.kind === "counter" ? "sum" : "avg"}(${item.column})`
+          : "") ||
+        (item instanceof YAMLDimension ? item.column : "") ||
+        "-"}
+    </span>
   </td>
 
   {#if item instanceof YAMLMeasure}

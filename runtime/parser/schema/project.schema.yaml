@@ -2307,6 +2307,42 @@ definitions:
                 lower_is_better:
                   type: boolean
                   description: When true, decreases in this measure are favorable (e.g. bounce rate, latency, error count). UI surfaces that render comparison deltas (KPIs, big numbers, leaderboards, pivot tables, time-series tooltips) swap their positive/negative coloring accordingly.
+                kind:
+                  type: string
+                  enum:
+                    - gauge
+                    - counter
+                  description: 'Semantic kind of the underlying metric. `gauge` measures default to `avg(column)`. `counter` measures default to `sum(column)`; with cumulative temporality, Rill generates a reset-safe per-series delta model upstream of the metrics view, so the sum is correct under every slice.'
+                temporality:
+                  type: string
+                  enum:
+                    - delta
+                    - cumulative
+                  description: 'For `kind: counter`: `delta` when each sample is already an increment, `cumulative` (the default) for Prometheus-style running totals that require normalization.'
+                column:
+                  type: string
+                  description: 'For kind-based measures: the source column holding the metric value. Used to derive the default expression and, for cumulative counters, the column to normalize.'
+                unit:
+                  type: string
+                  enum:
+                    - per_second
+                  description: '`per_second` divides the aggregated value by the duration of the time bucket (or of the whole queried time range when there is no time dimension), so the number reads the same at every time grain.'
+                thresholds:
+                  description: 'Severity thresholds for the measure''s value. UI surfaces that render measure values color the value by the highest step it crosses. Either a list of steps (e.g. `- warn: 10`) compared as at-or-above, or an object with `below: true` and `steps` for measures where low values are bad (e.g. free disk space).'
+                  anyOf:
+                    - type: array
+                      items:
+                        type: object
+                        description: 'A threshold step: `<level>: <value>` (levels: warn, critical) or `{value: ..., level: ...}`.'
+                    - type: object
+                      properties:
+                        below:
+                          type: boolean
+                          description: 'When true, a step is crossed when the measure is at or below its value.'
+                        steps:
+                          type: array
+                          items:
+                            type: object
 
               required:
                 - name
@@ -2748,6 +2784,9 @@ definitions:
                 type: string
               refresh_interval:
                 description: Refers to the default auto-refresh interval selected when a user initially loads the dashboard. The value must be a duration such as `30s`, `5m` or `1h`, or the special value `off` (the default).
+                type: string
+              split_by:
+                description: Dimension to split the measure charts by when the dashboard loads. Charts overlay one line per top dimension value (a small-multiples grid is available as an alternative layout).
                 type: string
             additionalProperties: false
           embeds:
