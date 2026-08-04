@@ -1,8 +1,7 @@
 # AFTER: the same raw cumulative counter table, declared with `kind: counter`.
 # The parser GENERATES the reset-safe per-series normalization model
 # (`http_requests_after__normalized`) and points this metrics view at it —
-# nobody writes window SQL by hand (compare models/http_requests.sql, the manual
-# recipe this replaces). Everything downstream is correct under every slice:
+# nobody writes window SQL by hand. Everything downstream is correct under every slice:
 #   - `requests` / `qps` sum the normalized increases (qps is grain-stable via unit: per_second)
 #   - the rate measures reference the same normalized column, so ratios are exact
 #   - thresholds are declared once and color every surface

@@ -5,10 +5,12 @@ Mirrors the queries on https://prometheus.io/docs/prometheus/latest/querying/exa
 RDS-fleet Grafana dashboard, to demonstrate two ideas from
 `feature-docs/10-grafana-monitoring-draft.md`:
 
-1. **Counter normalization at the model layer** — `models/http_requests_raw.sql` is a cumulative
-   `http_requests_total{job, instance, handler, status}` counter (with a counter reset and an
-   ongoing 500s incident baked in); `models/http_requests.sql` converts it once into per-series,
-   reset-safe increases, after which plain `SUM` is correct for every slice.
+1. **Generated counter normalization via `kind: counter`** — `models/http_requests_raw.sql` is a
+   cumulative `http_requests_total{job, instance, handler, status}` counter (with a counter reset
+   and an ongoing 500s incident baked in). The metrics view declares `kind: counter` on the value
+   column, and the parser generates the reset-safe per-series delta model
+   (`http_requests_after__normalized`) automatically — no hand-written window SQL anywhere in this
+   project. After normalization, plain `SUM` is correct for every slice.
 2. **Measure thresholds** (implemented on this branch) — `thresholds:` on metrics-view measures
    (compact steps `- warn: X` / `- critical: Y`, or `below: true` + `steps:` for
    bad-when-low measures like free disk); rendered in explore big numbers, leaderboards, and
