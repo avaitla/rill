@@ -74,9 +74,29 @@
             "type": "string",
             "description": "A label for the dashboard dimension."
           },
+          "display_name": {
+            "type": "string",
+            "description": "The display name of the dimension."
+          },
           "column": {
             "type": "string",
             "description": "A categorical column for the dimension."
+          },
+          "map_column": {
+            "type": "string",
+            "description": "A Map-typed column whose keys are discovered at reconcile time and expanded into per-key dimensions."
+          },
+          "columns": {
+            "type": "string",
+            "description": "Wildcard '*' to expand table columns into dimensions."
+          },
+          "discover": {
+            "type": "object",
+            "description": "Discovery options for map_column/columns dimensions.",
+            "properties": {
+              "limit": { "type": "integer" },
+              "pattern": { "type": "string" }
+            }
           },
           "property": {
             "type": "string",
@@ -107,7 +127,9 @@
         "oneOf": [
           { "required": ["column"] },
           { "required": ["property"] },
-          { "required": ["expression"] }
+          { "required": ["expression"] },
+          { "required": ["map_column"] },
+          { "required": ["columns"] }
         ]
       },
       "description": "Definitions of dimensions for exploring segments and filtering the dashboard."
@@ -125,9 +147,59 @@
             "type": "string",
             "description": "A label for the dashboard measure."
           },
+          "display_name": {
+            "type": "string",
+            "description": "The display name of the measure."
+          },
           "expression": {
             "type": "string",
             "description": "An expression combining operators and functions for aggregations."
+          },
+          "kind": {
+            "type": "string",
+            "enum": ["gauge", "counter"],
+            "description": "Semantic kind of the underlying metric. Gauges default to avg(column); cumulative counters get a generated reset-safe per-series delta model."
+          },
+          "temporality": {
+            "type": "string",
+            "enum": ["delta", "cumulative"],
+            "description": "For counters: 'delta' when each sample is already an increment, 'cumulative' (default) for Prometheus-style running totals."
+          },
+          "column": {
+            "type": "string",
+            "description": "For kind-based measures: the source column holding the metric value."
+          },
+          "unit": {
+            "type": "string",
+            "enum": ["per_second"],
+            "description": "'per_second' divides the aggregated value by the time bucket (or time range) duration, so the number reads the same at every grain."
+          },
+          "thresholds": {
+            "description": "Severity thresholds coloring this measure's values. Either a list of steps ('- warn: 10') compared as at-or-above, or an object with 'below: true' and 'steps' for bad-when-low measures.",
+            "oneOf": [
+              {
+                "type": "array",
+                "items": { "type": "object" }
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "below": { "type": "boolean" },
+                  "steps": {
+                    "type": "array",
+                    "items": { "type": "object" }
+                  }
+                }
+              }
+            ]
+          },
+          "lower_is_better": {
+            "type": "boolean",
+            "description": "When true, decreases in this measure are favorable; comparison deltas swap their coloring."
+          },
+          "treat_nulls_as": {
+            "type": "string",
+            "description": "Value to fill in for missing time buckets."
           },
           "description": {
             "type": "string",
@@ -207,7 +279,7 @@
             "description": "Optional list of tags used to group this measure in the explore dashboard's measures dropdown. Tags are case-sensitive and trimmed on read."
           }
         },
-        "required": ["expression"]
+        "anyOf": [{ "required": ["expression"] }, { "required": ["column"] }]
       },
       "description": "Numeric aggregates of columns from your data model."
     },
