@@ -13774,6 +13774,12 @@ func (m *MetricsViewSpec_Measure) validate(all bool) error {
 
 	// no validation rules for Unit
 
+	// no validation rules for Kind
+
+	// no validation rules for Temporality
+
+	// no validation rules for Column
+
 	if len(errors) > 0 {
 		return MetricsViewSpec_MeasureMultiError(errors)
 	}

@@ -2196,6 +2196,28 @@ export class MetricsViewSpec_Measure extends Message<MetricsViewSpec_Measure> {
    */
   unit = "";
 
+  /**
+   * Semantic kind of the underlying metric: "gauge" or "counter". Drives defaults and validation;
+   * for cumulative counters, the parser generates a reset-safe per-series delta model upstream of the metrics view.
+   *
+   * @generated from field: string kind = 20;
+   */
+  kind = "";
+
+  /**
+   * For kind "counter": "delta" (each sample is already an increment) or "cumulative" (Prometheus-style running total; requires normalization).
+   *
+   * @generated from field: string temporality = 21;
+   */
+  temporality = "";
+
+  /**
+   * For kind-based measures: the source column holding the metric value.
+   *
+   * @generated from field: string column = 22;
+   */
+  column = "";
+
   constructor(data?: PartialMessage<MetricsViewSpec_Measure>) {
     super();
     proto3.util.initPartial(data, this);
@@ -2223,6 +2245,9 @@ export class MetricsViewSpec_Measure extends Message<MetricsViewSpec_Measure> {
     { no: 17, name: "lower_is_better", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
     { no: 18, name: "thresholds", kind: "message", T: MetricsViewSpec_MeasureThresholds },
     { no: 19, name: "unit", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 20, name: "kind", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 21, name: "temporality", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 22, name: "column", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): MetricsViewSpec_Measure {

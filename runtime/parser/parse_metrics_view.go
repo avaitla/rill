@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 	"regexp"
+	"slices"
 	"strings"
 	"time"
 
@@ -104,6 +105,9 @@ type MetricsViewYAML struct {
 		LowerIsBetter       bool           `yaml:"lower_is_better"`
 		Thresholds          *MetricsViewMeasureThresholds
 		Unit                string
+		Kind                string
+		Temporality         string
+		Column              string
 		Tags                []string
 	}
 	ParentDimensions *FieldSelectorYAML `yaml:"parent_dimensions"` // used when Parent is set
@@ -361,6 +365,11 @@ func (f *MetricsViewMeasureThresholdStep) UnmarshalYAML(v *yaml.Node) error {
 }
 
 var validThresholdLevels = map[string]bool{"warn": true, "critical": true}
+
+// safeSQLName quotes an identifier for use in generated SQL.
+func safeSQLName(name string) string {
+	return fmt.Sprintf(`"%s"`, strings.ReplaceAll(name, `"`, `""`))
+}
 
 var comparisonModesMap = map[string]runtimev1.ExploreComparisonMode{
 	"":          runtimev1.ExploreComparisonMode_EXPLORE_COMPARISON_MODE_UNSPECIFIED,
@@ -641,6 +650,8 @@ func (p *Parser) parseMetricsView(node *Node) error {
 	}
 
 	measures := make([]*runtimev1.MetricsViewSpec_Measure, 0, len(tmp.Measures))
+	// Columns of cumulative counter measures, which need reset-safe per-series delta normalization in a generated model.
+	counterColumns := make(map[string]bool)
 	for i, measure := range tmp.Measures {
 		if measure == nil || measure.Ignore {
 			continue
@@ -783,6 +794,51 @@ func (p *Parser) parseMetricsView(node *Node) error {
 			return fmt.Errorf(`measure %q: invalid unit %q (allowed values: per_second)`, measure.Name, measure.Unit)
 		}
 
+		// Kind-based measures: validate the declaration and derive a default expression from the column.
+		// For cumulative counters, the columns are collected and normalized in a generated model (see below).
+		switch measure.Kind {
+		case "":
+			if measure.Temporality != "" {
+				return fmt.Errorf(`measure %q: "temporality" can only be set when "kind" is "counter"`, measure.Name)
+			}
+			if measure.Column != "" {
+				return fmt.Errorf(`measure %q: "column" can only be set when "kind" is set`, measure.Name)
+			}
+		case "gauge":
+			if measure.Temporality != "" {
+				return fmt.Errorf(`measure %q: "temporality" can only be set when "kind" is "counter"`, measure.Name)
+			}
+			if measure.Column == "" && measure.Expression == "" {
+				return fmt.Errorf(`measure %q: gauge measures require "column" or "expression"`, measure.Name)
+			}
+			// Gauges re-aggregate with avg by default.
+			if measure.Expression == "" {
+				measure.Expression = fmt.Sprintf("avg(%s)", safeSQLName(measure.Column))
+			}
+		case "counter":
+			switch measure.Temporality {
+			case "":
+				measure.Temporality = "cumulative" // The Prometheus default
+			case "delta", "cumulative":
+				// Valid
+			default:
+				return fmt.Errorf(`measure %q: invalid temporality %q (allowed values: delta, cumulative)`, measure.Name, measure.Temporality)
+			}
+			if measure.Column == "" {
+				return fmt.Errorf(`measure %q: counter measures require "column" (the cumulative or delta value column)`, measure.Name)
+			}
+			// Counters re-aggregate with sum; for cumulative counters this is correct because
+			// the generated model rewrites the column to reset-safe per-series increases.
+			if measure.Expression == "" {
+				measure.Expression = fmt.Sprintf("sum(%s)", safeSQLName(measure.Column))
+			}
+			if measure.Temporality == "cumulative" {
+				counterColumns[measure.Column] = true
+			}
+		default:
+			return fmt.Errorf(`measure %q: invalid kind %q (allowed values: gauge, counter)`, measure.Name, measure.Kind)
+		}
+
 		var thresholds *runtimev1.MetricsViewSpec_MeasureThresholds
 		if measure.Thresholds != nil {
 			if len(measure.Thresholds.Steps) == 0 {
@@ -828,6 +884,9 @@ func (p *Parser) parseMetricsView(node *Node) error {
 			LowerIsBetter:       measure.LowerIsBetter,
 			Thresholds:          thresholds,
 			Unit:                measure.Unit,
+			Kind:                measure.Kind,
+			Temporality:         measure.Temporality,
+			Column:              measure.Column,
 			Tags:                measure.Tags,
 		})
 	}
@@ -1097,6 +1156,76 @@ func (p *Parser) parseMetricsView(node *Node) error {
 		}
 	}
 
+	// Cumulative counter measures require a generated normalization model: validate the preconditions
+	// and prepare its SQL before any resources are inserted.
+	var counterModelName, counterModelSQL string
+	if len(counterColumns) > 0 {
+		if tmp.TimeDimension == "" {
+			return errors.New(`cumulative counter measures require a "timeseries" time dimension (per-series deltas are ordered by it)`)
+		}
+		if tmp.Parent != "" {
+			return errors.New(`cumulative counter measures are not supported on derived metrics views (remove "parent" or normalize in the parent)`)
+		}
+		if len(tmp.TableOptions) > 0 {
+			return errors.New(`cumulative counter measures cannot be combined with "table_options"`)
+		}
+		var source string
+		switch {
+		case tmp.Model != "":
+			source = safeSQLName(tmp.Model)
+		case tmp.Table != "":
+			source = safeSQLName(tmp.Table)
+		default:
+			return errors.New(`cumulative counter measures require a "model" or "table" source`)
+		}
+
+		// The series key is the full set of declared dimension columns (excluding the time dimension).
+		var partitionCols []string
+		for _, dim := range dimensions {
+			if dim.Column == tmp.TimeDimension {
+				continue
+			}
+			if dim.Column == "" {
+				return fmt.Errorf(`cumulative counter measures require all dimensions to be plain columns, but dimension %q is not (the generated normalization model partitions by the dimension columns)`, dim.Name)
+			}
+			partitionCols = append(partitionCols, safeSQLName(dim.Column))
+		}
+
+		// Reset-safe per-series delta per counter column: when the counter goes backwards
+		// (process restart), the new value is the increase.
+		cols := make([]string, 0, len(counterColumns))
+		for c := range counterColumns {
+			cols = append(cols, c)
+		}
+		slices.Sort(cols)
+		var replaces []string
+		for _, c := range cols {
+			q := safeSQLName(c)
+			replaces = append(replaces, fmt.Sprintf(
+				"CASE WHEN %[1]s - lag(%[1]s) OVER w_rill_counters < 0 THEN %[1]s ELSE coalesce(%[1]s - lag(%[1]s) OVER w_rill_counters, 0) END AS %[1]s",
+				q,
+			))
+		}
+		partitionClause := ""
+		if len(partitionCols) > 0 {
+			partitionClause = fmt.Sprintf("PARTITION BY %s ", strings.Join(partitionCols, ", "))
+		}
+		counterModelSQL = fmt.Sprintf(
+			"-- Generated by Rill from `kind: counter` measures on metrics view %q. Do not edit.\nSELECT * REPLACE (\n  %s\n)\nFROM %s\nWINDOW w_rill_counters AS (%sORDER BY %s)",
+			node.Name,
+			strings.Join(replaces, ",\n  "),
+			source,
+			partitionClause,
+			safeSQLName(tmp.TimeDimension),
+		)
+
+		counterModelName = node.Name + "__normalized"
+		if _, ok := p.Resources[ResourceName{Kind: ResourceKindModel, Name: counterModelName}.Normalized()]; ok {
+			return fmt.Errorf("generated counter normalization model %q conflicts with an existing resource", counterModelName)
+		}
+		node.Refs = append(node.Refs, ResourceName{Kind: ResourceKindModel, Name: counterModelName})
+	}
+
 	// validate and insert inline explore, if true and no error is returned from the method then an explore resource is created so no error should be returned after this point
 	skipExplore, exploreRes, err := p.parseAndInsertInlineExplore(tmp, node.Name, node.Paths, node.Tags)
 	if err != nil {
@@ -1124,6 +1253,37 @@ func (p *Parser) parseMetricsView(node *Node) error {
 			panic(fmt.Sprintf("failed to insert table option variant %q for metrics view %q: %s", tableOptionNames[t], node.Name, err))
 		}
 		tableOptionResources[t] = vr
+	}
+
+	// Insert the generated counter normalization model and point the metrics view at it.
+	// The collision was checked before insertResource, so insertion must not fail.
+	if counterModelName != "" {
+		var modelRefs []ResourceName
+		if tmp.Model != "" {
+			// Not setting Kind so that inference kicks in (it may be a source or an external table).
+			modelRefs = append(modelRefs, ResourceName{Name: tmp.Model})
+		}
+		mr, err := p.insertResource(ResourceKindModel, counterModelName, node.Paths, node.Tags, modelRefs...)
+		if err != nil {
+			panic(fmt.Sprintf("failed to insert counter normalization model %q for metrics view %q: %s", counterModelName, node.Name, err))
+		}
+		inputProps, err := structpb.NewStruct(map[string]any{"sql": counterModelSQL})
+		if err != nil {
+			panic(fmt.Sprintf("failed to serialize counter normalization SQL for metrics view %q: %s", node.Name, err))
+		}
+		outputProps, err := structpb.NewStruct(map[string]any{"materialize": true})
+		if err != nil {
+			panic(fmt.Sprintf("failed to serialize counter normalization output properties for metrics view %q: %s", node.Name, err))
+		}
+		mr.ModelSpec.InputConnector = node.Connector
+		mr.ModelSpec.InputProperties = inputProps
+		mr.ModelSpec.OutputConnector = node.Connector
+		mr.ModelSpec.OutputProperties = outputProps
+		mr.ModelSpec.ChangeMode = runtimev1.ModelChangeMode_MODEL_CHANGE_MODE_RESET
+
+		// The metrics view now reads from the normalized model.
+		tmp.Model = counterModelName
+		tmp.Table = ""
 	}
 
 	spec.Parent = tmp.Parent

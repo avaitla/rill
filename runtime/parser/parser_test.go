@@ -1662,6 +1662,98 @@ measures:
 	require.Equal(t, 500.0, ms[2].Thresholds.Steps[0].Value)
 }
 
+func TestMetricsViewMeasureKinds(t *testing.T) {
+	ctx := context.Background()
+	repo := makeRepo(t, map[string]string{
+		`rill.yaml`: ``,
+		`models/samples.sql`: `SELECT 1`,
+		// Cumulative counter: parser must generate a normalization model and rewire the metrics view.
+		`metrics/mv1.yaml`: `
+version: 1
+type: metrics_view
+model: samples
+timeseries: time
+dimensions:
+  - name: job
+    column: job
+measures:
+  - name: requests
+    kind: counter
+    column: hits
+    unit: per_second
+  - name: cpu
+    kind: gauge
+    column: cpu_pct
+`,
+		// Delta counter: no generated model needed.
+		`metrics/mv2.yaml`: `
+version: 1
+type: metrics_view
+model: samples
+timeseries: time
+measures:
+  - name: events
+    kind: counter
+    temporality: delta
+    column: n
+`,
+		// Invalid: counter without column
+		`metrics/mv3.yaml`: `
+version: 1
+type: metrics_view
+table: t3
+measures:
+  - name: m
+    kind: counter
+`,
+		// Invalid: cumulative counter with an expression dimension
+		`metrics/mv4.yaml`: `
+version: 1
+type: metrics_view
+table: t4
+timeseries: time
+dimensions:
+  - name: d
+    expression: upper(x)
+measures:
+  - name: m
+    kind: counter
+    column: hits
+`,
+	})
+
+	p, err := Parse(ctx, repo, "", "", "duckdb", true)
+	require.NoError(t, err)
+
+	require.Len(t, p.Errors, 2)
+	require.Equal(t, "/metrics/mv3.yaml", p.Errors[0].FilePath)
+	require.Contains(t, p.Errors[0].Message, `require "column"`)
+	require.Equal(t, "/metrics/mv4.yaml", p.Errors[1].FilePath)
+	require.Contains(t, p.Errors[1].Message, "plain columns")
+
+	// mv1: rewired onto the generated model
+	mv1 := p.Resources[ResourceName{Kind: ResourceKindMetricsView, Name: "mv1"}.Normalized()]
+	require.Equal(t, "mv1__normalized", mv1.MetricsViewSpec.Model)
+	require.Equal(t, `sum("hits")`, mv1.MetricsViewSpec.Measures[0].Expression)
+	require.Equal(t, "counter", mv1.MetricsViewSpec.Measures[0].Kind)
+	require.Equal(t, "cumulative", mv1.MetricsViewSpec.Measures[0].Temporality)
+	require.Equal(t, `avg("cpu_pct")`, mv1.MetricsViewSpec.Measures[1].Expression)
+
+	gen := p.Resources[ResourceName{Kind: ResourceKindModel, Name: "mv1__normalized"}.Normalized()]
+	require.NotNil(t, gen)
+	sql := gen.ModelSpec.InputProperties.AsMap()["sql"].(string)
+	require.Contains(t, sql, `SELECT * REPLACE`)
+	require.Contains(t, sql, `PARTITION BY "job"`)
+	require.Contains(t, sql, `ORDER BY "time"`)
+	require.Contains(t, sql, `lag("hits")`)
+	require.NotContains(t, sql, "cpu_pct") // gauges are not normalized
+
+	// mv2: delta counter needs no generated model
+	mv2 := p.Resources[ResourceName{Kind: ResourceKindMetricsView, Name: "mv2"}.Normalized()]
+	require.Equal(t, "samples", mv2.MetricsViewSpec.Model)
+	require.Nil(t, p.Resources[ResourceName{Kind: ResourceKindModel, Name: "mv2__normalized"}.Normalized()])
+}
+
 func TestMetricsViewAvoidSelfCyclicRef(t *testing.T) {
 	ctx := context.Background()
 	repo := makeRepo(t, map[string]string{

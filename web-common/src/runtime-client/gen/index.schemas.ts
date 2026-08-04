@@ -135,6 +135,12 @@ export interface MetricsViewSpecMeasure {
   thresholds?: MetricsViewSpecMeasureThresholds;
   /** "per_second" makes the runtime normalize the value by bucket/range duration. */
   unit?: string;
+  /** Semantic kind of the underlying metric: "gauge" or "counter". */
+  kind?: string;
+  /** For counters: "delta" or "cumulative". */
+  temporality?: string;
+  /** For kind-based measures: the source column holding the metric value. */
+  column?: string;
 }
 
 export interface MetricsViewSpecMeasureThresholdsStep {

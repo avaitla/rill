@@ -1,15 +1,16 @@
-# AFTER: the same data, with the two draft ideas applied.
-#   1. Counter semantics solved once at the model layer (`http_requests` computes the
-#      per-series, reset-safe increase) — so sum(increase) is correct under every slice.
-#      This replaces `sum by (job) (rate(http_requests_total[5m]))` from the PromQL
-#      examples page with a plain SUM the parser/reconciler can guarantee is right.
-#   2. Thresholds declared ONCE on the measure — every surface (explore big number,
-#      leaderboards, canvas KPIs) colors itself from the same declaration.
+# AFTER: the same raw cumulative counter table, declared with `kind: counter`.
+# The parser GENERATES the reset-safe per-series normalization model
+# (`http_requests_after__normalized`) and points this metrics view at it —
+# nobody writes window SQL by hand (compare models/http_requests.sql, the manual
+# recipe this replaces). Everything downstream is correct under every slice:
+#   - `requests` / `qps` sum the normalized increases (qps is grain-stable via unit: per_second)
+#   - the rate measures reference the same normalized column, so ratios are exact
+#   - thresholds are declared once and color every surface
 version: 1
 type: metrics_view
 
-display_name: HTTP — AFTER (normalized + thresholds)
-model: http_requests
+display_name: "HTTP — AFTER (kind: counter + thresholds)"
+model: http_requests_raw
 timeseries: time
 smallest_time_grain: minute
 
@@ -30,18 +31,21 @@ dimensions:
 measures:
   - name: requests
     display_name: Requests
-    expression: sum(increase)
-    description: Correct request count for any slice — the counter delta happened upstream.
+    kind: counter
+    column: value
+    description: Correct request count for any slice — normalization is generated, not hand-written.
     format_preset: humanize
   - name: qps
     display_name: Requests/sec
-    expression: sum(increase)
-    description: True rate — the runtime divides by the time bucket duration, so this reads the same at every grain.
+    kind: counter
+    column: value
     unit: per_second
+    description: True rate — reads the same at every time grain.
     format_d3: ".2f"
   - name: error_rate
     display_name: 5xx error rate
-    expression: sum(CASE WHEN status = '500' THEN increase ELSE 0 END) / NULLIF(sum(increase), 0)
+    expression: sum(CASE WHEN status = '500' THEN value ELSE 0 END) / NULLIF(sum(value), 0)
+    description: Ratio over the normalized increases (the generated model rewrote `value` in place).
     format_preset: percentage
     lower_is_better: true
     thresholds:
@@ -49,7 +53,7 @@ measures:
       - critical: 0.05
   - name: not_found_rate
     display_name: 404 rate
-    expression: sum(CASE WHEN status = '404' THEN increase ELSE 0 END) / NULLIF(sum(increase), 0)
+    expression: sum(CASE WHEN status = '404' THEN value ELSE 0 END) / NULLIF(sum(value), 0)
     format_preset: percentage
     lower_is_better: true
     thresholds:

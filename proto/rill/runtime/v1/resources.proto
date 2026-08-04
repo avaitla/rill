@@ -303,6 +303,13 @@ message MetricsViewSpec {
     MeasureThresholds thresholds = 18;
     // Unit of the measure. The value "per_second" makes the runtime divide the aggregated value by the duration of the time bucket (or of the whole queried time range when there is no time dimension), so the number reads the same at every time grain.
     string unit = 19;
+    // Semantic kind of the underlying metric: "gauge" or "counter". Drives defaults and validation;
+    // for cumulative counters, the parser generates a reset-safe per-series delta model upstream of the metrics view.
+    string kind = 20;
+    // For kind "counter": "delta" (each sample is already an increment) or "cumulative" (Prometheus-style running total; requires normalization).
+    string temporality = 21;
+    // For kind-based measures: the source column holding the metric value.
+    string column = 22;
   }
   // Severity thresholds for a measure.
   message MeasureThresholds {
