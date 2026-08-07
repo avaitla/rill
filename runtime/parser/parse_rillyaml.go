@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"strings"
 
 	"github.com/iancoleman/strcase"
 	"github.com/rilldata/rill/runtime/pkg/env"
@@ -131,10 +130,7 @@ func (p *Parser) parseRillYAML(ctx context.Context, path string) error {
 		return newYAMLError(err)
 	}
 
-	dec := yaml.NewDecoder(strings.NewReader(data))
-	dec.KnownFields(true)
-
-	err = dec.Decode(tmp)
+	err = decodeYAMLKnownFields(data, tmp)
 	if err != nil && !errors.Is(err, io.EOF) {
 		return newYAMLError(err)
 	}

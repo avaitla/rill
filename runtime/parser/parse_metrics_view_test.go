@@ -1252,3 +1252,92 @@ explore:
 	require.Nil(t, e3.DimensionsSelector)
 	require.Equal(t, &runtimev1.FieldSelector{Selector: &runtimev1.FieldSelector_Regex{Regex: "count.*"}}, e3.MeasuresSelector)
 }
+
+func TestMetricsViewCustomFields(t *testing.T) {
+	files := map[string]string{
+		// rill.yaml with a custom field
+		`rill.yaml`: `
+custom_project_key: hello
+`,
+		// model m1
+		`models/m1.sql`: `SELECT 1 AS id`,
+		// metrics view with custom fields at the top level and nested in dimensions and measures
+		`metrics_views/mv1.yaml`: `
+type: metrics_view
+version: 1
+model: m1
+custom_owner: data-team
+dimensions:
+- name: foo
+  expression: id
+  custom_facet: true
+measures:
+- name: count
+  expression: COUNT(*)
+  custom_priority: 1
+`,
+		// metrics view with a typo in a field name, which should still error
+		`metrics_views/mv2.yaml`: `
+type: metrics_view
+version: 1
+model: m1
+mesures:
+- name: count
+  expression: COUNT(*)
+`,
+	}
+
+	resources := []*Resource{
+		// model m1
+		{
+			Name:  ResourceName{Kind: ResourceKindModel, Name: "m1"},
+			Paths: []string{"/models/m1.sql"},
+			ModelSpec: &runtimev1.ModelSpec{
+				RefreshSchedule: &runtimev1.Schedule{RefUpdate: true},
+				InputConnector:  "duckdb",
+				InputProperties: must(structpb.NewStruct(map[string]any{"sql": strings.TrimSpace(files["models/m1.sql"])})),
+				OutputConnector: "duckdb",
+				ChangeMode:      runtimev1.ModelChangeMode_MODEL_CHANGE_MODE_RESET,
+			},
+		},
+		// metrics view mv1: custom_ fields are accepted and ignored
+		{
+			Name:  ResourceName{Kind: ResourceKindMetricsView, Name: "mv1"},
+			Refs:  []ResourceName{{Kind: ResourceKindModel, Name: "m1"}},
+			Paths: []string{"/metrics_views/mv1.yaml"},
+			MetricsViewSpec: &runtimev1.MetricsViewSpec{
+				Connector:   "duckdb",
+				Model:       "m1",
+				DisplayName: "Mv1",
+				Dimensions: []*runtimev1.MetricsViewSpec_Dimension{
+					{
+						Name:        "foo",
+						DisplayName: "Foo",
+						Expression:  "id",
+					},
+				},
+				Measures: []*runtimev1.MetricsViewSpec_Measure{
+					{
+						Name:        "count",
+						DisplayName: "Count",
+						Expression:  "COUNT(*)",
+						Type:        runtimev1.MetricsViewSpec_MEASURE_TYPE_SIMPLE,
+					},
+				},
+			},
+		},
+	}
+
+	errors := []*runtimev1.ParseError{
+		{
+			Message:  "field mesures not found",
+			FilePath: "/metrics_views/mv2.yaml",
+		},
+	}
+
+	ctx := context.Background()
+	repo := makeRepo(t, files)
+	p, err := Parse(ctx, repo, "", "", "duckdb", true)
+	require.NoError(t, err)
+	requireResourcesAndErrors(t, p, resources, errors)
+}

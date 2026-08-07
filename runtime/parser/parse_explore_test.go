@@ -127,3 +127,58 @@ measures:
 	require.NoError(t, err)
 	requireResourcesAndErrors(t, p, resources, nil)
 }
+
+func TestExploreCustomFields(t *testing.T) {
+	files := map[string]string{
+		// rill.yaml
+		`rill.yaml`: ``,
+		// explore with custom fields at the top level and nested in the defaults
+		`explores/e1.yaml`: `
+type: explore
+metrics_view: mv1
+custom_owner: data-team
+defaults:
+  custom_nested: true
+`,
+		// explore with a typo in a field name, which should still error
+		`explores/e2.yaml`: `
+type: explore
+metrics_view: mv1
+metrics_wiew: mv1
+`,
+	}
+
+	resources := []*Resource{
+		// explore e1: custom_ fields are accepted and ignored
+		{
+			Name:  ResourceName{Kind: ResourceKindExplore, Name: "e1"},
+			Refs:  []ResourceName{{Kind: ResourceKindMetricsView, Name: "mv1"}},
+			Paths: []string{"/explores/e1.yaml"},
+			ExploreSpec: &runtimev1.ExploreSpec{
+				DisplayName:          "E1",
+				MetricsView:          "mv1",
+				DimensionsSelector:   &runtimev1.FieldSelector{Selector: &runtimev1.FieldSelector_All{All: true}},
+				MeasuresSelector:     &runtimev1.FieldSelector{Selector: &runtimev1.FieldSelector_All{All: true}},
+				DefaultPreset: &runtimev1.ExplorePreset{
+					DimensionsSelector: &runtimev1.FieldSelector{Selector: &runtimev1.FieldSelector_All{All: true}},
+					MeasuresSelector:   &runtimev1.FieldSelector{Selector: &runtimev1.FieldSelector_All{All: true}},
+					ComparisonMode:     runtimev1.ExploreComparisonMode_EXPLORE_COMPARISON_MODE_NONE,
+				},
+				AllowCustomTimeRange: true,
+			},
+		},
+	}
+
+	errors := []*runtimev1.ParseError{
+		{
+			Message:  "field metrics_wiew not found",
+			FilePath: "/explores/e2.yaml",
+		},
+	}
+
+	ctx := context.Background()
+	repo := makeRepo(t, files)
+	p, err := Parse(ctx, repo, "", "", "duckdb", true)
+	require.NoError(t, err)
+	requireResourcesAndErrors(t, p, resources, errors)
+}

@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -347,10 +348,8 @@ func (p *Parser) decodeNodeYAML(node *Node, knownFields bool, dst any) error {
 	if node.YAML != nil {
 		var err error
 		if knownFields {
-			// Using node.YAMLRaw instead of node.YAML because we need to set KnownFields for metrics views
-			dec := yaml.NewDecoder(strings.NewReader(node.YAMLRaw))
-			dec.KnownFields(true)
-			err = dec.Decode(dst)
+			// Using node.YAMLRaw instead of node.YAML because strict decoding requires re-parsing the raw YAML
+			err = decodeYAMLKnownFields(node.YAMLRaw, dst)
 		} else {
 			err = node.YAML.Decode(dst)
 		}
@@ -376,6 +375,62 @@ func (p *Parser) decodeNodeYAML(node *Node, knownFields bool, dst any) error {
 	}
 
 	return nil
+}
+
+// decodeYAMLKnownFields decodes YAML into dst, returning an error if the YAML contains fields not defined on dst.
+// Keys prefixed with "custom_" are exempt from the strict check: they hold user-defined metadata,
+// e.g. for use by custom Rill distributions, and should not break parsing in the stock product.
+// KnownFields is only supported on a yaml.Decoder, not on a yaml.Node,
+// so it removes the custom fields from the node tree, re-marshals it, and decodes it strictly.
+// It then decodes the original YAML non-strictly so that "custom_"-prefixed fields that dst does define are still populated.
+func decodeYAMLKnownFields(raw string, dst any) error {
+	var root yaml.Node
+	if err := yaml.Unmarshal([]byte(raw), &root); err != nil {
+		return err
+	}
+	foundCustom := removeCustomFields(&root)
+	if !root.IsZero() {
+		data, err := yaml.Marshal(&root)
+		if err != nil {
+			return err
+		}
+		dec := yaml.NewDecoder(bytes.NewReader(data))
+		dec.KnownFields(true)
+		if err := dec.Decode(dst); err != nil {
+			return err
+		}
+	}
+	if foundCustom {
+		return yaml.Unmarshal([]byte(raw), dst)
+	}
+	return nil
+}
+
+// removeCustomFields recursively removes all mapping keys prefixed with "custom_" from a YAML node tree.
+// It reports whether any such keys were removed.
+func removeCustomFields(n *yaml.Node) bool {
+	var found bool
+	switch n.Kind {
+	case yaml.DocumentNode, yaml.SequenceNode:
+		for _, c := range n.Content {
+			found = removeCustomFields(c) || found
+		}
+	case yaml.MappingNode:
+		content := n.Content[:0]
+		for i := 0; i+1 < len(n.Content); i += 2 {
+			k := n.Content[i]
+			v := n.Content[i+1]
+			if k.Kind == yaml.ScalarNode && strings.HasPrefix(k.Value, "custom_") {
+				found = true
+				continue
+			}
+			found = removeCustomFields(v) || found
+			content = append(content, k, v)
+		}
+		n.Content = content
+	default:
+	}
+	return found
 }
 
 // parseYAMLRefs parses a list of YAML nodes into a list of ResourceNames.
