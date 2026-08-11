@@ -175,7 +175,12 @@ func (e *selfToSelfExecutor) Execute(ctx context.Context, opts *drivers.ModelExe
 
 	// If host access is allowed, ensure DuckDB has fallback secrets for missing cloud providers.
 	// This allows DuckDB to access s3, gcs, azure creds from env if  when no explicit connectors exist.
-	if !secretAlreadyExists && opts.Env.AllowHostAccess {
+	// Only do this when the model may actually read from cloud storage: creating a
+	// credential_chain secret makes DuckDB resolve the full cloud credential chain at
+	// creation time, which can take multiple seconds per provider on hosts without
+	// instance metadata endpoints (e.g. laptops), and the cost is paid on every
+	// connection of every model build.
+	if !secretAlreadyExists && opts.Env.AllowHostAccess && sqlMayReferenceCloudStorage(inputProps.SQL, inputProps.PreExec) {
 		var fallbackSecrets []string
 		var fallbackDrops []string
 
@@ -429,6 +434,24 @@ func (e *selfToSelfExecutor) createFromExternalDuckDB(ctx context.Context, input
 		BeforeCreateFn: beforeCreateFn,
 		AfterCreateFn:  afterCreateFn,
 	})
+}
+
+// cloudStorageRegex matches references to cloud object storage or remote URLs in SQL,
+// e.g. paths like 's3://bucket/file.parquet' passed to read_parquet.
+// It is deliberately broad and errs on the side of matching (a hit inside a comment or
+// unrelated string literal is fine): a false positive only re-introduces the fallback
+// secrets for that one model, while a false negative would break a remote read.
+var cloudStorageRegex = regexp.MustCompile(`(?i)\b(?:s3|s3a|gs|gcs|az|azure|abfss?|r2|https?)://`)
+
+// sqlMayReferenceCloudStorage reports whether any of the given SQL snippets may read from
+// cloud object storage and therefore need the fallback credential secrets.
+func sqlMayReferenceCloudStorage(sqls ...string) bool {
+	for _, sql := range sqls {
+		if cloudStorageRegex.MatchString(sql) {
+			return true
+		}
+	}
+	return false
 }
 
 func parseRefFromSQL(sql string) (string, string, *duckdbsql.AST, bool) {
